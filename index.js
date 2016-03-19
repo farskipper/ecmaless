@@ -50,6 +50,23 @@ module.exports = function(src){
 
   var estree_macros = {};
 
+  estree_macros["js/program"] = function(ast, astToTarget){
+    return {
+      "loc": ast.loc,
+      "type": "Program",
+      "body": _.map(astToTarget(ast.value.slice(1)), function(estree){
+        if(_.includes(["VariableDeclaration"], estree.type)){
+          return estree;
+        }
+        return {
+          loc: ast.loc,
+          type: "ExpressionStatement",
+          expression: estree
+        };
+      })
+    };
+  };
+
   estree_macros["js/fn-call"] = function(ast, astToTarget){
     return {
       loc: ast.loc,
@@ -101,21 +118,13 @@ module.exports = function(src){
     return callMacro("js/make-type-" + ast.type, ast);
   };
 
-
-  var body = _.map(astToTarget(ast), function(estree){
-    if(_.includes(["VariableDeclaration"], estree.type)){
-      return estree;
-    }
-    return {
-      loc: estree.loc,
-      type: "ExpressionStatement",
-      expression: estree
-    };
-  });
-
-  return escodegen.generate({
-    "loc": body[0].loc,
-    "type": "Program",
-    "body": body
-  });
+  return escodegen.generate(astToTarget(_.assign({}, ast, {
+    type: "list",
+    value: [
+      _.assign({}, ast, {
+        type: "symbol",
+        value: "js/program"
+      })
+    ].concat(ast)
+  })));
 };
