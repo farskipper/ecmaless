@@ -25,6 +25,9 @@ test("parser", function(t){
   var tp = _.partial(testParse, t);
   tp(" 1\n2", "1 2");
   tp(" (+ 1 2\n(  /\n1 4)) ", "(+ 1 2 (/ 1 4))");
+  tp("#asdf 2", "(asdf 2)");
+  tp("` (1 2)", "(` (1 2))");
+  tp("~sym", "(~ sym)");
   //tp("<1 2 3>", "(<> 1 2 3)");
   t.end();
 });

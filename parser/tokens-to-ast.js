@@ -46,14 +46,31 @@ module.exports = function(onAstNode){
       return;
     }else if(/^close-/.test(node.type)){
       node = stack.pop();
-    }else{
-      //TODO error
+    }else if(node.type === "dispatch"){
+      node = _.assign({}, node, {
+        type: 'list',
+        value: [
+        ],
+        list_max_size: 2
+      });
+      node.value.push(_.assign({}, node, {
+        type: 'symbol',
+        value: /^#.+/.test(node.src) ? node.src.substring(1) : node.src
+      }));
+      stack.push(node);
       return;
+    }else{
+      throw new Error("Unsupported token type: " + token.type);
     }
 
     var curr_list = _.last(stack);
     if(curr_list){
       curr_list.value.push(node);
+      if(curr_list.hasOwnProperty('list_max_size')){
+        if(curr_list.value.length === curr_list.list_max_size){
+          onAstNode(stack.pop());
+        }
+      }
     }else{
       onAstNode(node);
     }
