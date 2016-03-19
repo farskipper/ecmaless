@@ -54,5 +54,8 @@ test("balanced list chars", function(t){
   shouldFail( true, "({[)})");
   shouldFail(false, "({[]})");
 
+  shouldFail( true, "(one (two) three");
+  shouldFail(false, "(one (two) three)");
+
   t.end();
 });

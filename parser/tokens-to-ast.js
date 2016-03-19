@@ -26,7 +26,7 @@ var tokenToNode = function(token){
 module.exports = function(onAstNode){
   var stack = [];
 
-  return function(token){
+  var pushToken = function(token){
     var node = tokenToNode(token);
 
     if(node.type === 'whitespace'){
@@ -96,6 +96,15 @@ module.exports = function(onAstNode){
       }
     }else{
       onAstNode(node);
+    }
+  };
+
+  return {
+    pushToken: pushToken,
+    end: function(){
+      if(!_.isEmpty(stack)){
+        throw new Error("Program not finished");
+      }
     }
   };
 };
