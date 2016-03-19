@@ -15,6 +15,12 @@ var mkJSLiteral = function(ast, value, raw){
   };
 };
 
+var assertAstListLength = function(ast, len){
+  if(_.size(ast.value) !== len){
+    throw new Error("Wrong num args "+len+" != "+_.size(ast.value)+": todo helpful message with line numbers etc...");
+  }
+};
+
 var literal_symbols = {
   "js/null": function(ast){
     return mkJSLiteral(ast, null, "null");
@@ -30,6 +36,19 @@ var literal_symbols = {
       loc: ast.loc,
       type: "Identifier",
       name: "undefined"
+    };
+  },
+  "js/this": function(ast){
+    return {
+      "loc": ast.loc,
+      "type": "ThisExpression"
+    };
+  },
+  "js/arguments": function(ast){
+    return {
+      "loc": ast.loc,
+      "type": "Identifier",
+      "name": "arguments"
     };
   },
   "nil": function(ast){
@@ -94,6 +113,65 @@ defMacro("js/program", function(ast, astToTarget){
       };
     })
   };
+});
+
+var mkJS1ArgOperator = function(ast, astToTarget, operator){
+  return {
+    loc: ast.value[0].loc,
+    type: "UnaryExpression",
+    prefix: true,
+    operator: operator,
+    argument: astToTarget(ast.value[1])
+  };
+};
+
+var mkJS2ArgOperator = function(ast, astToTarget, type, operator){
+  return {
+    loc: ast.value[0].loc,
+    type: type,
+    operator: operator,
+    left: astToTarget(ast.value[1]),
+    right: astToTarget(ast.value[2])
+  };
+};
+
+var defJSOperator = function(type, operator){
+  defMacro("js/" + operator, function(ast, astToTarget){
+    assertAstListLength(ast, 3);
+    return mkJS2ArgOperator(ast, astToTarget, type, operator);
+  });
+};
+_.each([
+  "==", "!=", "===", "!==",
+  "<", "<=", ">", ">=",
+  "<<", ">>", ">>>",
+  "*", "/", "%",
+  "|", "^", "&", "in",
+  "instanceof"
+], function(operator){
+  defJSOperator("BinaryExpression", operator);
+});
+_.each(["&&", "||"], function(operator){
+  defJSOperator("LogicalExpression", operator);
+});
+
+_.each(["!", "~", "typeof", "void", "delete"], function(operator){
+  defMacro("js/" + operator, function(ast, astToTarget){
+    assertAstListLength(ast, 2);
+    return mkJS1ArgOperator(ast, astToTarget, operator);
+  });
+});
+
+_.each(["+", "-"], function(operator){
+  defMacro("js/" + operator, function(ast, astToTarget){
+    if(_.size(ast.value) === 2){
+      return mkJS1ArgOperator(ast, astToTarget, operator);
+    }else if(_.size(ast.value) === 3){
+      return mkJS2ArgOperator(ast, astToTarget, "BinaryExpression", operator);
+    }else{
+      throw new Error("Wrong num args "+_.size(ast.value)+" expected 2 or 3: todo helpful message with line numbers etc...");
+    }
+  });
 });
 
 
