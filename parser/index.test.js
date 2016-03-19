@@ -13,4 +13,4 @@ var astWoLocAndSrc = function(ast){
 };
 
 //console.log(parser("[\"one\"2<three :four>]"));
-console.log(JSON.stringify(astWoLocAndSrc(parser("(\"one\"2)")), undefined, 2));
+//console.log(JSON.stringify(astWoLocAndSrc(parser("(\"one\"2)")), undefined, 2));

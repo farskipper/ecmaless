@@ -4,6 +4,8 @@
   "description": "A compile to JS language that is minimal, yet powerful, and promotes freedom to extend the language.",
   "main": "index.js",
   "scripts": {
+    "dev": "onchange '**/*.js' -i -- npm run dev:test -s",
+    "dev:test": "node tests.js | tap-min",
     "test": "node tests.js"
   },
   "repository": {
@@ -31,6 +33,8 @@
     "tokenizer2": "^2.0.0"
   },
   "devDependencies": {
+    "onchange": "^2.1.2",
+    "tap-min": "^1.1.0",
     "tape": "^4.5.1"
   }
 }

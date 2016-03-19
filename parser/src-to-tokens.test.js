@@ -79,3 +79,24 @@ test("tokenize symbols", function(t){
   asrt('+-= + - %', ['+-=', '+', '-', '%']);
   t.end();
 });
+
+test("tokenize dispatchers", function(t){
+  var asrt = _.partial(assertAllOfType, t, "dispatch");
+  asrt("#one #'`@~^", ["#one", "#", "'", "`", "@", "~", "^"]);
+  t.end();
+});
+
+test("tokenize groups", function(t){
+  var toks = toToks("()[]{}<>");
+  t.deepEquals(toks, [
+    ["open-(" , "("],
+    ["close-(", ")"],
+    ["open-[" , "["],
+    ["close-[", "]"],
+    ["open-{" , "{"],
+    ["close-{", "}"],
+    ["open-<" , "<"],
+    ["close-<", ">"]
+  ]);
+  t.end();
+});
