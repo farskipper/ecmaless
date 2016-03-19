@@ -1,6 +1,6 @@
 var _ = require("lodash");
+var test = require("tape");
 var parser = require("./");
-require("./src-to-tokens.test");
 
 var astWoLocAndSrc = function(ast){
   if(_.isArray(ast)){
@@ -12,5 +12,9 @@ var astWoLocAndSrc = function(ast){
   };
 };
 
+test("parse numbers", function(t){
+  console.log(parser("(1 2)"));
+  t.end();
 //console.log(parser("[\"one\"2<three :four>]"));
 //console.log(JSON.stringify(astWoLocAndSrc(parser("(\"one\"2)")), undefined, 2));
+});
