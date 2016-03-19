@@ -1,1 +1,1 @@
-//TODO
+require("./parser.test");

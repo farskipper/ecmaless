@@ -24,5 +24,13 @@
   "bugs": {
     "url": "https://github.com/smallhelm/ecmaless/issues"
   },
-  "homepage": "https://github.com/smallhelm/ecmaless#readme"
+  "homepage": "https://github.com/smallhelm/ecmaless#readme",
+  "dependencies": {
+    "escape-regexp": "0.0.1",
+    "lodash": "^4.6.1",
+    "tokenizer2": "^1.2.1"
+  },
+  "devDependencies": {
+    "tape": "^4.5.1"
+  }
 }
