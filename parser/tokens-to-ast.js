@@ -64,6 +64,11 @@ module.exports = function(onAstNode){
       }));
       stack.push(node);
       return;
+    }else if(node.type === 'keyword'){
+      node = _.assign({}, node, {
+        type: 'string',
+        value: node.src.substring(1)
+      });
     }else if(node.type === 'symbol'){
       node.value = node.src;
     }else{

@@ -50,9 +50,9 @@ module.exports = function(src, onToken){
   _.each(dispatchers, function(c){
     t.addRule(new RegExp("^" + escapeRegExp(c) + "$"), "dispatch");
   });
+  t.addRule(new RegExp("^#[^0-9" + separators + "][^" + separators + "]*$"), "dispatch");
 
   t.addRule(new RegExp("^\\:[^" + separators + "]*$"), "keyword");
-  t.addRule(new RegExp("^#[^0-9" + separators + "][^" + separators + "]*$"), "dispatch");
   t.addRule(new RegExp("^[^0-9" + separators + "][^" + separators + "]*$"), "symbol");
 
   t.onText(src);

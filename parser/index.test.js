@@ -29,6 +29,9 @@ test("parser", function(t){
   tp("` (1 2)", "(` (1 2))");
   tp("~sym", "(~ sym)");
   tp("sym;some comment ", 'sym (; "some comment ")');
+  tp(":keyword", '"keyword"');
+  tp("::key-word::", '":key-word::"');
+  tp(":1", '"1"');
   //tp("<1 2 3>", "(<> 1 2 3)");
   t.end();
 });
