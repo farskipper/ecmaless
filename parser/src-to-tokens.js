@@ -56,7 +56,5 @@ module.exports = function(src, onToken){
   t.addRule(new RegExp("^[^0-9" + separators + "][^" + separators + "]*$"), "symbol");
 
   t.onText(src);
-  t.end(function(err){//this is actually synchronous
-    if(err) throw err;
-  });
+  t.end();
 };
