@@ -1,5 +1,6 @@
 var _ = require("lodash");
 var parser = require("./");
+require("./src-to-tokens.test");
 
 var astWoLocAndSrc = function(ast){
   if(_.isArray(ast)){
