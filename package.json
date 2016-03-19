@@ -29,6 +29,7 @@
   "homepage": "https://github.com/smallhelm/ecmaless#readme",
   "dependencies": {
     "escape-regexp": "0.0.1",
+    "escodegen": "^1.8.0",
     "lodash": "^4.6.1",
     "tokenizer2": "^2.0.0"
   },
