@@ -58,8 +58,11 @@ module.exports = function(onAstNode){
       }
       stack.push(node);
       return;
-    }else if(/^close-/.test(node.type)){
+    }else if(/^close-/.test(token.type)){
       node = stack.pop();
+      if(token.type !== "close-" + node.list_type){
+        throw new Error("Expected to close " + node.list_type);
+      }
     }else if(node.type === "dispatch"){
       node = _.assign({}, node, {
         type: 'list',

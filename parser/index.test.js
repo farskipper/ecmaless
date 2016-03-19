@@ -38,3 +38,21 @@ test("parser", function(t){
   tp("<1 2 3>", "(< 1 2 3)");
   t.end();
 });
+
+test("balanced list chars", function(t){
+  var shouldFail = function(should_it, src){
+    try{
+      parser(src);
+      t.notOk(should_it);
+    }catch(e){
+      t.ok(should_it);
+    }
+  };
+  shouldFail( true, "<one)");
+  shouldFail(false, "<one>");
+
+  shouldFail( true, "({[)})");
+  shouldFail(false, "({[]})");
+
+  t.end();
+});
