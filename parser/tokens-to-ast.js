@@ -45,10 +45,18 @@ module.exports = function(onAstNode){
       //just de-sugar the number. Converting it to a float, or big-num is up to the language dialect
       node.value = node.src.replace(/[+,]/g, '').toLowerCase();
     }else if(/^open-/.test(node.type)){
-      stack.push(_.assign({}, node, {
+      node = _.assign({}, node, {
         type: 'list',
-        value: []
-      }));
+        value: [],
+        list_type: node.type.split("-")[1]
+      });
+      if(node.list_type !== "("){
+        node.value.push(_.assign({}, node, {
+          type: 'symbol',
+          value: node.list_type
+        }));
+      }
+      stack.push(node);
       return;
     }else if(/^close-/.test(node.type)){
       node = stack.pop();
