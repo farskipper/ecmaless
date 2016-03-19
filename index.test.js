@@ -4,5 +4,6 @@ var compiler = require("./");
 
 test("basics", function(t){
   t.equals(compiler("(add 1 2)"), "add(1, 2);");
+  t.equals(compiler('( log "hello world" )'), "log('hello world');");
   t.end();
 });
