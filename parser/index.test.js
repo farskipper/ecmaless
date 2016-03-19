@@ -28,6 +28,7 @@ test("parser", function(t){
   tp("#asdf 2", "(asdf 2)");
   tp("` (1 2)", "(` (1 2))");
   tp("~sym", "(~ sym)");
+  tp("sym;some comment ", 'sym (; "some comment ")');
   //tp("<1 2 3>", "(<> 1 2 3)");
   t.end();
 });

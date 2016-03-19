@@ -31,10 +31,16 @@ module.exports = function(onAstNode){
 
     if(node.type === 'whitespace'){
       return;
+    }else if(node.type === "comment"){
+      node = _.assign({}, node, {
+        type: 'list',
+        value: [
+          _.assign({}, node, {type: 'symbol', value: ';'}),
+          _.assign({}, node, {type: 'string', value: node.src.substring(1)})
+        ]
+      });
     }else if(node.type === 'string'){
       node.value = node.src.substring(1, node.src.length - 1).replace(/\\"/g, '"');
-    }else if(node.type === 'symbol'){
-      node.value = node.src;
     }else if(node.type === 'number'){
       //just de-sugar the number. Converting it to a float, or big-num is up to the language dialect
       node.value = node.src.replace(/[+,]/g, '').toLowerCase();
@@ -49,8 +55,7 @@ module.exports = function(onAstNode){
     }else if(node.type === "dispatch"){
       node = _.assign({}, node, {
         type: 'list',
-        value: [
-        ],
+        value: [],
         list_max_size: 2
       });
       node.value.push(_.assign({}, node, {
@@ -59,6 +64,8 @@ module.exports = function(onAstNode){
       }));
       stack.push(node);
       return;
+    }else if(node.type === 'symbol'){
+      node.value = node.src;
     }else{
       throw new Error("Unsupported token type: " + token.type);
     }
