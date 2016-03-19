@@ -1,1 +1,1 @@
-require("./parser.test");
+require("./parser/index.test");

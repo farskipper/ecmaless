@@ -1,5 +1,5 @@
 var _ = require("lodash");
-var parser = require("./parser");
+var parser = require("./");
 
 var astWoLocAndSrc = function(ast){
   if(_.isArray(ast)){
