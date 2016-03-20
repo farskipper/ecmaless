@@ -26,8 +26,7 @@ var assertAstType = function(ast, type){
   }
 };
 
-var astToStatement = function(astToTarget, ast){
-  var estree = astToTarget(ast);
+var toStatement = function(estree){
   if(/(Statement|Declaration)$/.test(estree.type)){
     return estree;
   }
@@ -119,7 +118,7 @@ defMacro("js/program", function(ast, astToTarget){
   return {
     "loc": ast.loc,
     "type": "Program",
-    "body": _.map(ast.value.slice(1), _.partial(astToStatement, astToTarget))
+    "body": _.map(astToTarget(ast.value.slice(1)), toStatement)
   };
 });
 
@@ -238,7 +237,7 @@ defMacro("js/block-statement", function(ast, astToTarget){
   return {
     loc: ast.value[0].loc,
     type: "BlockStatement",
-    body: _.map(ast.value.slice(1), _.partial(astToStatement, astToTarget))
+    body: _.map(astToTarget(ast.value.slice(1)), toStatement)
   };
 });
 
@@ -259,7 +258,7 @@ defMacro("js/function", function(ast, astToTarget){
     expression: false,
     defaults: [],
     params: _.map(ast.value[2].value, astToTarget),
-    body: astToTarget(ast.value[3])
+    body: toStatement(astToTarget(ast.value[3]))
   };
 });
 
@@ -269,7 +268,7 @@ defMacro("js/while", function(ast, astToTarget){
     "loc": ast.value[0].loc,
     "type": "WhileStatement",
     "test": astToTarget(ast.value[1]),
-    "body": astToTarget(ast.value[2])
+    "body": toStatement(astToTarget(ast.value[2]))
   };
 });
 
@@ -290,8 +289,8 @@ defMacro("js/if", function(ast, astToTarget){
     loc: ast.value[0].loc,
     type: "IfStatement",
     test: astToTarget(ast.value[1]),
-    consequent: astToTarget(ast.value[2]),
-    alternate: astToTarget(ast.value[3])
+    consequent: toStatement(astToTarget(ast.value[2])),
+    alternate: toStatement(astToTarget(ast.value[3]))
   };
 });
 

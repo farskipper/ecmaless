@@ -52,6 +52,16 @@ test("basics", function(t){
     + "    log('false');\n"
     + "}"
   );
+  t.equals(compile(
+    "(js/if (js/=== a 1)\n"
+    + "(log :true)"
+    + "(log :false))"),
+
+    "if (a === 1)\n"
+    + "    log('true');\n"
+    + "else\n"
+    + "    log('false');"
+  );
   //TODO js/try catch
   //TODO js objects and arrays
   t.end();
