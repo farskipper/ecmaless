@@ -20,6 +20,11 @@ var assertAstListLength = function(ast, len){
     throw new Error("Wrong num args "+len+" != "+_.size(ast.value)+": todo helpful message with line numbers etc...");
   }
 };
+var assertAstType = function(ast, type){
+  if(ast.type !== type){
+    throw new Error("Expected "+type+" but got "+ast.type+": todo helpful message with line numbers etc...");
+  }
+};
 
 var literal_symbols = {
   "js/null": function(ast){
@@ -174,5 +179,92 @@ _.each(["+", "-"], function(operator){
   });
 });
 
+defMacro("js/=", function(ast, astToTarget){
+  assertAstListLength(ast, 3);
+  return {
+    type: "AssignmentExpression",
+    operator: "=",
+    left: astToTarget(ast.value[1]),
+    right: astToTarget(ast.value[2])
+  };
+});
+
+defMacro("js/var", function(ast, astToTarget){
+  var args = ast.value.slice(1);
+  if((_.size(args) % 2) !== 0){
+    throw new Error("js/var expects an even number of pairs");//TODO be more helpful
+  }
+  return {
+    loc: ast.value[0].loc,
+    type: "VariableDeclaration",
+    kind: "var",
+    declarations: _.map(_.chunk(args, 2), function(pair){
+      assertAstType(pair[0], "symbol");
+      return {
+        loc: pair[0].loc,
+        type: "VariableDeclarator",
+        id: astToTarget(pair[0]),
+        init: astToTarget(pair[1])
+      };
+    })
+  };
+});
+
+defMacro("js/property-access", function(ast, astToTarget){
+  assertAstListLength(ast, 3);
+  return {
+    type: "MemberExpression",
+    computed: true,
+    object: astToTarget(ast.value[1]),
+    property: astToTarget(ast.value[2])
+  };
+});
+
+defMacro("js/function", function(ast, astToTarget){
+  assertAstType(ast.value[1], "symbol");
+  assertAstType(ast.value[2], "list");
+  _.each(ast.value[2].value, function(arg){
+    assertAstType(arg, "symbol");
+  });
+
+  var statements = ast.value.slice(3);
+
+  return {
+    loc: ast.value[0].loc,
+    type: "FunctionExpression",
+    id: astToTarget(ast.value[1]),
+    rest: null,
+    generator: false,
+    expression: false,
+    defaults: [],
+    params: _.map(ast.value[2].value, astToTarget),
+    body: {
+      loc: ast.value[3].loc,
+      type: "BlockStatement",
+      body: _.map(statements, function(node, i){
+        var estree = astToTarget(node);
+        if(_.includes([
+          "VariableDeclaration",
+          "ReturnStatement",
+          "ExpressionStatement"
+        ], estree.type)){
+          return estree;
+        }
+        if(i === (_.size(statements) - 1)){
+          return {
+            loc: node.loc,
+            type: "ReturnStatement",
+            argument: estree
+          };
+        }
+        return {
+          loc: node.loc,
+          type: "ExpressionStatement",
+          expression: estree
+        };
+      })
+    }
+  };
+});
 
 module.exports = estree_macros;
