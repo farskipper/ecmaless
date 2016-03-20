@@ -3,8 +3,6 @@ var symbolToJSIdentifier = require("./symbolToJSIdentifier");
 
 var estree_macros = {};
 var defMacro = function(name, fn){
-  name = name.replace(/</g, "lt");
-  name = name.replace(/>/g, "gt");
   estree_macros[name] = fn;
 };
 
@@ -30,14 +28,7 @@ var assertAstType = function(ast, type){
 
 var astToStatement = function(astToTarget, ast){
   var estree = astToTarget(ast);
-  if(_.includes([
-    "VariableDeclaration",
-    "ReturnStatement",
-    "ExpressionStatement",
-    "EmptyStatement",
-    "BlockStatement",
-    "WhileStatement"
-  ], estree.type)){
+  if(/(Statement|Declaration)$/.test(estree.type)){
     return estree;
   }
   return {
@@ -153,7 +144,10 @@ var mkJS2ArgOperator = function(ast, astToTarget, type, operator){
 };
 
 var defJSOperator = function(type, operator){
-  defMacro("js/" + operator, function(ast, astToTarget){
+  var name = "js/" + operator;
+  name = name.replace(/</g, "lt");
+  name = name.replace(/>/g, "gt");
+  defMacro(name, function(ast, astToTarget){
     assertAstListLength(ast, 3);
     return mkJS2ArgOperator(ast, astToTarget, type, operator);
   });
