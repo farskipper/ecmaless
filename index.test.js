@@ -62,7 +62,17 @@ test("basics", function(t){
     + "else\n"
     + "    log('false');"
   );
-  //TODO js/try catch
+  t.equals(compile(
+    "(js/try-catch\n"
+    + "(run)\n"
+    + "err\n"
+    + "(log \"error\" err))"),
+
+    "try\n"
+    + "    run();\n"
+    + "catch (err)\n"
+    + "    log('error', err);"
+  );
   //TODO js objects and arrays
   t.end();
 });

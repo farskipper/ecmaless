@@ -294,4 +294,22 @@ defMacro("js/if", function(ast, astToTarget){
   };
 });
 
+defMacro("js/try-catch", function(ast, astToTarget){
+  assertAstListLength(ast, 4);
+  assertAstType(ast.value[2], "symbol");
+  return {
+    "loc": ast.value[0].loc,
+    "type": "TryStatement",
+    "block": toStatement(astToTarget(ast.value[1])),
+    "guardedHandlers": [],
+    "handlers": [{
+      "loc": ast.value[2].loc,
+      "type": "CatchClause",
+      "param": astToTarget(ast.value[2]),
+      "body": toStatement(astToTarget(ast.value[3]))
+    }],
+    "finalizer": null
+  };
+});
+
 module.exports = estree_macros;
