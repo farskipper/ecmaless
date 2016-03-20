@@ -73,6 +73,10 @@ test("basics", function(t){
     + "catch (err)\n"
     + "    log('error', err);"
   );
+  //TODO more elegant way?
+  t.equals(compile("($$ecmaless$$fn-call (js/property-access console :log) 1 2)"),
+    "console['log'](1, 2);"
+  );
   //TODO js objects and arrays
   t.end();
 });
