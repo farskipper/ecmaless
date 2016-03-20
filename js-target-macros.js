@@ -3,6 +3,8 @@ var symbolToJSIdentifier = require("./symbolToJSIdentifier");
 
 var estree_macros = {};
 var defMacro = function(name, fn){
+  name = name.replace(/</g, "lt");
+  name = name.replace(/>/g, "gt");
   estree_macros[name] = fn;
 };
 
@@ -24,6 +26,25 @@ var assertAstType = function(ast, type){
   if(ast.type !== type){
     throw new Error("Expected "+type+" but got "+ast.type+": todo helpful message with line numbers etc...");
   }
+};
+
+var astToStatement = function(astToTarget, ast){
+  var estree = astToTarget(ast);
+  if(_.includes([
+    "VariableDeclaration",
+    "ReturnStatement",
+    "ExpressionStatement",
+    "EmptyStatement",
+    "BlockStatement",
+    "WhileStatement"
+  ], estree.type)){
+    return estree;
+  }
+  return {
+    loc: estree.loc,
+    type: "ExpressionStatement",
+    expression: estree
+  };
 };
 
 var literal_symbols = {
@@ -107,16 +128,7 @@ defMacro("js/program", function(ast, astToTarget){
   return {
     "loc": ast.loc,
     "type": "Program",
-    "body": _.map(astToTarget(ast.value.slice(1)), function(estree){
-      if(_.includes(["VariableDeclaration"], estree.type)){
-        return estree;
-      }
-      return {
-        loc: ast.loc,
-        type: "ExpressionStatement",
-        expression: estree
-      };
-    })
+    "body": _.map(ast.value.slice(1), _.partial(astToStatement, astToTarget))
   };
 });
 
@@ -220,14 +232,29 @@ defMacro("js/property-access", function(ast, astToTarget){
   };
 });
 
+defMacro("js/return", function(ast, astToTarget){
+  return {
+    loc: ast.value[0].loc,
+    type: "ReturnStatement",
+    argument: astToTarget(ast.value[1])
+  };
+});
+
+defMacro("js/block-statement", function(ast, astToTarget){
+  return {
+    loc: ast.value[0].loc,
+    type: "BlockStatement",
+    body: _.map(ast.value.slice(1), _.partial(astToStatement, astToTarget))
+  };
+});
+
 defMacro("js/function", function(ast, astToTarget){
+  assertAstListLength(ast, 4);
   assertAstType(ast.value[1], "symbol");
   assertAstType(ast.value[2], "list");
   _.each(ast.value[2].value, function(arg){
     assertAstType(arg, "symbol");
   });
-
-  var statements = ast.value.slice(3);
 
   return {
     loc: ast.value[0].loc,
@@ -238,32 +265,17 @@ defMacro("js/function", function(ast, astToTarget){
     expression: false,
     defaults: [],
     params: _.map(ast.value[2].value, astToTarget),
-    body: {
-      loc: ast.value[3].loc,
-      type: "BlockStatement",
-      body: _.map(statements, function(node, i){
-        var estree = astToTarget(node);
-        if(_.includes([
-          "VariableDeclaration",
-          "ReturnStatement",
-          "ExpressionStatement"
-        ], estree.type)){
-          return estree;
-        }
-        if(i === (_.size(statements) - 1)){
-          return {
-            loc: node.loc,
-            type: "ReturnStatement",
-            argument: estree
-          };
-        }
-        return {
-          loc: node.loc,
-          type: "ExpressionStatement",
-          expression: estree
-        };
-      })
-    }
+    body: astToTarget(ast.value[3])
+  };
+});
+
+defMacro("js/while", function(ast, astToTarget){
+  assertAstListLength(ast, 3);
+  return {
+    "loc": ast.value[0].loc,
+    "type": "WhileStatement",
+    "test": astToTarget(ast.value[1]),
+    "body": astToTarget(ast.value[2])
   };
 });
 

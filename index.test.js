@@ -19,16 +19,30 @@ test("basics", function(t){
   t.equals(compile("(js/property-access a :b)"), "a['b'];");
   t.equals(compile("(js/= a :b)"), "a = 'b';");
   t.equals(compile(
-    "(js/function add (a b) (js/+ a b))"),
-    "(function add(a, b) {\n    return a + b;\n});"
-  );
-  t.equals(compile(
-    "(js/function add4 (a) (js/var b 4) (log :hello-world) (js/+ a b))"),
+    "(js/function add4 (a) (js/block-statement\n"
+    + "(js/var b 4)\n"
+    + "(log :hello-world)\n"
+    + "(js/return (js/+ a b))))"
+    ),
     "(function add4(a) {\n"
     + "    var b = 4;\n"
     + "    log('hello-world');\n"
     + "    return a + b;\n"
     + "});"
   );
+  t.equals(compile(
+    "(js/while (js/lt= i 3) (js/block-statement\n"
+    + "(log :loop-again)\n"
+    + "(js/= i (js/+ i 1))))"
+    ),
+    "while (i <= 3) {\n"
+    + "    log('loop-again');\n"
+    + "    i = i + 1;\n"
+    + "}"
+  );
+  //TODO js/if
+  //TODO js/ternary
+  //TODO js/try catch
+  //TODO js objects and arrays
   t.end();
 });
