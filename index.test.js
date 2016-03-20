@@ -40,8 +40,18 @@ test("basics", function(t){
     + "    i = i + 1;\n"
     + "}"
   );
-  //TODO js/if
-  //TODO js/ternary
+  t.equals(compile("(js/ternary (js/=== a 1) :one a)"), "a === 1 ? 'one' : a;");
+  t.equals(compile(
+    "(js/if (js/=== a 1)\n"
+    + "(js/block-statement (log :true))"
+    + "(js/block-statement (log :false)))"),
+
+    "if (a === 1) {\n"
+    + "    log('true');\n"
+    + "} else {\n"
+    + "    log('false');\n"
+    + "}"
+  );
   //TODO js/try catch
   //TODO js objects and arrays
   t.end();

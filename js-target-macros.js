@@ -273,4 +273,26 @@ defMacro("js/while", function(ast, astToTarget){
   };
 });
 
+defMacro("js/ternary", function(ast, astToTarget){
+  assertAstListLength(ast, 4);
+  return {
+    loc: ast.value[0].loc,
+    type: "ConditionalExpression",
+    test: astToTarget(ast.value[1]),
+    consequent: astToTarget(ast.value[2]),
+    alternate: astToTarget(ast.value[3])
+  };
+});
+
+defMacro("js/if", function(ast, astToTarget){
+  assertAstListLength(ast, 4);
+  return {
+    loc: ast.value[0].loc,
+    type: "IfStatement",
+    test: astToTarget(ast.value[1]),
+    consequent: astToTarget(ast.value[2]),
+    alternate: astToTarget(ast.value[3])
+  };
+});
+
 module.exports = estree_macros;
