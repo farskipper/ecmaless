@@ -1,3 +1,9 @@
 #!/usr/bin/env node
 
-console.log("TODO cli");
+var concat = require("concat-stream");
+var compile = require("../");
+
+process.stdin.pipe(concat(function(stdin){
+  var src = stdin.toString();
+  console.log(compile(src));
+}));
