@@ -14,10 +14,12 @@ module.exports = function(ast, target_macros){
       return _.map(ast, astToTarget);
     }else if(ast.type === "list"){
       var list_op = ast.value[0];
-      if(!list_op || list_op.type !== "symbol"){
-        throw new Error("First arg in an AST list should always be a symbol, but was: " + (list_op && list_op.type));
+      if(!list_op){
+        throw new Error("An AST list should never be empty");
       }
-      var macro = target_macros[list_op.value];
+      var macro = list_op.type === "symbol"
+        ? target_macros[list_op.value]
+        : undefined;
       if(!macro){
         list_op = _.assign({}, ast, {
           type: "symbol",
