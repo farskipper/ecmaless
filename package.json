@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "description": "A compile to JS language that is minimal, yet powerful, and promotes freedom to extend the language.",
   "main": "index.js",
+  "bin": {
+    "ecmaless": "bin/ecmaless"
+  },
   "scripts": {
     "dev": "onchange '**/*.js' -i -- npm run dev:test -s",
     "dev:test": "node tests.js | tap-min",
