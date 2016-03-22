@@ -83,5 +83,8 @@ test("basics", function(t){
   t.equals(compile("(js/object :a)"), "({ 'a': undefined });");
   t.equals(compile("(js/object :a 1)"), "({ 'a': 1 });");
   t.equals(compile("(js/object :a 1 :2 3)"), "({\n    'a': 1,\n    '2': 3\n});");
+
+  t.equals(compile("(js/throw (js/new Error :msg))"), "throw new Error('msg');");
+
   t.end();
 });

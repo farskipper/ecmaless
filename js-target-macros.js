@@ -338,4 +338,22 @@ defMacro("js/object", function(ast, astToTarget){
   };
 });
 
+defMacro("js/new", function(ast, astToTarget){
+  return {
+    "loc": ast.value[0].loc,
+    "type": "NewExpression",
+    "callee": astToTarget(ast.value[1]),
+    "arguments": _.map(ast.value.slice(2), astToTarget)
+  };
+});
+
+defMacro("js/throw", function(ast, astToTarget){
+  assertAstListLength(ast, 2);
+  return {
+    "loc": ast.value[0].loc,
+    "type": "ThrowStatement",
+    "argument": astToTarget(ast.value[1])
+  };
+});
+
 module.exports = estree_macros;
