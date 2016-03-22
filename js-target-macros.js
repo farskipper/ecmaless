@@ -312,4 +312,30 @@ defMacro("js/try-catch", function(ast, astToTarget){
   };
 });
 
+defMacro("js/array", function(ast, astToTarget){
+  return {
+    "loc": ast.value[0].loc,
+    "type": "ArrayExpression",
+    "elements": _.map(ast.value.slice(1), astToTarget)
+  };
+});
+
+defMacro("js/object", function(ast, astToTarget){
+  return {
+    "loc": ast.value[0].loc,
+    "type": "ObjectExpression",
+    "properties": _.map(_.chunk(ast.value.slice(1), 2), function(pair){
+      var key = pair[0];
+      assertAstType(key, "string");
+      var val = pair[1] || _.assign({}, key, {type: "symbol", value: "js/undefined"});
+      return {
+        "type": "Property",
+        "key": astToTarget(key),
+        "value": astToTarget(val),
+        "kind": "init"
+      };
+    })
+  };
+});
+
 module.exports = estree_macros;

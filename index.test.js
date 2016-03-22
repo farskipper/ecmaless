@@ -76,6 +76,12 @@ test("basics", function(t){
   t.equals(compile("((js/property-access console :log) 1 2)"),
     "console['log'](1, 2);"
   );
-  //TODO js objects and arrays
+  t.equals(compile("(js/array)"), "[];");
+  t.equals(compile("(js/array a 1 :2)"), "[\n    a,\n    1,\n    '2'\n];");
+
+  t.equals(compile("(js/object)"), "({});");
+  t.equals(compile("(js/object :a)"), "({ 'a': undefined });");
+  t.equals(compile("(js/object :a 1)"), "({ 'a': 1 });");
+  t.equals(compile("(js/object :a 1 :2 3)"), "({\n    'a': 1,\n    '2': 3\n});");
   t.end();
 });
