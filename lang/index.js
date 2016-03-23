@@ -2,10 +2,25 @@ var _ = require("lodash");
 var parser = require("../parser");
 var symbolToJSIdentifier = require("../symbolToJSIdentifier");
 
+var lang = {
+  "defn": {
+    type: "macro",
+    value: require("./defn")
+  }
+};
+
 var target_macros = {};
 var defTmacro = function(name, fn){
   target_macros[name] = fn;
 };
+
+_.map(lang, function(desc, symbol){
+  if(desc.type === "macro"){
+    defTmacro(symbol, function(ast, astToTarget){
+      return astToTarget(desc.value.apply(null, ast.value.slice(1)));
+    });
+  }
+});
 
 var mkJSLiteral = function(ast, value, raw){
   return {

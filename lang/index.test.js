@@ -92,5 +92,7 @@ test("basics", function(t){
   tc("'a", "({'type':'symbol','value':'a','src':'a','loc':{'start':{'line':1,'column':1},'end':{'line':1,'column':1}}});");
   tc("(list a 1)", "({'type':'list','value':[a,1],'src':'(','loc':{'start':{'line':1,'column':0},'end':{'line':1,'column':0}},'list_type':'('});");
 
+  tc("(defn add [a b] (js/+ a b))", "var add=function add(a,b){return a+b;};");
+
   t.end();
 });
