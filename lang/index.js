@@ -418,6 +418,54 @@ defTmacro("{", function(ast, astToTarget){
   };
 });
 
+var mkAST = function(ast, type, value){
+  return _.assign({}, ast, {type: type, value: value});
+};
+
+var toAst = function(ast, obj){
+  if(_.isString(obj)){
+    return mkAST(ast, "string", obj);
+  }
+  if(_.isNumber(obj)){
+    return mkAST(ast, "number", obj);
+  }
+  if(_.isArray(obj)){
+    return mkAST(ast, "list", [
+      mkAST(ast, "symbol", "[")
+    ].concat(_.map(obj, function(val){
+      return toAst(ast, val);
+    })));
+  }
+  if(_.isPlainObject(obj)){
+    return mkAST(ast, "list", [
+      mkAST(ast, "symbol", "{")
+    ].concat(_.flattenDeep(_.map(obj, function(val, key){
+      return [toAst(ast, key), toAst(ast, val)];
+    }))));
+  }
+  throw new Error("I don't know how to toAst this...");//TODO be more helpful
+};
+
+defTmacro("'", function(ast, astToTarget){
+  assertAstListLength(ast, 2);
+  var item = ast.value[1];
+  return astToTarget(toAst(ast.value[0].loc, item));
+});
+
+defTmacro("list", function(ast, astToTarget){
+  var list = toAst(ast.value[0], mkAST(ast, "list", []));
+
+  var i = 0;
+  while(i < _.size(list.value)){
+    if(list.value[i].type === "string" && list.value[i].value === "value"){
+      list.value[i + 1].value = list.value[i + 1].value.concat(ast.value.slice(1));
+      break;
+    }
+    i++;
+  }
+  return astToTarget(list);
+});
+
 defTmacro("fn", function(ast, astToTarget){
   return astToTarget(_.assign({}, ast, {
     "type": "list",

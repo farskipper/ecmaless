@@ -89,5 +89,8 @@ test("basics", function(t){
   tc("(fn [a] (def b 1) (js/+ a b))", "(function(a){var b=1;return a+b;});");
   tc("(fn [])", "(function(){});");
 
+  tc("'a", "({'type':'symbol','value':'a','src':'a','loc':{'start':{'line':1,'column':1},'end':{'line':1,'column':1}}});");
+  tc("(list a 1)", "({'type':'list','value':[a,1],'src':'(','loc':{'start':{'line':1,'column':0},'end':{'line':1,'column':0}},'list_type':'('});");
+
   t.end();
 });
