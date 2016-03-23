@@ -252,7 +252,7 @@ defMacro("js/function", function(ast, astToTarget){
   return {
     loc: ast.value[0].loc,
     type: "FunctionExpression",
-    id: astToTarget(ast.value[1]),
+    id: ast.value[1].value === "js/null" ? null : astToTarget(ast.value[1]),
     rest: null,
     generator: false,
     expression: false,

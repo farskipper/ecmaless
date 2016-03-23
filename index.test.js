@@ -31,6 +31,14 @@ test("basics", function(t){
     + "});"
   );
   t.equals(compile(
+    "(js/function js/null (a b) (js/block-statement\n"
+    + "(js/return (js/+ a b))))"
+    ),
+    "(function (a, b) {\n"
+    + "    return a + b;\n"
+    + "});"
+  );
+  t.equals(compile(
     "(js/while (js/lt= i 3) (js/block-statement\n"
     + "(log :loop-again)\n"
     + "(js/= i (js/+ i 1))))"
