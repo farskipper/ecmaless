@@ -349,26 +349,27 @@ defTmacro("def", function(ast, astToTarget){
   };
 });
 
-defTmacro("fn", function(ast, astToTarget){
+defTmacro("named-fn", function(ast, astToTarget){
+  assertAstType(ast.value[1], "symbol");
   if(true
-      && ast.value[1].type === "list"
-      && ast.value[1].value[0]
-      && ast.value[1].value[0].type === "symbol"
-      && ast.value[1].value[0].value === "["
+      && ast.value[2].type === "list"
+      && ast.value[2].value[0]
+      && ast.value[2].value[0].type === "symbol"
+      && ast.value[2].value[0].value === "["
       ){
   }else{
     throw new Error("fn expects first argument to be an array");
   }
-  var params = ast.value[1].value.slice(1);
+  var params = ast.value[2].value.slice(1);
   _.each(params, function(param){
     assertAstType(param, "symbol");
   });
 
-  var stmts = ast.value.slice(2);
+  var stmts = ast.value.slice(3);
   return {
     loc: ast.value[0].loc,
     type: "FunctionExpression",
-    id: null,
+    id: ast.value[1].value === "nil" ? null : astToTarget(ast.value[1]),
     rest: null,
     generator: false,
     expression: false,
@@ -415,6 +416,22 @@ defTmacro("{", function(ast, astToTarget){
       };
     })
   };
+});
+
+defTmacro("fn", function(ast, astToTarget){
+  return astToTarget(_.assign({}, ast, {
+    "type": "list",
+    "value": [
+      _.assign({}, ast, {
+        "type": "symbol",
+        "value": "named-fn"
+      }),
+      _.assign({}, ast, {
+        "type": "symbol",
+        "value": "nil"
+      }),
+    ].concat(ast.value.slice(1))
+  }));
 });
 
 module.exports = {
