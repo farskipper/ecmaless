@@ -1,6 +1,0 @@
-(js/= module.exports
-      (fn [name args body]
-        (list
-          'def
-          name
-          (list 'named-fn name args body))))

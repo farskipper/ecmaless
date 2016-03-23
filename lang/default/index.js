@@ -2,12 +2,7 @@ var _ = require("lodash");
 var parser = require("../../parser");
 var symbolToJSIdentifier = require("../../symbolToJSIdentifier");
 
-var lang = {
-  "defn": {
-    type: "macro",
-    value: require("./defn")
-  }
-};
+var lang = {};
 
 var target_macros = {};
 var defTmacro = function(name, fn){
@@ -506,6 +501,19 @@ defmacro("fn", function(params/* body... */){
     mkAST(params, "symbol", "nil"),
     params
   ].concat(_.toArray(arguments).slice(1)));
+});
+
+defmacro("defn", function(name, params/* body... */){
+  assertAstType(name, "symbol");
+  return mkAST(name, "list", [
+    mkAST(name, "symbol", "def"),
+    name,
+    mkAST(params, "list", [
+      mkAST(params, "symbol", "named-fn"),
+      name,
+      params
+    ].concat(_.toArray(arguments).slice(2)))
+  ]);
 });
 
 defmacro("if", function(test, a, b){
