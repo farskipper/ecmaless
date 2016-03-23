@@ -7,9 +7,10 @@
     "ecmaless": "bin/ecmaless"
   },
   "scripts": {
-    "dev": "onchange '**/*.js' -i -- npm run dev:test -s",
-    "dev:test": "node tests.js | tap-min",
-    "test": "node tests.js"
+    "dev": "onchange '**/*.ecmaless' '**/*.js' -e 'lang/index.js' -i -- npm run dev:test -s",
+    "dev:test": "npm test -s | tap-min",
+    "compile": "cat lang/index.ecmaless | bin/ecmaless > lang/index.js",
+    "test": "npm run compile -s && node tests.js"
   },
   "repository": {
     "type": "git",
