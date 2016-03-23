@@ -73,20 +73,21 @@ test("basics", function(t){
   tc("((js/property-access console :log) 1 2)",
     "console['log'](1,2);"
   );
-  tc("(js/array)", "[];");
-  tc("(js/array a 1 :2)", "[a,1,'2'];");
+  tc("[]", "[];");
+  tc("[a 1 :2]", "[a,1,'2'];");
 
-  tc("(js/object)", "({});");
-  tc("(js/object :a)", "({'a':undefined});");
-  tc("(js/object :a 1)", "({'a':1});");
-  tc("(js/object :a 1 :2 3)", "({'a':1,'2':3});");
+  tc("{}", "({});");
+  tc("{:a}", "({'a':undefined});");
+  tc("{:a 1}", "({'a':1});");
+  tc("{:a 1 :2 3}", "({'a':1,'2':3});");
 
   tc("(js/throw (js/new Error :msg))", "throw new Error('msg');");
 
   tc("(def a 1)", "var a=1;");
 
-  tc("(fn (a b) (js/+ a b))", "(function(a,b){return a+b;});");
-  tc("(fn (a) (def b 1) (js/+ a b))", "(function(a){var b=1;return a+b;});");
+  tc("(fn [a b] (js/+ a b))", "(function(a,b){return a+b;});");
+  tc("(fn [a] (def b 1) (js/+ a b))", "(function(a){var b=1;return a+b;});");
+  tc("(fn [])", "(function(){});");
 
   t.end();
 });

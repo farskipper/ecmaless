@@ -313,32 +313,6 @@ defTmacro("js/try-catch", function(ast, astToTarget){
   };
 });
 
-defTmacro("js/array", function(ast, astToTarget){
-  return {
-    "loc": ast.value[0].loc,
-    "type": "ArrayExpression",
-    "elements": _.map(ast.value.slice(1), astToTarget)
-  };
-});
-
-defTmacro("js/object", function(ast, astToTarget){
-  return {
-    "loc": ast.value[0].loc,
-    "type": "ObjectExpression",
-    "properties": _.map(_.chunk(ast.value.slice(1), 2), function(pair){
-      var key = pair[0];
-      assertAstType(key, "string");
-      var val = pair[1] || _.assign({}, key, {type: "symbol", value: "js/undefined"});
-      return {
-        "type": "Property",
-        "key": astToTarget(key),
-        "value": astToTarget(val),
-        "kind": "init"
-      };
-    })
-  };
-});
-
 defTmacro("js/new", function(ast, astToTarget){
   return {
     "loc": ast.value[0].loc,
@@ -376,6 +350,20 @@ defTmacro("def", function(ast, astToTarget){
 });
 
 defTmacro("fn", function(ast, astToTarget){
+  if(true
+      && ast.value[1].type === "list"
+      && ast.value[1].value[0]
+      && ast.value[1].value[0].type === "symbol"
+      && ast.value[1].value[0].value === "["
+      ){
+  }else{
+    throw new Error("fn expects first argument to be an array");
+  }
+  var params = ast.value[1].value.slice(1);
+  _.each(params, function(param){
+    assertAstType(param, "symbol");
+  });
+
   var stmts = ast.value.slice(2);
   return {
     loc: ast.value[0].loc,
@@ -385,7 +373,7 @@ defTmacro("fn", function(ast, astToTarget){
     generator: false,
     expression: false,
     defaults: [],
-    params: _.map(ast.value[1].value, astToTarget),
+    params: _.map(params, astToTarget),
     body: {
       loc: ast.value[0].loc,
       type: "BlockStatement",
@@ -400,6 +388,32 @@ defTmacro("fn", function(ast, astToTarget){
         };
       })
     }
+  };
+});
+
+defTmacro("[", function(ast, astToTarget){
+  return {
+    "loc": ast.value[0].loc,
+    "type": "ArrayExpression",
+    "elements": _.map(ast.value.slice(1), astToTarget)
+  };
+});
+
+defTmacro("{", function(ast, astToTarget){
+  return {
+    "loc": ast.value[0].loc,
+    "type": "ObjectExpression",
+    "properties": _.map(_.chunk(ast.value.slice(1), 2), function(pair){
+      var key = pair[0];
+      assertAstType(key, "string");
+      var val = pair[1] || _.assign({}, key, {type: "symbol", value: "js/undefined"});
+      return {
+        "type": "Property",
+        "key": astToTarget(key),
+        "value": astToTarget(val),
+        "kind": "init"
+      };
+    })
   };
 });
 
