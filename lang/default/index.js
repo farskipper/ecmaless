@@ -1,6 +1,6 @@
 var _ = require("lodash");
-var parser = require("../parser");
-var symbolToJSIdentifier = require("../symbolToJSIdentifier");
+var parser = require("../../parser");
+var symbolToJSIdentifier = require("../../symbolToJSIdentifier");
 
 var lang = {
   "defn": {

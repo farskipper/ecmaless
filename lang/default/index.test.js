@@ -1,6 +1,6 @@
 var _ = require("lodash");
 var test = require("tape");
-var compile = require("../");
+var compile = require("../../");
 
 var testCompile = function(t, src, expected){
   t.equals(compile(src, {

@@ -5,7 +5,7 @@ var astToTarget = require("./ast-to-target");
 module.exports = function(src, options){
   options = options || {};
 
-  var lang_name = "index";
+  var lang_name = "default";
 
   var re_lang = /^#lang ([^\n]+)\n/.exec(src);
   if(re_lang && re_lang[1]){
