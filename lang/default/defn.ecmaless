@@ -1,4 +1,4 @@
-(js/= (js/property-access module :exports)
+(js/= module.exports
       (fn [name args body]
         (list
           'def

@@ -118,11 +118,26 @@ defTmacro("$$ecmaless$$apply", function(ast, astToTarget){
     "arguments": _.map(ast.value.slice(2), astToTarget)
   };
 });
+
+var astForGetting = function(ast, parts){
+  if(_.size(parts) === 1){
+    return mkAST(ast, "symbol", parts[0]);
+  }
+  return mkAST(ast, "list", [
+    mkAST(ast, "symbol", "js/property-access"),
+    astForGetting(ast, parts.slice(0, -1)),
+    mkAST(ast, "string", _.last(parts))
+  ]);
+};
+
 defTmacro("$$ecmaless$$make-type-symbol", function(ast, astToTarget){
   if(_.has(literal_symbols, ast.value)){
     return literal_symbols[ast.value](ast);
   }
   var symbol = ast.value;
+  if(/\./.test(symbol)){
+    return astToTarget(astForGetting(ast, symbol.split(".")));
+  }
   return {
     loc: ast.loc,
     type: "Identifier",
@@ -498,7 +513,7 @@ defmacro("if", function(test, a, b){
     mkAST(test, "symbol", "js/ternary"),
     test,
     a,
-    b ? b : mkAST(test, "symbol", "nil"),
+    b || mkAST(test, "symbol", "nil")
   ]);
 });
 

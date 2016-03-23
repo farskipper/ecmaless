@@ -97,5 +97,8 @@ test("basics", function(t){
   tc("(if a b c)", "a?b:c;");
   tc("(if a b)", "a?b:void 0;");
 
+  tc("a.b", "a['b'];");
+  tc("a.b.c.d.e", "a['b']['c']['d']['e'];");
+
   t.end();
 });
