@@ -91,7 +91,13 @@ module.exports = function(onAstNode){
       curr_list.value.push(node);
       if(curr_list.hasOwnProperty('list_max_size')){
         if(curr_list.value.length === curr_list.list_max_size){
-          onAstNode(stack.pop());
+          node = stack.pop();
+          curr_list = _.last(stack);
+          if(curr_list){
+            curr_list.value.push(node);
+          }else{
+            onAstNode(node);
+          }
         }
       }
     }else{
