@@ -6,15 +6,15 @@ var astToTarget = require("./ast-to-target");
 module.exports = function(src, options){
   options = options || {};
 
-  var lang = "js";
+  var lang_name = "index";
 
   var re_lang = /^#lang ([^\n]+)\n/.exec(src);
   if(re_lang && re_lang[1]){
-    lang = re_lang[1].trim();
+    lang_name = re_lang[1].trim();
     src = src.replace(/^#lang[^\n]+\n/, "");
   }
 
-  var target_macros = require("./lang/" + lang);
+  var lang = require("./lang/" + lang_name);
   var ast = parser(src);
 
   ast = _.assign({}, ast, {
@@ -27,6 +27,6 @@ module.exports = function(src, options){
     ].concat(ast)
   });
 
-  var estree = astToTarget(ast, target_macros);
+  var estree = astToTarget(ast, lang.target_macros);
   return escodegen.generate(estree, options.escodegen);
 };
