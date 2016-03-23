@@ -1,5 +1,5 @@
 var _ = require("lodash");
-var symbolToJSIdentifier = require("./symbolToJSIdentifier");
+var symbolToJSIdentifier = require("../symbolToJSIdentifier");
 
 var estree_macros = {};
 var defMacro = function(name, fn){

@@ -2,9 +2,17 @@ var _ = require("lodash");
 var parser = require("./parser");
 var escodegen = require("escodegen");
 var astToTarget = require("./ast-to-target");
-var js_target_macros = require("./js-target-macros");
 
 module.exports = function(src){
+  var lang = "js";
+
+  var re_lang = /^#lang ([^\n]+)\n/.exec(src);
+  if(re_lang && re_lang[1]){
+    lang = re_lang[1].trim();
+    src = src.replace(/^#lang[^\n]+\n/, "");
+  }
+
+  var target_macros = require("./lang/" + lang);
   var ast = parser(src);
 
   ast = _.assign({}, ast, {
@@ -17,5 +25,5 @@ module.exports = function(src){
     ].concat(ast)
   });
 
-  return escodegen.generate(astToTarget(ast, js_target_macros));
+  return escodegen.generate(astToTarget(ast, target_macros));
 };
