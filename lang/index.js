@@ -1,4 +1,5 @@
 var _ = require("lodash");
+var parser = require("../parser");
 var symbolToJSIdentifier = require("../symbolToJSIdentifier");
 
 var target_macros = {};
@@ -357,5 +358,18 @@ defTmacro("js/throw", function(ast, astToTarget){
 });
 
 module.exports = {
+  parse: function(src){
+    var ast = parser(src);
+    ast = _.assign({}, ast, {
+      type: "list",
+      value: [
+        _.assign({}, ast, {
+          type: "symbol",
+          value: "js/program"
+        })
+      ].concat(ast)
+    });
+    return ast;
+  },
   target_macros: target_macros
 };

@@ -1,5 +1,4 @@
 var _ = require("lodash");
-var parser = require("./parser");
 var escodegen = require("escodegen");
 var astToTarget = require("./ast-to-target");
 
@@ -15,18 +14,9 @@ module.exports = function(src, options){
   }
 
   var lang = require("./lang/" + lang_name);
-  var ast = parser(src);
 
-  ast = _.assign({}, ast, {
-    type: "list",
-    value: [
-      _.assign({}, ast, {
-        type: "symbol",
-        value: "js/program"
-      })
-    ].concat(ast)
-  });
-
+  var ast = lang.parse(src);
   var estree = astToTarget(ast, lang.target_macros);
+
   return escodegen.generate(estree, options.escodegen);
 };
