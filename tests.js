@@ -2,3 +2,4 @@ require("./parser/src-to-tokens.test");
 require("./parser/index.test");
 require("./symbolToJSIdentifier.test.js");
 require("./index.test");
+require("./lang/index.test");

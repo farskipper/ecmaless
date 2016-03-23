@@ -3,7 +3,9 @@ var parser = require("./parser");
 var escodegen = require("escodegen");
 var astToTarget = require("./ast-to-target");
 
-module.exports = function(src){
+module.exports = function(src, options){
+  options = options || {};
+
   var lang = "js";
 
   var re_lang = /^#lang ([^\n]+)\n/.exec(src);
@@ -25,5 +27,6 @@ module.exports = function(src){
     ].concat(ast)
   });
 
-  return escodegen.generate(astToTarget(ast, target_macros));
+  var estree = astToTarget(ast, target_macros);
+  return escodegen.generate(estree, options.escodegen);
 };
