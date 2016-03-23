@@ -357,6 +357,52 @@ defTmacro("js/throw", function(ast, astToTarget){
   };
 });
 
+defTmacro("def", function(ast, astToTarget){
+  assertAstListLength(ast, 3);
+  assertAstType(ast.value[1], "symbol");
+  return {
+    loc: ast.value[0].loc,
+    type: "VariableDeclaration",
+    kind: "var",
+    declarations: [
+      {
+        loc: ast.value[1].loc,
+        type: "VariableDeclarator",
+        id: astToTarget(ast.value[1]),
+        init: astToTarget(ast.value[2])
+      }
+    ]
+  };
+});
+
+defTmacro("fn", function(ast, astToTarget){
+  var stmts = ast.value.slice(2);
+  return {
+    loc: ast.value[0].loc,
+    type: "FunctionExpression",
+    id: null,
+    rest: null,
+    generator: false,
+    expression: false,
+    defaults: [],
+    params: _.map(ast.value[1].value, astToTarget),
+    body: {
+      loc: ast.value[0].loc,
+      type: "BlockStatement",
+      body: _.map(astToTarget(stmts), function(estree, i){
+        if(i !== (_.size(stmts) - 1)){
+          return toStatement(estree);
+        }
+        return {
+          loc: estree.loc,
+          type: "ReturnStatement",
+          argument: estree
+        };
+      })
+    }
+  };
+});
+
 module.exports = {
   parse: function(src){
     var ast = parser(src);

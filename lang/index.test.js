@@ -83,5 +83,10 @@ test("basics", function(t){
 
   tc("(js/throw (js/new Error :msg))", "throw new Error('msg');");
 
+  tc("(def a 1)", "var a=1;");
+
+  tc("(fn (a b) (js/+ a b))", "(function(a,b){return a+b;});");
+  tc("(fn (a) (def b 1) (js/+ a b))", "(function(a){var b=1;return a+b;});");
+
   t.end();
 });
