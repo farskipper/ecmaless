@@ -14,13 +14,21 @@ var defTmacro = function(name, fn){
   target_macros[name] = fn;
 };
 
+var defmacro = function(name, fn){
+  defTmacro(name, function(ast, astToTarget){
+    return astToTarget(fn.apply(null, ast.value.slice(1)));
+  });
+};
+
 _.map(lang, function(desc, symbol){
   if(desc.type === "macro"){
-    defTmacro(symbol, function(ast, astToTarget){
-      return astToTarget(desc.value.apply(null, ast.value.slice(1)));
-    });
+    defmacro(symbol, desc.value);
   }
 });
+
+var mkAST = function(ast, type, value){
+  return _.assign({}, ast, {type: type, value: value});
+};
 
 var mkJSLiteral = function(ast, value, raw){
   return {
@@ -422,7 +430,7 @@ defTmacro("{", function(ast, astToTarget){
     "properties": _.map(_.chunk(ast.value.slice(1), 2), function(pair){
       var key = pair[0];
       assertAstType(key, "string");
-      var val = pair[1] || _.assign({}, key, {type: "symbol", value: "js/undefined"});
+      var val = pair[1] || mkAST(key, "symbol", "js/undefined");
       return {
         "type": "Property",
         "key": astToTarget(key),
@@ -432,10 +440,6 @@ defTmacro("{", function(ast, astToTarget){
     })
   };
 });
-
-var mkAST = function(ast, type, value){
-  return _.assign({}, ast, {type: type, value: value});
-};
 
 var toAst = function(ast, obj){
   if(_.isString(obj)){
@@ -481,34 +485,27 @@ defTmacro("list", function(ast, astToTarget){
   return astToTarget(list);
 });
 
-defTmacro("fn", function(ast, astToTarget){
-  return astToTarget(_.assign({}, ast, {
-    "type": "list",
-    "value": [
-      _.assign({}, ast, {
-        "type": "symbol",
-        "value": "named-fn"
-      }),
-      _.assign({}, ast, {
-        "type": "symbol",
-        "value": "nil"
-      }),
-    ].concat(ast.value.slice(1))
-  }));
+defmacro("fn", function(params/* body... */){
+  return mkAST(params, "list", [
+    mkAST(params, "symbol", "named-fn"),
+    mkAST(params, "symbol", "nil"),
+    params
+  ].concat(_.toArray(arguments).slice(1)));
+});
+
+defmacro("if", function(test, a, b){
+  return mkAST(test, "list", [
+    mkAST(test, "symbol", "js/ternary"),
+    test,
+    a,
+    b ? b : mkAST(test, "symbol", "nil"),
+  ]);
 });
 
 module.exports = {
   parse: function(src){
     var ast = parser(src);
-    ast = _.assign({}, ast, {
-      type: "list",
-      value: [
-        _.assign({}, ast, {
-          type: "symbol",
-          value: "js/program"
-        })
-      ].concat(ast)
-    });
+    ast = mkAST(ast, "list", [mkAST(ast, "symbol", "js/program")].concat(ast));
     return ast;
   },
   target_macros: target_macros

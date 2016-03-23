@@ -94,5 +94,8 @@ test("basics", function(t){
 
   tc("(defn add [a b] (js/+ a b))", "var add=function add(a,b){return a+b;};");
 
+  tc("(if a b c)", "a?b:c;");
+  tc("(if a b)", "a?b:void 0;");
+
   t.end();
 });
