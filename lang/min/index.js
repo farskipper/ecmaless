@@ -60,6 +60,30 @@ defTmacro("js/program", function(ast, astToTarget){
   };
 });
 
+defTmacro("[", function(ast, astToTarget){
+  return e("array", astToTarget(ast.value.slice(1)), ast.loc);
+});
+
+defTmacro("{", function(ast, astToTarget){
+  return {
+    "loc": ast.value[0].loc,
+    "type": "ObjectExpression",
+    "properties": _.map(_.chunk(ast.value.slice(1), 2), function(pair){
+      var key = pair[0];
+      if(key && key.type === "string"){
+        //TODO funciton call to build obj dynamically
+      }
+      var val = pair[1];
+      return {
+        "type": "Property",
+        "key": astToTarget(key),
+        "value": val ? astToTarget(val) : e.nil(val.loc),
+        "kind": "init"
+      };
+    })
+  };
+});
+
 module.exports = {
   parse: function(src){
     var ast = parser(src);

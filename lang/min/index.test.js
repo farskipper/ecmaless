@@ -16,5 +16,8 @@ test("basics", function(t){
   tc("nil", "void 0;");
   tc("one", "one;");
 
+  tc("[1 2 3]", "[1,2,3];");
+  tc('{"one" 1 "two" 2}', "({'one':1,'two':2});");
+
   t.end();
 });
