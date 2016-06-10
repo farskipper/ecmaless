@@ -132,18 +132,36 @@ defTmacro("fn", function(ast, astToTarget){
   return e("function", args, body, id, ast.loc);
 });
 
-defTmacro("+", function(ast, astToTarget){
-  var args = _.map(ast.value.slice(1), astToTarget);
-  if(args.length === 0){
-    return e("number", 0, ast.loc);
-  }else if(args.length === 1){
-    return args[0];
-  }
-  var cur_group = args[0];
-  _.each(args.slice(1), function(arg){
-    cur_group = e("+", cur_group, arg, ast.loc);
+_.each({
+  "+": "+",
+  "-": "-",
+  "*": "*",
+  "/": "/",
+  "%": "%",
+  "and": "&&",
+  "or": "||",
+}, function(js_op, mac_name){
+  defTmacro(mac_name, function(ast, astToTarget){
+    var args = _.map(ast.value.slice(1), astToTarget);
+    if(args.length === 0){
+      return e("number", 0, ast.loc);
+    }else if(args.length === 1){
+      return args[0];
+    }
+    var cur_group = args[0];
+    _.each(args.slice(1), function(arg){
+      cur_group = e(js_op, cur_group, arg, ast.loc);
+    });
+    return cur_group;
   });
-  return cur_group;
+});
+
+defTmacro("&", function(ast, astToTarget){
+  return e("%", astToTarget(ast.value[1]), ast.loc);
+});
+
+defTmacro("not", function(ast, astToTarget){
+  return e("!", astToTarget(ast.value[1]), ast.loc);
 });
 
 module.exports = {

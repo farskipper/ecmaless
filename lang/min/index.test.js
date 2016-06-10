@@ -46,5 +46,17 @@ test("basics", function(t){
   tc('(+ 1 2 3 4)', "1+2+3+4;");
   tc('(+ blah (one))', "blah+one();");
 
+  tc('(- 1 2)', "1-2;");
+  tc('(/ 1 2)', "1/2;");
+  tc('(* 1 2)', "1*2;");
+  tc('(% a b)', "a%b;");
+
+  tc('(and a)', "a;");
+  tc('(and a b c)', "a&&b&&c;");
+  tc('(and (or a b) c)', "(a||b)&&c;");
+
+  tc('(not a)', "!a;");
+
+
   t.end();
 });
