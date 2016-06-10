@@ -12,8 +12,13 @@ test("basics", function(t){
   var tc = _.partial(testCompile, t);
 
   tc("1", "1;");
+  tc("+1,200.3", "1200.3;");
+  tc("-.3", "-0.3;");
+  tc("0.0", "0;");
   tc('"one"', "'one';");
   tc("nil", "void 0;");
+  tc("true", "true;");
+  tc("false", "false;");
   tc("one", "one;");
 
   tc("[]", "[];");

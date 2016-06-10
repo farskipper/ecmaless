@@ -38,13 +38,21 @@ defTmacro("$$ecmaless$$apply", function(ast, astToTarget){
 
 defTmacro("$$ecmaless$$make-type-symbol", function(ast, astToTarget){
   var symbol = ast.value;
-  if(_.has(literal_symbols, symbol)){
-    return literal_symbols[symbol](ast);
+  if(symbol === "nil"){
+    return e("void", e.number(0, ast.loc), ast.loc);
+  }else if(symbol === "true"){
+    return e("true", ast.loc);
+  }else if(symbol === "false"){
+    return e("false", ast.loc);
   }
   return e.id(symbolToJSIdentifier(symbol), ast.loc)
 });
 defTmacro("$$ecmaless$$make-type-number", function(ast, astToTarget){
-  return e("number", parseFloat(ast.value), ast.loc);
+  var f = parseFloat(ast.value);
+  if(f < 0){
+    return e("-", e("number", Math.abs(f), ast.loc));
+  }
+  return e("number", f, ast.loc);
 });
 defTmacro("$$ecmaless$$make-type-string", function(ast, astToTarget){
   return e("string", ast.value, ast.loc);
