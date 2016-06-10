@@ -111,8 +111,17 @@ defTmacro("def", function(ast, astToTarget){
 });
 
 defTmacro("fn", function(ast, astToTarget){
-  var args = _.map(ast.value[1].value.slice(1), "value");
-  var stmts = ast.value.slice(2);
+  var id;
+  var args;
+  var stmts;
+  if(ast.value[1].type === "list"){
+    args = _.map(ast.value[1].value.slice(1), "value");
+    stmts = ast.value.slice(2);
+  }else{
+    id = symbolToJSIdentifier(ast.value[1].value);
+    args = _.map(ast.value[2].value.slice(1), "value");
+    stmts = ast.value.slice(3);
+  }
   var body = _.map(stmts, function(stmt, i){
     var estree = astToTarget(stmt);
     if(i < (stmts.length - 1)){
@@ -120,7 +129,6 @@ defTmacro("fn", function(ast, astToTarget){
     }
     return e("return", estree, ast.loc);
   });
-  var id = undefined;
   return e("function", args, body, id, ast.loc);
 });
 
