@@ -139,7 +139,11 @@ defTmacro("+", function(ast, astToTarget){
   }else if(args.length === 1){
     return args[0];
   }
-  return e("+", args[0], args[1], ast.loc);
+  var cur_group = args[0];
+  _.each(args.slice(1), function(arg){
+    cur_group = e("+", cur_group, arg, ast.loc);
+  });
+  return cur_group;
 });
 
 module.exports = {
