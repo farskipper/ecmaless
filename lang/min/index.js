@@ -132,6 +132,16 @@ defTmacro("fn", function(ast, astToTarget){
   return e("function", args, body, id, ast.loc);
 });
 
+defTmacro("+", function(ast, astToTarget){
+  var args = _.map(ast.value.slice(1), astToTarget);
+  if(args.length === 0){
+    return e("number", 0, ast.loc);
+  }else if(args.length === 1){
+    return args[0];
+  }
+  return e("+", args[0], args[1], ast.loc);
+});
+
 module.exports = {
   parse: function(src){
     var ast = parser(src);

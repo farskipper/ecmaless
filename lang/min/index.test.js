@@ -39,5 +39,9 @@ test("basics", function(t){
 
   tc('(fn arg2 [a b] b)', "(function arg2(a,b){return b;});");
 
+  tc('(+)', "0;");
+  tc('(+ 1)', "1;");
+  tc('(+ 1 2)', "1+2;");
+
   t.end();
 });
