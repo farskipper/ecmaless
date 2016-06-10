@@ -65,23 +65,33 @@ defTmacro("[", function(ast, astToTarget){
 });
 
 defTmacro("{", function(ast, astToTarget){
+  var args = ast.value.slice(1);
+  var pairs = _.chunk(args, 2);
+  var is_dynamic = _.some(pairs, function(pair){
+      var key = pair[0];
+      return (key && key.type) !== "string";
+  });
+  if(is_dynamic){
+    return e("call", e("id", "struct", ast.loc), _.map(args, astToTarget), ast.loc);
+  }
   return {
     "loc": ast.value[0].loc,
     "type": "ObjectExpression",
-    "properties": _.map(_.chunk(ast.value.slice(1), 2), function(pair){
+    "properties": _.map(pairs, function(pair){
       var key = pair[0];
-      if(key && key.type === "string"){
-        //TODO funciton call to build obj dynamically
-      }
       var val = pair[1];
       return {
         "type": "Property",
         "key": astToTarget(key),
-        "value": val ? astToTarget(val) : e.nil(val.loc),
+        "value": val ? astToTarget(val) : e.nil(key.loc),
         "kind": "init"
       };
     })
   };
+});
+defTmacro("<", function(ast, astToTarget){
+  var args = ast.value.slice(1);
+  return e("call", e("id", "todo_angled_list", ast.loc), _.map(args, astToTarget), ast.loc);
 });
 
 module.exports = {

@@ -16,8 +16,16 @@ test("basics", function(t){
   tc("nil", "void 0;");
   tc("one", "one;");
 
+  tc("[]", "[];");
   tc("[1 2 3]", "[1,2,3];");
+
+  tc('{}', "({});");
   tc('{"one" 1 "two" 2}', "({'one':1,'two':2});");
+  tc('{"one" [1 2] "two"}', "({'one':[1,2],'two':undefined});");
+  tc('{one 1 two 2}', "struct(one,1,two,2);");
+
+  tc('<>', "todo_angled_list();");
+  tc('<1 2>', "todo_angled_list(1,2);");
 
   t.end();
 });
