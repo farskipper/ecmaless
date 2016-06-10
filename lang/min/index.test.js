@@ -57,6 +57,7 @@ test("basics", function(t){
 
   tc('(not a)', "!a;");
 
+  tc('(set! a 2)', "a=2;");
 
   t.end();
 });

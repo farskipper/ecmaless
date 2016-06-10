@@ -164,6 +164,10 @@ defTmacro("not", function(ast, astToTarget){
   return e("!", astToTarget(ast.value[1]), ast.loc);
 });
 
+defTmacro("set!", function(ast, astToTarget){
+  return e("=", astToTarget(ast.value[1]), astToTarget(ast.value[2]), ast.loc);
+});
+
 module.exports = {
   parse: function(src){
     var ast = parser(src);
