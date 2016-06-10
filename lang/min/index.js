@@ -102,6 +102,28 @@ defTmacro("<", function(ast, astToTarget){
   return e("call", e("id", "todo_angled_list", ast.loc), _.map(args, astToTarget), ast.loc);
 });
 
+defTmacro("def", function(ast, astToTarget){
+  var id = symbolToJSIdentifier(ast.value[1].value);
+  if(ast.value.length >= 3){
+    return e("var", id, astToTarget(ast.value[2]), ast.loc);
+  }
+  return e("var", id, astToTarget(mkAST(ast, "symbol", "nil")), ast.loc);
+});
+
+defTmacro("fn", function(ast, astToTarget){
+  var args = _.map(ast.value[1].value.slice(1), "value");
+  var stmts = ast.value.slice(2);
+  var body = _.map(stmts, function(stmt, i){
+    var estree = astToTarget(stmt);
+    if(i < (stmts.length - 1)){
+      return toStatement(estree);
+    }
+    return e("return", estree, ast.loc);
+  });
+  var id = undefined;
+  return e("function", args, body, id, ast.loc);
+});
+
 module.exports = {
   parse: function(src){
     var ast = parser(src);

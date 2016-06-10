@@ -32,5 +32,10 @@ test("basics", function(t){
   tc('<>', "todo_angled_list();");
   tc('<1 2>', "todo_angled_list(1,2);");
 
+  tc('(def a)', "var a=void 0;");
+  tc('(def a 1)', "var a=1;");
+
+  tc('(fn [a b] 1 2 3)', "(function(a,b){1;2;return 3;});");
+
   t.end();
 });
