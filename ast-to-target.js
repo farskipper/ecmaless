@@ -11,7 +11,7 @@ module.exports = function(ast, target_macros){
 
   var astToTarget = function(ast){
     if(_.isArray(ast)){
-      return _.map(ast, astToTarget);
+      return _.compact(_.map(ast, astToTarget));
     }else if(ast.type !== "list"){
       return callMacro("$$ecmaless$$make-type-" + ast.type, ast);
     }

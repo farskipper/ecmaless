@@ -1,8 +1,11 @@
 var _ = require("lodash");
 var e = require("estree-builder");
+var escodegen = require("escodegen");
 var symbolToJSIdentifier = require("../symbolToJSIdentifier");
 
 var target_macros = {};
+var user_macros = {};
+
 var defTmacro = function(name, fn){
   target_macros[name] = fn;
 };
@@ -33,7 +36,10 @@ var literal_symbols = {
 defTmacro("$$ecmaless$$apply", function(ast, astToTarget){
   var callee = ast.value[1];
   if(callee.type === "symbol"){
-    //TODO look for user defined macros here
+    if(_.has(user_macros, callee.value)){
+      var macro_fn = user_macros[callee.value];
+      return astToTarget(macro_fn.apply(null, ast.value.slice(2)));
+    }
   }
   return e("call", astToTarget(callee), _.map(ast.value.slice(2), astToTarget), ast.loc);
 });
@@ -207,6 +213,22 @@ defTmacro("'", function(ast, astToTarget){
     }, ast.loc);
   }
   return e('json', val, ast.loc);
+});
+
+defTmacro("defmacro", function(ast, astToTarget){
+  var name = ast.value[1];
+  var args = ast.value[2];
+  var body = ast.value[3];
+
+  var fn_args = _.map(args.value.slice(1), function(arg){
+    return symbolToJSIdentifier(arg.value);
+  });
+  var fn_body = escodegen.generate(e('return', astToTarget(body), body.loc));
+  var fn = new (Function.prototype.bind.apply(Function, [Function].concat(fn_args.concat([fn_body]))));
+
+  user_macros[name.value] = fn;
+
+  return undefined;
 });
 
 module.exports = {
