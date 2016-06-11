@@ -197,6 +197,18 @@ defTmacro("get", function(ast, astToTarget){
   return cur_group;
 });
 
+defTmacro("'", function(ast, astToTarget){
+  var val = ast.value[1];
+  if(val.type === 'list'){
+    return e('object', {
+      type: e('string', 'list', ast.loc),
+      value: e('array', _.map(val.value, astToTarget), ast.loc),
+      loc: e('json', val.loc, ast.loc),
+    }, ast.loc);
+  }
+  return e('json', val, ast.loc);
+});
+
 module.exports = {
   target_macros: target_macros
 };

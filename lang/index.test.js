@@ -84,5 +84,10 @@ test("basics", function(t){
   tc('..', "__;");
   tc('...', "___;");
 
+  tc("'a", "({'type':'symbol','value':'a','src':'a','loc':{'start':{'line':1,'column':1},'end':{'line':1,'column':1}}});");
+
+  tc("'(a 1 2)", "({'type':'list','value':[a,1,2],'loc':{'start':{'line':1,'column':1},'end':{'line':1,'column':1}}});");
+  tc("'[1 2]", "({'type':'list','value':[_6,1,2],'loc':{'start':{'line':1,'column':1},'end':{'line':1,'column':1}}});");
+
   t.end();
 });
