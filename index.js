@@ -7,7 +7,6 @@ var astToTarget = require("./ast-to-target");
 module.exports = function(src, options){
   options = options || {};
 
-
   var ast = parser(src);
   ast = {
     loc: ast.loc,

@@ -31,8 +31,11 @@ var literal_symbols = {
 ////////////////////////////////////////////////////////////////////////////////
 //primitive $$ecmaless$$ macros
 defTmacro("$$ecmaless$$apply", function(ast, astToTarget){
-  //TODO look for user defined macros here?
-  return e("call", astToTarget(ast.value[1]), _.map(ast.value.slice(2), astToTarget), ast.loc);
+  var callee = ast.value[1];
+  if(callee.type === "symbol"){
+    //TODO look for user defined macros here
+  }
+  return e("call", astToTarget(callee), _.map(ast.value.slice(2), astToTarget), ast.loc);
 });
 
 defTmacro("$$ecmaless$$make-type-symbol", function(ast, astToTarget){
@@ -44,6 +47,19 @@ defTmacro("$$ecmaless$$make-type-symbol", function(ast, astToTarget){
   }else if(symbol === "false"){
     return e("false", ast.loc);
   }
+
+  var path = symbol.split('.');
+  if(path.length > 1 && _.every(path, function(part){
+    return part.trim().length > 0;
+  })){
+    return astToTarget(mkAST(ast, "list", [
+      mkAST(ast, "symbol", "get"),
+      mkAST(ast, "symbol", path[0])
+    ].concat(_.map(path.slice(1), function(part){
+      return mkAST(ast, "string", part);
+    }))));
+  }
+
   return e.id(symbolToJSIdentifier(symbol), ast.loc)
 });
 defTmacro("$$ecmaless$$make-type-number", function(ast, astToTarget){

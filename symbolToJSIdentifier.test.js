@@ -22,5 +22,9 @@ test("symbolToJSIdentifier", function(t){
   t.notEquals(symbolToJSIdentifier("_"), symbolToJSIdentifier("-"));
   t.equals(symbolToJSIdentifier("_"), symbolToJSIdentifier("_"));
 
+  t.equals(symbolToJSIdentifier("."), "_3");
+  t.equals(symbolToJSIdentifier("a."), "a_");
+  t.equals(symbolToJSIdentifier(".a"), "_a");
+
   t.end();
 });
