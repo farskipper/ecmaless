@@ -92,5 +92,8 @@ test("basics", function(t){
   tc("(defmacro def-a [val] '('def 'a val))", "");
   tc("(def-a 1)", "var a=1;");
 
+  tc("(if a b c)", "a?b:c;");
+  tc("(if a b)", "a?b:void 0;");
+
   t.end();
 });

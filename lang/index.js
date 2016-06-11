@@ -54,7 +54,7 @@ defTmacro("$$ecmaless$$make-type-symbol", function(ast, astToTarget){
     return e("false", ast.loc);
   }
 
-  var path = symbol.split('.');
+  var path = symbol.split(".");
   if(path.length > 1 && _.every(path, function(part){
     return part.trim().length > 0;
   })){
@@ -205,14 +205,14 @@ defTmacro("get", function(ast, astToTarget){
 
 defTmacro("'", function(ast, astToTarget){
   var val = ast.value[1];
-  if(val.type === 'list'){
-    return e('object', {
-      type: e('string', 'list', ast.loc),
-      value: e('array', _.map(val.value, astToTarget), ast.loc),
-      loc: e('json', val.loc, ast.loc),
+  if(val.type === "list"){
+    return e("object", {
+      type: e("string", "list", ast.loc),
+      value: e("array", _.map(val.value, astToTarget), ast.loc),
+      loc: e("json", val.loc, ast.loc),
     }, ast.loc);
   }
-  return e('json', val, ast.loc);
+  return e("json", val, ast.loc);
 });
 
 defTmacro("defmacro", function(ast, astToTarget){
@@ -223,12 +223,18 @@ defTmacro("defmacro", function(ast, astToTarget){
   var fn_args = _.map(args.value.slice(1), function(arg){
     return symbolToJSIdentifier(arg.value);
   });
-  var fn_body = escodegen.generate(e('return', astToTarget(body), body.loc));
+  var fn_body = escodegen.generate(e("return", astToTarget(body), body.loc));
   var fn = new (Function.prototype.bind.apply(Function, [Function].concat(fn_args.concat([fn_body]))));
 
   user_macros[name.value] = fn;
 
   return undefined;
+});
+
+defTmacro("if", function(ast, astToTarget){
+  var args = _.map(ast.value.slice(1), astToTarget);
+  var nil = astToTarget(mkAST(ast, "symbol", "nil"));
+  return e("?", args[0] || nil, args[1] || nil, args[2] || nil, ast.loc);
 });
 
 module.exports = {
