@@ -1,7 +1,6 @@
 var _ = require("lodash");
 var e = require("estree-builder");
-var parser = require("../../parser");
-var symbolToJSIdentifier = require("../../symbolToJSIdentifier");
+var symbolToJSIdentifier = require("../symbolToJSIdentifier");
 
 var target_macros = {};
 var defTmacro = function(name, fn){
@@ -183,10 +182,5 @@ defTmacro("get", function(ast, astToTarget){
 });
 
 module.exports = {
-  parse: function(src){
-    var ast = parser(src);
-    ast = mkAST(ast, "list", [mkAST(ast, "symbol", "js/program")].concat(ast));
-    return ast;
-  },
   target_macros: target_macros
 };
