@@ -168,6 +168,20 @@ defTmacro("set!", function(ast, astToTarget){
   return e("=", astToTarget(ast.value[1]), astToTarget(ast.value[2]), ast.loc);
 });
 
+defTmacro("get", function(ast, astToTarget){
+  var args = _.map(ast.value.slice(1), astToTarget);
+  if(args.length === 0){
+    return astToTarget(mkAST(ast, "symbol", "nil"));
+  }else if(args.length === 1){
+    return args[0];
+  }
+  var cur_group = args[0];
+  _.each(args.slice(1), function(arg){
+    cur_group = e("get", cur_group, arg, ast.loc);
+  });
+  return cur_group;
+});
+
 module.exports = {
   parse: function(src){
     var ast = parser(src);

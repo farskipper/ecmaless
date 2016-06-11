@@ -59,5 +59,13 @@ test("basics", function(t){
 
   tc('(set! a 2)', "a=2;");
 
+  tc('(get)', "void 0;");
+  tc('(get a)', "a;");
+  tc('(get a 1)', "a[1];");
+  tc('(get a 1 "two")', "a[1]['two'];");
+  tc('(get a 1 "two" three)', "a[1]['two'][three];");
+
+  tc('(set! (get a 1) (+ b 2))', "a[1]=b+2;");
+
   t.end();
 });
