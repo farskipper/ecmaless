@@ -1,0 +1,7 @@
+(fn [mdefs main]
+  (def cache {})
+  (def require
+    (fn require [mid]
+      (set! (get cache mid) "im-b-ok?")
+      (get cache mid)))
+  (require main))
