@@ -20,6 +20,9 @@ test("basics", function(t){
   tc("true", "true;");
   tc("false", "false;");
   tc("one", "one;");
+  tc(":", "'';");
+  tc("::", "':';");
+  tc(":keyword", "'keyword';");
 
   tc("[]", "[];");
   tc("[1 2 3]", "[1,2,3];");
@@ -66,6 +69,10 @@ test("basics", function(t){
   tc('(get a 1 "two" three)', "a[1]['two'][three];");
 
   tc('(set! (get a 1) (+ b 2))', "a[1]=b+2;");
+
+  tc('#a b', "a(b);");
+  tc('@a', "_3(a);");
+  tc('#[1 2]', "_4([1,2]);");
 
   t.end();
 });
