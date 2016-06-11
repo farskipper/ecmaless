@@ -34,6 +34,7 @@
     "concat-stream": "^1.5.1",
     "escape-regexp": "0.0.1",
     "escodegen": "^1.8.0",
+    "estree-builder": "^1.1.0",
     "lodash": "^4.6.1",
     "tokenizer2": "^2.0.0"
   },
