@@ -4,7 +4,6 @@ var escodegen = require("escodegen");
 var symbolToJSIdentifier = require("../symbolToJSIdentifier");
 
 var target_macros = {};
-var user_macros = {};
 
 var defTmacro = function(name, fn){
   target_macros[name] = fn;
@@ -36,16 +35,6 @@ var literal_symbols = {
 
 ////////////////////////////////////////////////////////////////////////////////
 //primitive $$ecmaless$$ macros
-defTmacro("$$ecmaless$$apply", function(ast, astToTarget){
-  var callee = ast.value[1];
-  if(callee.type === "symbol"){
-    if(_.has(user_macros, callee.value)){
-      var macro_fn = user_macros[callee.value];
-      return astToTarget(macro_fn.apply(null, ast.value.slice(2)));
-    }
-  }
-  return e("call", astToTarget(callee), _.map(ast.value.slice(2), astToTarget), ast.loc);
-});
 
 defTmacro("$$ecmaless$$make-type-symbol", function(ast, astToTarget){
   var symbol = ast.value;
@@ -232,22 +221,6 @@ defTmacro("`", function(ast, astToTarget){
   return e("json", val, ast.loc);
 });
 
-defTmacro("defmacro", function(ast, astToTarget){
-  var name = ast.value[1];
-  var args = ast.value[2];
-  var body = ast.value[3];
-
-  var fn_args = _.map(args.value.slice(1), function(arg){
-    return symbolToJSIdentifier(arg.value);
-  });
-  var fn_body = escodegen.generate(e("return", astToTarget(body), body.loc));
-  var fn = new (Function.prototype.bind.apply(Function, [Function].concat(fn_args.concat([fn_body]))));
-
-  user_macros[name.value] = fn;
-
-  return undefined;
-});
-
 defTmacro("if", function(ast, astToTarget){
   var args = _.compact(_.map(ast.value.slice(1), astToTarget));
   var nil = astToTarget(mkAST(ast, "symbol", "nil"));
@@ -261,6 +234,38 @@ defTmacro("while", function(ast, astToTarget){
   return e("while", cond, e("block", body, ast.value[0].loc), ast.value[0].loc);
 });
 
-module.exports = {
-  target_macros: target_macros
+module.exports = function(){
+  var this_instance_t_macros = _.clone(target_macros);
+  var user_macros = {};
+
+  this_instance_t_macros["$$ecmaless$$apply"] = function(ast, astToTarget){
+    var callee = ast.value[1];
+    if(callee.type === "symbol"){
+      if(_.has(user_macros, callee.value)){
+        var macro_fn = user_macros[callee.value];
+        return astToTarget(macro_fn.apply(null, ast.value.slice(2)));
+      }
+    }
+    return e("call", astToTarget(callee), _.map(ast.value.slice(2), astToTarget), ast.loc);
+  };
+
+  this_instance_t_macros["defmacro"] = function(ast, astToTarget){
+    var name = ast.value[1];
+    var args = ast.value[2];
+    var body = ast.value[3];
+
+    var fn_args = _.map(args.value.slice(1), function(arg){
+      return symbolToJSIdentifier(arg.value);
+    });
+    var fn_body = escodegen.generate(e("return", astToTarget(body), body.loc));
+    var fn = new (Function.prototype.bind.apply(Function, [Function].concat(fn_args.concat([fn_body]))));
+
+    user_macros[name.value] = fn;
+
+    return undefined;
+  };
+  return {
+    user_macros: user_macros,
+    target_macros: this_instance_t_macros
+  };
 };

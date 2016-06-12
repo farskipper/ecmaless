@@ -90,8 +90,7 @@ test("basics", function(t){
   tc("'(a 1 2)", "({'type':'list','value':[a,1,2],'loc':{'start':{'line':1,'column':1},'end':{'line':1,'column':1}}});");
   tc("'[1 2]", "({'type':'list','value':[_6,1,2],'loc':{'start':{'line':1,'column':1},'end':{'line':1,'column':1}}});");
 
-  tc("(defmacro def-a [val] '('def 'a val))", "");
-  tc("(def-a 1)", "var a=1;");
+  tc("(defmacro def-a [val] '('def 'a val)) (def-a 1)", "var a=1;");
 
   tc("(if a b c)", "a?b:c;");
   tc("(if a b)", "a?b:void 0;");

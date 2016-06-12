@@ -11,7 +11,7 @@ var module_loader_ast = parser(fs.readFileSync("./module_loader.ecmaless").toStr
 var compile = function(ast, options){
   options = options || {};
 
-  var estree = astToTarget(ast, lang.target_macros);
+  var estree = astToTarget(ast, lang().target_macros);
 
   return escodegen.generate(estree, options.escodegen);
 };
