@@ -4,6 +4,7 @@ var lang = require("./lang");
 var parser = require("./parser");
 var escodegen = require("escodegen");
 var astToTarget = require("./ast-to-target");
+var toStatement = require("./toESTreeStatement");
 
 var module_loader_ast = parser(fs.readFileSync("./module_loader.ecmaless").toString());
 
@@ -11,22 +12,10 @@ var module_loader_ast = parser(fs.readFileSync("./module_loader.ecmaless").toStr
 var compile = function(ast, options){
   options = options || {};
 
-  var estree = astToTarget(ast, lang().target_macros);
-
-  return escodegen.generate(estree, options.escodegen);
-};
-
-var wrapInJsProgram = function(ast){
+  var l = lang(options.user_macros);
   return {
-    loc: ast.loc,
-    type: "list",
-    value: [
-    {
-      loc: ast.loc,
-      type: "symbol",
-      value: "js/program"
-    }
-    ].concat(ast)
+    estree: astToTarget(ast, l.target_macros),
+    user_macros: l.user_macros
   };
 };
 
@@ -50,12 +39,25 @@ var parseFile = function(src){
   };
 };
 
+var toJSFile = function(estree, options){
+  options = options || {};
+
+  if(!_.isArray(estree)){
+    estree = [estree];
+  }
+  return escodegen.generate({
+    "loc": _.size(estree) > 0 ? _.head(estree).loc : undefined,
+    "type": "Program",
+    "body": _.map(estree, toStatement)
+  }, options.escodegen);
+};
+
 module.exports = function(src, options){
   options = options || {};
 
   if(!_.has(options, 'files')){
-    var ast = wrapInJsProgram(parser(src));
-    return compile(ast, options);
+    options.files = {'main': {src: src}};
+    src = 'main';
   }
 
   var modules = _.cloneDeep(options.files);
@@ -105,5 +107,10 @@ module.exports = function(src, options){
     mkAST('string', src)
   ]));
 
-  return compile(wrapInJsProgram(daAST), options);
+  if(_.size(modules) === 1){
+    daAST = modules[_.keys(modules)[0]].ast;
+  }
+
+  var compiled = compile(daAST, options);
+  return toJSFile(compiled.estree, options);
 };

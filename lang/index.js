@@ -1,6 +1,7 @@
 var _ = require("lodash");
 var e = require("estree-builder");
 var escodegen = require("escodegen");
+var toStatement = require("../toESTreeStatement");
 var symbolToJSIdentifier = require("../symbolToJSIdentifier");
 
 var target_macros = {};
@@ -11,20 +12,6 @@ var defTmacro = function(name, fn){
 
 var mkAST = function(ast, type, value){
   return _.assign({}, ast, {type: type, value: value});
-};
-
-var toStatement = function(estree){
-  if(!estree){
-    return estree;
-  }
-  if(/(Statement|Declaration)$/.test(estree.type)){
-    return estree;
-  }
-  return {
-    loc: estree.loc,
-    type: "ExpressionStatement",
-    expression: estree
-  };
 };
 
 var literal_symbols = {
@@ -77,14 +64,6 @@ defTmacro(";", function(ast, astToTarget){
 
 ////////////////////////////////////////////////////////////////////////////////
 //js macros
-defTmacro("js/program", function(ast, astToTarget){
-  return {
-    "loc": ast.loc,
-    "type": "Program",
-    "body": _.map(astToTarget(ast.value.slice(1)), toStatement)
-  };
-});
-
 defTmacro("[", function(ast, astToTarget){
   return e("array", astToTarget(ast.value.slice(1)), ast.loc);
 });
