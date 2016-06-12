@@ -4,17 +4,18 @@ var compile = require("./");
 
 test("modules", function(t){
 
-  t.equals(eval(compile('./a', {
+  var src = compile('./a', {
     files: {
       './a': {
-        src: '(m b "./b") (console.log b)'
+        src: '(m b "./b") b'
       },
       './b': {
         src: ":im-b-ok?"
       }
-    },
-    escodegen: {format: {compact: true}}
-  })), "im-b-ok?");
+    }
+  });
+
+  t.equals(eval(src), "im-b-ok?");
 
   t.end();
 });

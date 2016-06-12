@@ -1,7 +1,17 @@
 (fn [mdefs main]
-  (def cache {})
-  (def require
-    (fn require [mid]
-      (set! (get cache mid) "im-b-ok?")
-      (get cache mid)))
-  (require main))
+    (def cache {})
+    (def load-module
+      (fn load-module [mid]
+          ;blah
+          (def args [])
+          (def i 1)
+          (while (lt i (get mdefs mid :length))
+                 (args.push (require (get mdefs mid i)))
+                 (set! i (+ i 1)))
+          ((get mdefs mid 0 :apply) nil args)))
+    (def require
+      (fn require [mid]
+          (if (not (get cache mid))
+            (set! (get cache mid) (load-module mid)))
+          (get cache mid)))
+    (require main))
