@@ -19,7 +19,6 @@ test("modules", function(t){
     }
   }, "im-b-ok?");
 
-  /*
   tc({
     './a': {
       src: '(m def-a "stdlib") (def-a 3) a'
@@ -28,7 +27,6 @@ test("modules", function(t){
       src: "(defmacro def-a [val] '('def 'a val))"
     }
   }, 3);
-  */
 
   t.end();
 });

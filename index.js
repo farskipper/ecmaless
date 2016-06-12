@@ -92,7 +92,17 @@ module.exports = function(src, options){
     _.each(m.deps, loadModule);
 
     //now that all deps have been loaded, we can compile it
-    m.estree = compile(m.module_ast).estree;
+    var user_macros = {};
+
+    //TODO load these based on paths given in (m ...)
+    if(_.has(modules, ["stdlib", "user_macros"])){
+      //TODO load these based on paths given in (m ...)
+      user_macros = modules["stdlib"]["user_macros"];
+    }
+
+    var c = compile(m.module_ast, _.assign({}, options, {user_macros: user_macros}));
+    m.estree = c.estree;
+    m.user_macros = c.user_macros;
   };
 
   loadModule(src);
