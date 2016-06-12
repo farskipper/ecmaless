@@ -139,6 +139,7 @@ defTmacro("fn", function(ast, astToTarget){
     args = _.map(ast.value[2].value.slice(1), "value");
     stmts = ast.value.slice(3);
   }
+  args = _.map(args, symbolToJSIdentifier);
   var estree_stmts = _.compact(_.map(stmts, astToTarget));
   var body = _.map(estree_stmts, function(estree, i){
     if(i < (estree_stmts.length - 1)){
