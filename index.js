@@ -76,15 +76,26 @@ module.exports = function(src, options){
     var p = parseFile(modules[module].src);
     modules[module].ast = p.ast;
     modules[module].deps = p.deps;
+    var mkAST = function(type, value){
+      var loc = p.ast[0].loc;
+      return {type: type, value: value, loc: loc};
+    };
+    modules[module].module_ast = mkAST('list', [
+      mkAST('symbol', 'fn'),
+      mkAST('list', [
+        mkAST('symbol', '[')
+      ].concat(_.map(_.keys(p.deps), function(arg){
+        return mkAST('symbol', arg);
+      })))
+    ].concat(p.ast));
+
     _.each(p.deps, loadModule);
+
+    //now that all deps have been loaded, we can compile it
+    modules[module].estree = compile(modules[module].module_ast).estree;
   };
 
   loadModule(src);
-
-  var mkAST = function(type, value){
-    var loc = modules[src].ast[0].loc;
-    return {type: type, value: value, loc: loc};
-  };
 
   var daEST;
   if(_.size(modules) === 1){
@@ -92,18 +103,8 @@ module.exports = function(src, options){
   }else{
     daEST = [e('call', module_loader_est, [
       e('object', _.mapValues(modules, function(m){
-        var ast = mkAST('list', [
-          mkAST('symbol', 'fn'),
-          mkAST('list', [
-            mkAST('symbol', '[')
-          ].concat(_.map(_.keys(m.deps), function(arg){
-            return mkAST('symbol', arg);
-          })))
-        ].concat(m.ast));
-
-        var estree = compile(ast, options).estree;
         return e('array', [
-          estree
+          m.estree
         ].concat(_.map(m.deps, function(dep){
           return e('string', dep);
         })));
