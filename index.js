@@ -1,4 +1,5 @@
 var _ = require("lodash");
+var e = require("estree-builder");
 var fs = require("fs");
 var lang = require("./lang");
 var parser = require("./parser");
@@ -6,7 +7,9 @@ var escodegen = require("escodegen");
 var astToTarget = require("./ast-to-target");
 var toStatement = require("./toESTreeStatement");
 
-var module_loader_ast = parser(fs.readFileSync("./module_loader.ecmaless").toString());
+var module_loader_src = fs.readFileSync("./module_loader.ecmaless").toString();
+var module_loader_ast = parser(module_loader_src);
+var module_loader_est = astToTarget(module_loader_ast, lang().target_macros)[0];
 
 
 var compile = function(ast, options){
@@ -83,34 +86,30 @@ module.exports = function(src, options){
     return {type: type, value: value, loc: loc};
   };
 
-  var daAST = mkAST('list', module_loader_ast.concat([
-    mkAST('list', [
-      mkAST('symbol', '{')
-    ].concat(_.flatten(_.map(modules, function(m, module){
-      return [
-        mkAST('string', module),
-        mkAST('list', [
-          mkAST('symbol', '['),
-          mkAST('list', [
-            mkAST('symbol', 'fn'),
-            mkAST('list', [
-              mkAST('symbol', '[')
-            ].concat(_.map(_.keys(m.deps), function(arg){
-              return mkAST('symbol', arg);
-            })))
-          ].concat(m.ast))
-        ].concat(_.map(m.deps, function(dep){
-          return mkAST('string', dep);
-        })))
-      ];
-    })))),
-    mkAST('string', src)
-  ]));
-
+  var daEST;
   if(_.size(modules) === 1){
-    daAST = modules[_.keys(modules)[0]].ast;
-  }
+    daEST = compile(modules[_.keys(modules)[0]].ast).estree;
+  }else{
+    daEST = [e('call', module_loader_est, [
+      e('object', _.mapValues(modules, function(m){
+        var ast = mkAST('list', [
+          mkAST('symbol', 'fn'),
+          mkAST('list', [
+            mkAST('symbol', '[')
+          ].concat(_.map(_.keys(m.deps), function(arg){
+            return mkAST('symbol', arg);
+          })))
+        ].concat(m.ast));
 
-  var compiled = compile(daAST, options);
-  return toJSFile(compiled.estree, options);
+        var estree = compile(ast, options).estree;
+        return e('array', [
+          estree
+        ].concat(_.map(m.deps, function(dep){
+          return e('string', dep);
+        })));
+      })),
+      e('string', src)
+    ])];
+  }
+  return toJSFile(daEST, options);
 };
