@@ -19,14 +19,16 @@ test("modules", function(t){
     }
   }, "im-b-ok?");
 
+  /*
   tc({
     './a': {
-      src: '(m def-a "stdlib") def-a'
+      src: '(m def-a "stdlib") (def-a 3) a'
     },
     'stdlib': {
-      src: "(defmacro def-a [val] '('def 'a val)) 3"
+      src: "(defmacro def-a [val] '('def 'a val))"
     }
   }, 3);
+  */
 
   t.end();
 });

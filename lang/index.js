@@ -235,9 +235,9 @@ defTmacro("while", function(ast, astToTarget){
   return e("while", cond, e("block", body, ast.value[0].loc), ast.value[0].loc);
 });
 
-module.exports = function(){
+module.exports = function(user_macros){
+  user_macros = user_macros || {};
   var this_instance_t_macros = _.clone(target_macros);
-  var user_macros = {};
 
   this_instance_t_macros["$$ecmaless$$apply"] = function(ast, astToTarget){
     var callee = ast.value[1];
