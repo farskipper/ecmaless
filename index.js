@@ -73,26 +73,26 @@ module.exports = function(src, options){
       return;//already loaded
     }
 
-    var p = parseFile(modules[module].src);
-    modules[module].ast = p.ast;
-    modules[module].deps = p.deps;
+    var m = parseFile(modules[module].src);
+    modules[module] = m;
+
     var mkAST = function(type, value){
-      var loc = p.ast[0].loc;
+      var loc = m.ast[0].loc;
       return {type: type, value: value, loc: loc};
     };
-    modules[module].module_ast = mkAST('list', [
+    m.module_ast = mkAST('list', [
       mkAST('symbol', 'fn'),
       mkAST('list', [
         mkAST('symbol', '[')
-      ].concat(_.map(_.keys(p.deps), function(arg){
+      ].concat(_.map(_.keys(m.deps), function(arg){
         return mkAST('symbol', arg);
       })))
-    ].concat(p.ast));
+    ].concat(m.ast));
 
-    _.each(p.deps, loadModule);
+    _.each(m.deps, loadModule);
 
     //now that all deps have been loaded, we can compile it
-    modules[module].estree = compile(modules[module].module_ast).estree;
+    m.estree = compile(m.module_ast).estree;
   };
 
   loadModule(src);
