@@ -96,5 +96,8 @@ test("basics", function(t){
   tc("(if a b c)", "a?b:c;");
   tc("(if a b)", "a?b:void 0;");
 
+  tc("(while a (b))", "while(a){b();}");
+  tc("(while a 1 2 3)", "while(a){1;2;3;}");
+
   t.end();
 });

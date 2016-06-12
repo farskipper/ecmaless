@@ -239,9 +239,16 @@ defTmacro("defmacro", function(ast, astToTarget){
 });
 
 defTmacro("if", function(ast, astToTarget){
-  var args = _.map(ast.value.slice(1), astToTarget);
+  var args = _.compact(_.map(ast.value.slice(1), astToTarget));
   var nil = astToTarget(mkAST(ast, "symbol", "nil"));
   return e("?", args[0] || nil, args[1] || nil, args[2] || nil, ast.loc);
+});
+
+defTmacro("while", function(ast, astToTarget){
+  var args = _.compact(_.map(ast.value.slice(1), astToTarget));
+  var cond = args[0];
+  var body = _.map(args.slice(1), toStatement);
+  return e("while", cond, e("block", body, ast.value[0].loc), ast.value[0].loc);
 });
 
 module.exports = {
