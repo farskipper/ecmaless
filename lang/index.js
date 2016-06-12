@@ -227,6 +227,11 @@ defTmacro("'", function(ast, astToTarget){
   return e("json", val, ast.loc);
 });
 
+defTmacro("`", function(ast, astToTarget){
+  var val = ast.value[1];
+  return e("json", val, ast.loc);
+});
+
 defTmacro("defmacro", function(ast, astToTarget){
   var name = ast.value[1];
   var args = ast.value[2];

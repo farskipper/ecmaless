@@ -99,5 +99,7 @@ test("basics", function(t){
   tc("(while a (b))", "while(a){b();}");
   tc("(while a 1 2 3)", "while(a){1;2;3;}");
 
+  tc("`(1)", "({'type':'list','value':[{'type':'number','value':'1','src':'1','loc':{'start':{'line':1,'column':2},'end':{'line':1,'column':2}}}],'src':'(','loc':{'start':{'line':1,'column':1},'end':{'line':1,'column':1}},'list_type':'('});");
+
   t.end();
 });
