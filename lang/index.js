@@ -15,6 +15,9 @@ var mkAST = function(ast, type, value){
 };
 
 var toStatement = function(estree){
+  if(!estree){
+    return estree;
+  }
   if(/(Statement|Declaration)$/.test(estree.type)){
     return estree;
   }
@@ -77,6 +80,10 @@ defTmacro("$$ecmaless$$make-type-number", function(ast, astToTarget){
 });
 defTmacro("$$ecmaless$$make-type-string", function(ast, astToTarget){
   return e("string", ast.value, ast.loc);
+});
+
+defTmacro(";", function(ast, astToTarget){
+  return undefined;
 });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -143,12 +150,12 @@ defTmacro("fn", function(ast, astToTarget){
     args = _.map(ast.value[2].value.slice(1), "value");
     stmts = ast.value.slice(3);
   }
-  var body = _.map(stmts, function(stmt, i){
-    var estree = astToTarget(stmt);
-    if(i < (stmts.length - 1)){
+  var estree_stmts = _.compact(_.map(stmts, astToTarget));
+  var body = _.map(estree_stmts, function(estree, i){
+    if(i < (estree_stmts.length - 1)){
       return toStatement(estree);
     }
-    return e("return", estree, ast.loc);
+    return e("return", estree, estree.loc);
   });
   return e("function", args, body, id, ast.loc);
 });

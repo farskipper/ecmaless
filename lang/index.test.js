@@ -23,6 +23,7 @@ test("basics", function(t){
   tc(":", "'';");
   tc("::", "':';");
   tc(":keyword", "'keyword';");
+  tc(";comment", "");
 
   tc("[]", "[];");
   tc("[1 2 3]", "[1,2,3];");
