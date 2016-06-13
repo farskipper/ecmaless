@@ -118,6 +118,24 @@ defTmacro("fn", function(ast, astToTarget){
     args = _.map(ast.value[2].value.slice(1), "value");
     stmts = ast.value.slice(3);
   }
+  if(args[0] && /\.\.\.$/.test(args[0])){
+    //TODO make this more generic
+    stmts.unshift(mkAST(ast, "list", [
+      mkAST(ast, "symbol", "def"),
+      mkAST(ast, "symbol", args[0].substring(0, args[0].length - 3)),
+      mkAST(ast, "list", [
+        mkAST(ast, "list", [
+          mkAST(ast, "symbol", "get"),
+          mkAST(ast, "symbol", "Array"),
+          mkAST(ast, "string", "prototype"),
+          mkAST(ast, "string", "slice"),
+          mkAST(ast, "string", "call")
+        ]),
+        mkAST(ast, "symbol", "arguments")
+      ])
+    ]));
+    args = [];
+  }
   args = _.map(args, symbolToJSIdentifier);
   var estree_stmts = _.compact(_.map(stmts, astToTarget));
   var body = _.map(estree_stmts, function(estree, i){

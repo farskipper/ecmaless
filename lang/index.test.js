@@ -100,5 +100,8 @@ test("basics", function(t){
 
   tc("`(1)", "({'type':'list','value':[{'type':'number','value':'1','src':'1','loc':{'start':{'line':1,'column':2},'end':{'line':1,'column':2}}}],'src':'(','loc':{'start':{'line':1,'column':1},'end':{'line':1,'column':1}},'list_type':'('});");
 
+  tc("(fn [args...] args)", "(function(){var args=Array['prototype']['slice']['call'](arguments);return args;});");
+  tc("(fn [r...] r)", "(function(){var r=Array['prototype']['slice']['call'](arguments);return r;});");
+
   t.end();
 });
