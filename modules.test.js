@@ -5,9 +5,10 @@ var compile = require("./");
 test("modules", function(t){
 
   var tc = function(files, expected){
-    t.equals(eval(compile(_.keys(files)[0], {
+    var js = compile(_.keys(files)[0], {
       files: files
-    })), expected);
+    });
+    t.equals(eval(js), expected);
   };
 
   tc({

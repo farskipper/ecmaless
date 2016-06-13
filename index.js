@@ -36,9 +36,21 @@ var parseFile = function(src){
     });
     ast = ast.slice(1);
   }
+  var last_node = _.last(ast);
+  var macro_to_export;
+  if(last_node
+      && last_node.type === "list"
+      && last_node.value[0]
+      && last_node.value[0].type === "symbol"
+      && last_node.value[0].value === "defmacro"
+      && last_node.value[1]
+      && last_node.value[1].type === "symbol"){
+    macro_to_export = last_node.value[1].value;
+  }
   return {
     ast: ast,
-    deps: deps
+    deps: deps,
+    macro_to_export: macro_to_export
   };
 };
 
@@ -94,11 +106,13 @@ module.exports = function(src, options){
     //now that all deps have been loaded, we can compile it
     var user_macros = {};
 
-    //TODO load these based on paths given in (m ...)
-    if(_.has(modules, ["stdlib", "user_macros"])){
-      //TODO load these based on paths given in (m ...)
-      user_macros = modules["stdlib"]["user_macros"];
-    }
+    _.each(m.deps, function(path, symbol){
+      var macro_name = _.get(modules, [path, "macro_to_export"]);
+      var macro_fn = _.get(modules, [path, "user_macros", macro_name]);
+      if(macro_fn){
+        user_macros[symbol] = macro_fn;
+      }
+    });
 
     var c = compile(m.module_ast, _.assign({}, options, {user_macros: user_macros}));
     m.estree = c.estree;
