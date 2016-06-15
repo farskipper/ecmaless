@@ -16,9 +16,17 @@ var compile = function(ast, options){
   options = options || {};
 
   var l = lang(options.target_macros);
+  var estree = astToTarget(ast, l.target_macros);
+  if(options.export_type !== 'macro'){
+    return {
+      estree: estree
+    };
+  }
+  //TODO actually bundle each macro with it's dependancies then execute the whole bundle
+  var macro_fn = eval('(' + escodegen.generate(estree) + '())');
   return {
-    estree: astToTarget(ast, l.target_macros),
-    target_macros: l.target_macros
+    estree: estree,
+    macro_fn: macro_fn
   };
 };
 
@@ -37,20 +45,18 @@ var parseFile = function(src){
     ast = ast.slice(1);
   }
   var last_node = _.last(ast);
-  var macro_to_export;
+  var export_type = 'value';
   if(last_node
       && last_node.type === "list"
       && last_node.value[0]
       && last_node.value[0].type === "symbol"
-      && last_node.value[0].value === "defmacro"
-      && last_node.value[1]
-      && last_node.value[1].type === "symbol"){
-    macro_to_export = last_node.value[1].value;
+      && last_node.value[0].value === "macro"){
+    export_type = 'macro';
   }
   return {
     ast: ast,
     deps: deps,
-    macro_to_export: macro_to_export
+    export_type: export_type
   };
 };
 
@@ -107,16 +113,16 @@ module.exports = function(src, options){
     var target_macros = {};
 
     _.each(m.deps, function(path, symbol){
-      var macro_name = _.get(modules, [path, "macro_to_export"]);
-      var macro_fn = _.get(modules, [path, "target_macros", macro_name]);
-      if(macro_fn){
-        target_macros[symbol] = macro_fn;
+      var export_type = _.get(modules, [path, "export_type"]);
+      if(export_type === 'macro'){
+        target_macros[symbol] = _.get(modules, [path, "macro_fn"]);
+        delete m.deps[symbol];
       }
     });
 
-    var c = compile(m.module_ast, _.assign({}, options, {target_macros: target_macros}));
+    var c = compile(m.module_ast, _.assign({}, m, options, {target_macros: target_macros}));
     m.estree = c.estree;
-    m.target_macros = c.target_macros;
+    m.macro_fn = c.macro_fn;
   };
 
   loadModule(src);

@@ -25,7 +25,7 @@ test("modules", function(t){
       src: '(m def-a "stdlib") (def-a 3) a'
     },
     'stdlib': {
-      src: "(defmacro def-a [val] '('def 'a val))"
+      src: "(macro [val] '('def 'a val))"
     }
   }, 3);
 

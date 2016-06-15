@@ -142,11 +142,7 @@ defTmacro("fn", function(ast, astToTarget){
           mkAST(ast, "symbol", "arguments"),
           mkAST(ast, "list", [
             mkAST(ast, "symbol", "-"),
-            mkAST(ast, "list", [
-              mkAST(ast, "symbol", "get"),
-              mkAST(ast, "symbol", "arguments"),
-              mkAST(ast, "string", "length")
-            ]),
+            mkAST(ast, "symbol", "arguments.length"),
             mkAST(ast, "number", params.length - param_after_i)
           ])
         ])
@@ -157,22 +153,12 @@ defTmacro("fn", function(ast, astToTarget){
       mkAST(ast, "symbol", "def"),
       mkAST(ast, "symbol", params[param_expand_i].substring(0, params[param_expand_i].length - 3)),
       mkAST(ast, "list", [
-        mkAST(ast, "list", [
-          mkAST(ast, "symbol", "get"),
-          mkAST(ast, "symbol", "Array"),
-          mkAST(ast, "string", "prototype"),
-          mkAST(ast, "string", "slice"),
-          mkAST(ast, "string", "call")
-        ]),
+        mkAST(ast, "symbol", "Array.prototype.slice.call"),
         mkAST(ast, "symbol", "arguments"),
         mkAST(ast, "number", param_expand_i),
         mkAST(ast, "list", [
           mkAST(ast, "symbol", "-"),
-          mkAST(ast, "list", [
-            mkAST(ast, "symbol", "get"),
-            mkAST(ast, "symbol", "arguments"),
-            mkAST(ast, "string", "length")
-          ]),
+          mkAST(ast, "symbol", "arguments.length"),
           mkAST(ast, "number", params.length - (param_expand_i + 1))
         ])
       ])
@@ -269,6 +255,38 @@ defTmacro("while", function(ast, astToTarget){
   var cond = args[0];
   var body = _.map(args.slice(1), toStatement);
   return e("while", cond, e("block", body, ast.value[0].loc), ast.value[0].loc);
+});
+
+defTmacro("macro", function(ast, astToTarget){
+  var m = function(type, value){
+    return mkAST(ast.value[0], type, value);
+  };
+  return astToTarget(m("list", [
+    m("symbol", "fn"),
+    m("list", [
+      m("symbol", "["),
+      m("symbol", "ast"),
+      m("symbol", "astToTarget")
+    ]),
+    m("list", [
+      m("symbol", "def"),
+      m("symbol", "mac-fn"),
+      m("list", [
+        m("symbol", "fn")
+      ].concat(ast.value.slice(1)))
+    ]),
+    m("list", [
+      m("symbol", "astToTarget"),
+      m("list", [
+        m("symbol", "mac-fn.apply"),
+        m("symbol", "nil"),
+        m("list", [
+          m("symbol", "ast.value.slice"),
+          m("number", "1")
+        ])
+      ])
+    ])
+  ]));
 });
 
 module.exports = function(macros){
