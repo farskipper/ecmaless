@@ -23,6 +23,10 @@ var literal_symbols = {
 ////////////////////////////////////////////////////////////////////////////////
 //primitive $$ecmaless$$ macros
 
+defTmacro("$$ecmaless$$apply", function(ast, astToTarget){
+  return e("call", astToTarget(ast.value[1]), _.map(ast.value.slice(2), astToTarget), ast.loc);
+});
+
 defTmacro("$$ecmaless$$make-type-symbol", function(ast, astToTarget){
   var symbol = ast.value;
   if(symbol === "nil"){
@@ -215,10 +219,6 @@ _.each({
   });
 });
 
-defTmacro("&", function(ast, astToTarget){
-  return e("%", astToTarget(ast.value[1]), ast.loc);
-});
-
 defTmacro("not", function(ast, astToTarget){
   return e("!", astToTarget(ast.value[1]), ast.loc);
 });
@@ -271,20 +271,8 @@ defTmacro("while", function(ast, astToTarget){
   return e("while", cond, e("block", body, ast.value[0].loc), ast.value[0].loc);
 });
 
-module.exports = function(user_macros){
-  user_macros = user_macros || {};
-  var this_instance_t_macros = _.clone(target_macros);
-
-  this_instance_t_macros["$$ecmaless$$apply"] = function(ast, astToTarget){
-    var callee = ast.value[1];
-    if(callee.type === "symbol"){
-      if(_.has(user_macros, callee.value)){
-        var macro_fn = user_macros[callee.value];
-        return astToTarget(macro_fn.apply(null, ast.value.slice(2)));
-      }
-    }
-    return e("call", astToTarget(callee), _.map(ast.value.slice(2), astToTarget), ast.loc);
-  };
+module.exports = function(macros){
+  var this_instance_t_macros = _.assign({}, target_macros, macros || {});
 
   this_instance_t_macros["defmacro"] = function(ast, astToTarget){
     var name = ast.value[1];
@@ -297,12 +285,13 @@ module.exports = function(user_macros){
     var fn_body = escodegen.generate(e("return", astToTarget(body), body.loc));
     var fn = new (Function.prototype.bind.apply(Function, [Function].concat(fn_args.concat([fn_body]))));
 
-    user_macros[name.value] = fn;
+    this_instance_t_macros[name.value] = function(ast, astToTarget){
+      return astToTarget(fn.apply(null, ast.value.slice(1)));
+    };
 
     return undefined;
   };
   return {
-    user_macros: user_macros,
     target_macros: this_instance_t_macros
   };
 };

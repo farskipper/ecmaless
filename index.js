@@ -15,10 +15,10 @@ var module_loader_est = astToTarget(module_loader_ast, lang().target_macros)[0];
 var compile = function(ast, options){
   options = options || {};
 
-  var l = lang(options.user_macros);
+  var l = lang(options.target_macros);
   return {
     estree: astToTarget(ast, l.target_macros),
-    user_macros: l.user_macros
+    target_macros: l.target_macros
   };
 };
 
@@ -104,19 +104,19 @@ module.exports = function(src, options){
     _.each(m.deps, loadModule);
 
     //now that all deps have been loaded, we can compile it
-    var user_macros = {};
+    var target_macros = {};
 
     _.each(m.deps, function(path, symbol){
       var macro_name = _.get(modules, [path, "macro_to_export"]);
-      var macro_fn = _.get(modules, [path, "user_macros", macro_name]);
+      var macro_fn = _.get(modules, [path, "target_macros", macro_name]);
       if(macro_fn){
-        user_macros[symbol] = macro_fn;
+        target_macros[symbol] = macro_fn;
       }
     });
 
-    var c = compile(m.module_ast, _.assign({}, options, {user_macros: user_macros}));
+    var c = compile(m.module_ast, _.assign({}, options, {target_macros: target_macros}));
     m.estree = c.estree;
-    m.user_macros = c.user_macros;
+    m.target_macros = c.target_macros;
   };
 
   loadModule(src);
