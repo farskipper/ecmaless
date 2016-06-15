@@ -108,21 +108,50 @@ defTmacro("def", function(ast, astToTarget){
 
 defTmacro("fn", function(ast, astToTarget){
   var id;
-  var args;
+  var params;
   var stmts;
   if(ast.value[1].type === "list"){
-    args = _.map(ast.value[1].value.slice(1), "value");
+    params = _.map(ast.value[1].value.slice(1), "value");
     stmts = ast.value.slice(2);
   }else{
     id = symbolToJSIdentifier(ast.value[1].value);
-    args = _.map(ast.value[2].value.slice(1), "value");
+    params = _.map(ast.value[2].value.slice(1), "value");
     stmts = ast.value.slice(3);
   }
-  if(args[0] && /\.\.\.$/.test(args[0])){
-    //TODO make this more generic
+  var param_expand_i = -1;
+  _.each(params, function(param, i){
+    if(/\.\.\.$/.test(param)){
+      if(param_expand_i >= 0){
+        throw new Error('At most one paramater can have ...');
+      }
+      param_expand_i = i;
+    }
+  });
+  if(param_expand_i >= 0){
+    var param_after_i = param_expand_i + 1;
+    while(param_after_i < params.length){
+      stmts.unshift(mkAST(ast, "list", [
+        mkAST(ast, "symbol", "def"),
+        mkAST(ast, "symbol", params[param_after_i]),
+        mkAST(ast, "list", [
+          mkAST(ast, "symbol", "get"),
+          mkAST(ast, "symbol", "arguments"),
+          mkAST(ast, "list", [
+            mkAST(ast, "symbol", "-"),
+            mkAST(ast, "list", [
+              mkAST(ast, "symbol", "get"),
+              mkAST(ast, "symbol", "arguments"),
+              mkAST(ast, "string", "length")
+            ]),
+            mkAST(ast, "number", params.length - param_after_i)
+          ])
+        ])
+      ]));
+      param_after_i++;
+    }
     stmts.unshift(mkAST(ast, "list", [
       mkAST(ast, "symbol", "def"),
-      mkAST(ast, "symbol", args[0].substring(0, args[0].length - 3)),
+      mkAST(ast, "symbol", params[param_expand_i].substring(0, params[param_expand_i].length - 3)),
       mkAST(ast, "list", [
         mkAST(ast, "list", [
           mkAST(ast, "symbol", "get"),
@@ -131,12 +160,22 @@ defTmacro("fn", function(ast, astToTarget){
           mkAST(ast, "string", "slice"),
           mkAST(ast, "string", "call")
         ]),
-        mkAST(ast, "symbol", "arguments")
+        mkAST(ast, "symbol", "arguments"),
+        mkAST(ast, "number", param_expand_i),
+        mkAST(ast, "list", [
+          mkAST(ast, "symbol", "-"),
+          mkAST(ast, "list", [
+            mkAST(ast, "symbol", "get"),
+            mkAST(ast, "symbol", "arguments"),
+            mkAST(ast, "string", "length")
+          ]),
+          mkAST(ast, "number", params.length - (param_expand_i + 1))
+        ])
       ])
     ]));
-    args = [];
+    params = params.slice(0, param_expand_i);
   }
-  args = _.map(args, symbolToJSIdentifier);
+  params = _.map(params, symbolToJSIdentifier);
   var estree_stmts = _.compact(_.map(stmts, astToTarget));
   var body = _.map(estree_stmts, function(estree, i){
     if(i < (estree_stmts.length - 1)){
@@ -144,7 +183,7 @@ defTmacro("fn", function(ast, astToTarget){
     }
     return e("return", estree, estree.loc);
   });
-  return e("function", args, body, id, ast.loc);
+  return e("function", params, body, id, ast.loc);
 });
 
 _.each({

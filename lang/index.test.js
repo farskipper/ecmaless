@@ -100,8 +100,9 @@ test("basics", function(t){
 
   tc("`(1)", "({'type':'list','value':[{'type':'number','value':'1','src':'1','loc':{'start':{'line':1,'column':2},'end':{'line':1,'column':2}}}],'src':'(','loc':{'start':{'line':1,'column':1},'end':{'line':1,'column':1}},'list_type':'('});");
 
-  tc("(fn [args...] args)", "(function(){var args=Array['prototype']['slice']['call'](arguments);return args;});");
-  tc("(fn [r...] r)", "(function(){var r=Array['prototype']['slice']['call'](arguments);return r;});");
+  tc("(fn [args...] args)", "(function(){var args=Array['prototype']['slice']['call'](arguments,0,arguments['length']-0);return args;});");
+  tc("(fn [a b c...] c)", "(function(a,b){var c=Array['prototype']['slice']['call'](arguments,2,arguments['length']-0);return c;});");
+  tc("(fn [a b c... d] d)", "(function(a,b){var c=Array['prototype']['slice']['call'](arguments,2,arguments['length']-1);var d=arguments[arguments['length']-1];return d;});");
 
   t.end();
 });
