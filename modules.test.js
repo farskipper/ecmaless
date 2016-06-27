@@ -13,7 +13,7 @@ test("modules", function(t){
 
   tc({
     './a': {
-      src: '(m b "./b") b'
+      src: '(deps b "./b") b'
     },
     './b': {
       src: ":im-b-ok?"
@@ -22,7 +22,7 @@ test("modules", function(t){
 
   tc({
     './a': {
-      src: '(m def-a "stdlib") (def-a 3) a'
+      src: '(deps def-a "stdlib") (def-a 3) a'
     },
     'stdlib': {
       src: "(macro [val] '('def 'a val))"

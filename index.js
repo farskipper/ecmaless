@@ -36,7 +36,7 @@ var parseFile = function(src){
 
   if(ast[0].type === "list"
       && ast[0].value[0].type === "symbol"
-      && ast[0].value[0].value === "m"){
+      && ast[0].value[0].value === "deps"){
     _.each(_.chunk(ast[0].value.slice(1), 2), function(pair){
       var sym = pair[0].value;
       var path = pair[1].value;
