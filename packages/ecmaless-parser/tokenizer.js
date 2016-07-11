@@ -1,5 +1,13 @@
 var EStreeLoc = require("estree-loc");
 var tokenizer2 = require("tokenizer2/core");
+var escapeRegExp = require("escape-regexp");
+
+var groups = {
+  "(": ")",
+  "[": "]",
+  "{": "}",
+  "<": ">"
+};
 
 var toIndent = function(src){
   var lines = src.split('\n');
@@ -29,18 +37,25 @@ module.exports = function(src){
 
   var t = tokenizer2(function(tok){
     if(tok.type === "SPACE"){
-      //TODO ignore this when inside a grouping of some kind
-      var ind = toIndent(tok.src);
-      if(ind >= 0){
-        while(ind > stack[0]){
-          stack.unshift(stack[0] + 1);
-          pushTok("INDENT", tok.src);
-        }
-        while(ind < stack[0]){
-          pushTok("DEDENT", tok.src);
-          stack.shift();
+      if(typeof stack[0] === "number"){
+        var ind = toIndent(tok.src);
+        if(ind >= 0){
+          while(ind > stack[0]){
+            stack.unshift(stack[0] + 1);
+            pushTok("INDENT", tok.src);
+          }
+          while(ind < stack[0]){
+            pushTok("DEDENT", tok.src);
+            stack.shift();
+          }
         }
       }
+    }else if(tok.type === "OPEN"){
+      pushTok(tok.src, tok.src);
+      stack.unshift(tok.src);
+    }else if(tok.type === "CLOSE"){
+      pushTok(tok.src, tok.src);
+      stack.shift();
     }else{
       pushTok(tok.type, tok.src);
     }
@@ -53,6 +68,14 @@ module.exports = function(src){
   t.addRule(/^[0-9]+\.?[.0-9]*$/, "NUMBER");
   t.addRule(/^[a-zA-Z_][a-zA-Z0-9_]*$/, "SYMBOL");
   t.addRule(/^:$/, "COLON");
+
+  var key;
+  for(key in groups){
+    if(groups.hasOwnProperty(key)){
+      t.addRule(new RegExp("^" + escapeRegExp(key) + "$"), "OPEN"); 
+      t.addRule(new RegExp("^" + escapeRegExp(groups[key]) + "$"), "CLOSE"); 
+    }
+  }
 
   t.onText(src);
   t.end();

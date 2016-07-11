@@ -58,5 +58,21 @@ test("tokenizer", function(t){
     "DEDENT"
   ]);
 
+  var src = '';
+  src += 'deps:\n';
+  src += '    a [\n';
+  src += '        1\n';
+  src += '    ]\n';
+  testOrder(src, [
+    "SYMBOL",
+    "COLON",
+    "INDENT",
+    "SYMBOL",
+    "[",
+    "NUMBER",
+    "]",
+    "DEDENT"
+  ]);
+
   t.end();
 });
