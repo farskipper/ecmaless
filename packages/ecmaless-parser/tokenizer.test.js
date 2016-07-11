@@ -26,5 +26,7 @@ test("tokenizer", function(t){
   testOrder('123 "four"\nblah', ["NUMBER", "STRING", "SYMBOL"]);
   testOrder('10 0.1 1.0', ["NUMBER", "NUMBER", "NUMBER"]);
 
+  testOrder('deps:\n    1', ["SYMBOL", "COLON", "INDENT", "NUMBER"]);
+
   t.end();
 });
