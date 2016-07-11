@@ -3,16 +3,20 @@ var tokenizer2 = require("tokenizer2/core");
 
 var toIndent = function(src){
   var lines = src.split('\n');
-  var last = lines[lines.length - 1];
-  if((last.length % 4) === 0){
-    return last.length / 4;
+  if(lines.length < 2){
+    return -1;
   }
-  return -1;
+  var last = lines[lines.length - 1];
+  if((last.length % 4) !== 0){
+    return -1;
+  }
+  return last.length / 4;
 };
 
 module.exports = function(src){
   var toLoc = EStreeLoc(src);
   var tokens = [];
+  var stack = [0];
   var index = 0;
 
   var pushTok = function(type, src){
@@ -27,8 +31,15 @@ module.exports = function(src){
     if(tok.type === "SPACE"){
       //TODO ignore this when inside a grouping of some kind
       var ind = toIndent(tok.src);
-      if(ind > 0){
-        pushTok("INDENT", tok.src);
+      if(ind >= 0){
+        while(ind > stack[0]){
+          stack.unshift(stack[0] + 1);
+          pushTok("INDENT", tok.src);
+        }
+        while(ind < stack[0]){
+          pushTok("DEDENT", tok.src);
+          stack.shift();
+        }
       }
     }else{
       pushTok(tok.type, tok.src);
@@ -46,5 +57,9 @@ module.exports = function(src){
   t.onText(src);
   t.end();
 
+  while(0 < stack[0]){
+    pushTok("DEDENT", "");
+    stack.shift();
+  }
   return tokens;
 };
