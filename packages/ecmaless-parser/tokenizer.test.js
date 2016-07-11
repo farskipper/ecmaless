@@ -24,7 +24,7 @@ test("tokenizer", function(t){
   };
 
   testOrder('123 "four"\nblah', ["Number", "Space", "String", "NewLine", "Symbol"]);
-  testOrder('10 .1 0.1 1.0', ["Number", "Space", "Number", "Space", "Number", "Space", "Number"]);
+  testOrder('10 0.1 1.0', ["Number", "Space", "Number", "Space", "Number"]);
 
   t.end();
 });
