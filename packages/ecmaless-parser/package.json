@@ -1,0 +1,24 @@
+{
+  "name": "ecmaless-parser",
+  "version": "0.0.0",
+  "description": "Parser for the ecmaless language",
+  "main": "index.js",
+  "scripts": {
+    "test": "node tests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/farskipper/ecmaless-parser.git"
+  },
+  "keywords": [
+    "ecmaless",
+    "parser",
+    "lang"
+  ],
+  "author": "farskipper",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/farskipper/ecmaless-parser/issues"
+  },
+  "homepage": "https://github.com/farskipper/ecmaless-parser#readme"
+}
