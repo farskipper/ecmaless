@@ -4,7 +4,9 @@
   "description": "Parser for the ecmaless language",
   "main": "index.js",
   "scripts": {
-    "test": "node tests.js"
+    "start": "onchange '*.js' '*.ne' -e 'grammar.js' -i -- npm test",
+    "build": "nearleyc grammar.ne > grammar.js",
+    "test": "npm run build && node tests.js"
   },
   "repository": {
     "type": "git",
@@ -20,5 +22,13 @@
   "bugs": {
     "url": "https://github.com/farskipper/ecmaless-parser/issues"
   },
-  "homepage": "https://github.com/farskipper/ecmaless-parser#readme"
+  "homepage": "https://github.com/farskipper/ecmaless-parser#readme",
+  "devDependencies": {
+    "lodash": "^4.13.1",
+    "onchange": "^2.5.0",
+    "tape": "^4.6.0"
+  },
+  "dependencies": {
+    "nearley": "^2.6.0"
+  }
 }
