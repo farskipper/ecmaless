@@ -5,21 +5,28 @@ module.exports = function(src){
   var toLoc = EStreeLoc(src);
   var tokens = [];
   var index = 0;
-  var t = tokenizer2(function(tok){
+
+  var pushTok = function(type, src){
     tokens.push({
-      type: tok.type,
-      src: tok.src,
-      loc: toLoc(index, index + tok.src.length)
+      type: type,
+      src: src,
+      loc: toLoc(index, index + src.length)
     });
+  };
+
+  var t = tokenizer2(function(tok){
+    if(tok.type === "SPACE"){
+    }else{
+      pushTok(tok.type, tok.src);
+    }
     index += tok.src.length;
   });
 
-  t.addRule(/^ +$/, "Space");
-  t.addRule(/^\n$/, "NewLine");
-  t.addRule(/^;[^\n]*$/, "Comment");
-  t.addRule(/(^""$)|(^"([^"]|\\")*[^\\]"$)/, "String");
-  t.addRule(/^[0-9]+\.?[.0-9]*$/, "Number");
-  t.addRule(/^[a-zA-Z_][a-zA-Z0-9_]*$/, "Symbol");
+  t.addRule(/^[ \n]+$/, "SPACE");
+  t.addRule(/^;[^\n]*$/, "COMMENT");
+  t.addRule(/(^""$)|(^"([^"]|\\")*[^\\]"$)/, "STRING");
+  t.addRule(/^[0-9]+\.?[.0-9]*$/, "NUMBER");
+  t.addRule(/^[a-zA-Z_][a-zA-Z0-9_]*$/, "SYMBOL");
 
   t.onText(src);
   t.end();
