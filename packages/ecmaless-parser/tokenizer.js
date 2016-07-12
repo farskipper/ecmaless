@@ -56,6 +56,8 @@ module.exports = function(src){
     }else if(tok.type === "CLOSE"){
       pushTok(tok.src, tok.src);
       stack.shift();
+    }else if(tok.type === "RAW"){
+      pushTok(tok.src, tok.src);
     }else{
       pushTok(tok.type, tok.src);
     }
@@ -67,7 +69,7 @@ module.exports = function(src){
   t.addRule(/(^""$)|(^"([^"]|\\")*[^\\]"$)/, "STRING");
   t.addRule(/^[0-9]+\.?[.0-9]*$/, "NUMBER");
   t.addRule(/^[a-zA-Z_][a-zA-Z0-9_]*$/, "SYMBOL");
-  t.addRule(/^:$/, "COLON");
+  t.addRule(/^[:+=,]$/, "RAW");
 
   var key;
   for(key in groups){

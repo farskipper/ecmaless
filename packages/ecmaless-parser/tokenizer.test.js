@@ -26,10 +26,10 @@ test("tokenizer", function(t){
   testOrder('123 "four"\nblah', ["NUMBER", "STRING", "SYMBOL"]);
   testOrder('10 0.1 1.0', ["NUMBER", "NUMBER", "NUMBER"]);
 
-  testOrder('deps:\n    1', ["SYMBOL", "COLON", "INDENT", "NUMBER", "DEDENT"]);
+  testOrder('deps:\n    1', ["SYMBOL", ":", "INDENT", "NUMBER", "DEDENT"]);
   testOrder('deps:\n        1', [
     "SYMBOL",
-    "COLON",
+    ":",
     "INDENT",
     "INDENT",
     "NUMBER",
@@ -38,7 +38,7 @@ test("tokenizer", function(t){
   ]);
   testOrder('deps:\n        1\n    2', [
     "SYMBOL",
-    "COLON",
+    ":",
     "INDENT",
     "INDENT",
     "NUMBER",
@@ -48,7 +48,7 @@ test("tokenizer", function(t){
   ]);
   testOrder('deps:\n        1    3\n    2', [
     "SYMBOL",
-    "COLON",
+    ":",
     "INDENT",
     "INDENT",
     "NUMBER",
@@ -65,7 +65,7 @@ test("tokenizer", function(t){
   src += '    ]\n';
   testOrder(src, [
     "SYMBOL",
-    "COLON",
+    ":",
     "INDENT",
     "SYMBOL",
     "[",

@@ -3,7 +3,13 @@ var test = require("tape");
 var parser = require("./");
 
 var rmLoc = function(ast){
-  return _.omit(ast, "loc");
+  if(_.isPlainObject(ast)){
+    return _.mapValues(_.omit(ast, "loc"), rmLoc);
+  }
+  if(_.isArray(ast)){
+    return _.map(ast, rmLoc);
+  }
+  return ast;
 };
 
 var mk = {};
@@ -12,6 +18,12 @@ mk.num = function(value){
 };
 mk.str = function(value){
   return {type: "String", value: value};
+};
+mk.sym = function(value){
+  return {type: "Symbol", value: value};
+};
+mk.def = function(id, init){
+  return {type: "Define", id: id, init: init};
 };
 
 test("parser", function(t){
@@ -23,6 +35,15 @@ test("parser", function(t){
   tst("123", mk.num(123));
   tst("\"ok\"", mk.str("ok"));
   tst("\"\\\"that\\\"\"", mk.str("\"that\""));
+
+  tst("def a", mk.def(mk.sym("a")));
+  tst("def a = 1.2", mk.def(mk.sym("a"), mk.num(1.2)));
+  /*
+  var src = "";
+  src += "def add = fn [a, b] :\n"
+  src += "    a + b"
+  tst(src, {});
+  */
 
   t.end();
 });
