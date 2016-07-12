@@ -25,6 +25,9 @@ mk.sym = function(value){
 mk.def = function(id, init){
   return {type: "Define", id: id, init: init};
 };
+mk.fn = function(params, body){
+  return {type: "Function", params: params, body: body};
+};
 
 test("parser", function(t){
   var tst = function(src, expected){
@@ -38,12 +41,13 @@ test("parser", function(t){
 
   tst("def a", mk.def(mk.sym("a")));
   tst("def a = 1.2", mk.def(mk.sym("a"), mk.num(1.2)));
-  /*
+
   var src = "";
-  src += "def add = fn [a, b] :\n"
-  src += "    a + b"
-  tst(src, {});
-  */
+  src += "def id = fn args :\n"
+  src += "    args"
+  tst(src, mk.def(mk.sym("id"), mk.fn(mk.sym("args"), [
+    mk.sym("args")
+  ])));
 
   t.end();
 });

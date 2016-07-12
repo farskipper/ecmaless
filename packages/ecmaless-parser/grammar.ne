@@ -13,8 +13,12 @@ var tok = function(type, value){
 var tok_NUMBER = tok("NUMBER");
 var tok_STRING = tok("STRING");
 var tok_SYMBOL = tok("SYMBOL");
+var tok_INDENT = tok("INDENT");
+var tok_DEDENT = tok("DEDENT");
+var tok_COLON = tok(":");
 var tok_EQ = tok("=");
 var tok_def = tok("SYMBOL", "def");
+var tok_fn = tok("SYMBOL", "fn");
 
 var mkType = function(d, type, value){
   return {
@@ -48,6 +52,28 @@ Expression ->
       Number {% id %}
     | String {% id %}
     | Symbol {% id %}
+    | Function {% id %}
+
+Function -> %tok_fn Params Blok {% function(d){
+  return {
+    loc: {start: d[0].loc.start, end: d[2].loc.end},
+    type: "Function",
+    params: d[1],
+    body: d[2].body
+  };
+} %}
+
+Params -> Symbol {% id %}
+
+Blok -> %tok_COLON %tok_INDENT Statement:* %tok_DEDENT {%
+  function(d){
+    return {
+      loc: {start: d[0].loc.start, end: d[3].loc.end},
+      type: "Block",
+      body: d[2]
+    };
+  }
+%}
 
 Number -> %tok_NUMBER {% function(d){
   return mkType(d, "Number", parseFloat(d[0].src) || 0);
