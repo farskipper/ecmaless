@@ -52,6 +52,21 @@ var mkType = function(d, type, value){
     value: value
   };
 };
+
+var mkMemberExpression = function(loc, method, object, path){
+  return {
+    loc: loc,
+    type: "MemberExpression",
+    object: object,
+    path: path,
+    method: method
+  };
+};
+
+var mkLoc = function(d, start_i, end_i){
+  return {start: d[start_i].loc.start, end: d[end_i].loc.end};
+};
+
 var grammar = {
     ParserRules: [
     {"name": "main", "symbols": ["Statement"], "postprocess": id},
@@ -74,6 +89,12 @@ var grammar = {
         } },
     {"name": "Expression", "symbols": ["MemberExpression"], "postprocess": id},
     {"name": "MemberExpression", "symbols": ["PrimaryExpression"], "postprocess": id},
+    {"name": "MemberExpression", "symbols": ["MemberExpression", tok_DOT, "Identifier"], "postprocess":  function(d){
+            return mkMemberExpression(mkLoc(d, 0, 2), "dot", d[0], d[2]);
+        } },
+    {"name": "MemberExpression", "symbols": ["MemberExpression", tok_OPEN_SQ, "Expression", tok_CLOSE_SQ], "postprocess":  function(d){
+            return mkMemberExpression(mkLoc(d, 0, 3), "index", d[0], d[2]);
+        } },
     {"name": "PrimaryExpression", "symbols": ["Number"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": ["String"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": ["Identifier"], "postprocess": id},
@@ -84,7 +105,7 @@ var grammar = {
     {"name": "PrimaryExpression", "symbols": [tok_OPEN_PN, "Expression", tok_CLOSE_PN], "postprocess": idN(1)},
     {"name": "Application", "symbols": ["MemberExpression", tok_OPEN_PN, "Expression_list", tok_CLOSE_PN], "postprocess":  function(d){
           return {
-            loc: {start: d[0].loc.start, end: d[3].loc.end},
+            loc: mkLoc(d, 0, 3),
             type: "Application",
             callee: d[0],
             args: d[2]
@@ -92,7 +113,7 @@ var grammar = {
         } },
     {"name": "Struct", "symbols": [tok_OPEN_CU, "KeyValPairs", tok_CLOSE_CU], "postprocess":  function(d){
           return {
-            loc: {start: d[0].loc.start, end: d[2].loc.end},
+            loc: mkLoc(d, 0, 2),
             type: "Struct",
             value: d[1]
           };
@@ -111,7 +132,7 @@ var grammar = {
         } },
     {"name": "Array", "symbols": [tok_OPEN_SQ, "Expression_list", tok_CLOSE_SQ], "postprocess":  function(d){
           return {
-            loc: {start: d[0].loc.start, end: d[2].loc.end},
+            loc: mkLoc(d, 0, 2),
             type: "Array",
             value: d[1]
           };
@@ -124,7 +145,7 @@ var grammar = {
     {"name": "Expression_list_body", "symbols": ["Expression_list_body", tok_COMMA, "Expression"], "postprocess": concatArr},
     {"name": "Function", "symbols": [tok_fn, "Params", "Blok"], "postprocess":  function(d){
           return {
-            loc: {start: d[0].loc.start, end: d[2].loc.end},
+            loc: mkLoc(d, 0, 2),
             type: "Function",
             params: d[1],
             body: d[2].body
@@ -145,7 +166,7 @@ var grammar = {
             return d[0];
           }
           return {
-            loc: {start: d[0].loc.start, end: d[1].loc.end},
+            loc: mkLoc(d, 0, 1),
             type: "DotDotDot",
             value: d[0]
           };
@@ -156,7 +177,7 @@ var grammar = {
     {"name": "Blok", "symbols": [tok_COLON, tok_INDENT, "Blok$ebnf$1", tok_DEDENT], "postprocess": 
         function(d){
           return {
-            loc: {start: d[0].loc.start, end: d[3].loc.end},
+            loc: mkLoc(d, 0, 3),
             type: "Block",
             body: d[2]
           };

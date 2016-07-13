@@ -48,6 +48,21 @@ var mkType = function(d, type, value){
     value: value
   };
 };
+
+var mkMemberExpression = function(loc, method, object, path){
+  return {
+    loc: loc,
+    type: "MemberExpression",
+    object: object,
+    path: path,
+    method: method
+  };
+};
+
+var mkLoc = function(d, start_i, end_i){
+  return {start: d[start_i].loc.start, end: d[end_i].loc.end};
+};
+
 %}
 
 main -> Statement {% id %}
@@ -72,6 +87,14 @@ Define -> %tok_def Identifier (%tok_EQ Expression):? {% function(d){
 Expression -> MemberExpression {% id %}
 
 MemberExpression -> PrimaryExpression {% id %}
+    | MemberExpression %tok_DOT Identifier
+      {% function(d){
+          return mkMemberExpression(mkLoc(d, 0, 2), "dot", d[0], d[2]);
+      } %}
+    | MemberExpression %tok_OPEN_SQ Expression %tok_CLOSE_SQ
+      {% function(d){
+          return mkMemberExpression(mkLoc(d, 0, 3), "index", d[0], d[2]);
+      } %}
 
 PrimaryExpression ->
       Number {% id %}
@@ -85,7 +108,7 @@ PrimaryExpression ->
 
 Application -> MemberExpression %tok_OPEN_PN Expression_list %tok_CLOSE_PN {% function(d){
   return {
-    loc: {start: d[0].loc.start, end: d[3].loc.end},
+    loc: mkLoc(d, 0, 3),
     type: "Application",
     callee: d[0],
     args: d[2]
@@ -94,7 +117,7 @@ Application -> MemberExpression %tok_OPEN_PN Expression_list %tok_CLOSE_PN {% fu
 
 Struct -> %tok_OPEN_CU KeyValPairs %tok_CLOSE_CU {% function(d){
   return {
-    loc: {start: d[0].loc.start, end: d[2].loc.end},
+    loc: mkLoc(d, 0, 2),
     type: "Struct",
     value: d[1]
   };
@@ -112,7 +135,7 @@ KeyValPair -> (String|Number|Symbol) %tok_COLON Expression {% function(d){
 
 Array -> %tok_OPEN_SQ Expression_list %tok_CLOSE_SQ {% function(d){
   return {
-    loc: {start: d[0].loc.start, end: d[2].loc.end},
+    loc: mkLoc(d, 0, 2),
     type: "Array",
     value: d[1]
   };
@@ -126,7 +149,7 @@ Expression_list_body ->
 
 Function -> %tok_fn Params Blok {% function(d){
   return {
-    loc: {start: d[0].loc.start, end: d[2].loc.end},
+    loc: mkLoc(d, 0, 2),
     type: "Function",
     params: d[1],
     body: d[2].body
@@ -147,7 +170,7 @@ Param -> Identifier %tok_DOTDOTDOT:? {%
       return d[0];
     }
     return {
-      loc: {start: d[0].loc.start, end: d[1].loc.end},
+      loc: mkLoc(d, 0, 1),
       type: "DotDotDot",
       value: d[0]
     };
@@ -157,7 +180,7 @@ Param -> Identifier %tok_DOTDOTDOT:? {%
 Blok -> %tok_COLON %tok_INDENT Statement:* %tok_DEDENT {%
   function(d){
     return {
-      loc: {start: d[0].loc.start, end: d[3].loc.end},
+      loc: mkLoc(d, 0, 3),
       type: "Block",
       body: d[2]
     };

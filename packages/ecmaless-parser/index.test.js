@@ -43,6 +43,9 @@ mk.struct = function(value){
 mk.ddd = function(value){
   return {type: "DotDotDot", value: value};
 };
+mk.mem = function(method, object, path){
+  return {type: "MemberExpression", object: object, path: path, method: method};
+};
 
 var mkv = function(v){
   if(_.isNumber(v)){
@@ -117,6 +120,9 @@ test("parser", function(t){
   tst("add  (1)", mk.app(mk.id("add"), [mkv(1)]));
 
   tst("(1)", mkv(1));
+
+  tst("a.b.c", mk.mem("dot", mk.mem("dot", mk.id("a"), mk.id("b")), mk.id("c")));
+  tst("a[b][0]", mk.mem("index", mk.mem("index", mk.id("a"), mk.id("b")), mkv(0)));
 
   t.end();
 });
