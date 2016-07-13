@@ -62,6 +62,9 @@ mk.infix = function(op, left, right){
     right: right
   };
 };
+mk.stmt = function(e){
+  return {type: "ExpressionStatement", expression: e};
+};
 
 var mkv = function(v){
   if(_.isNumber(v)){
@@ -81,6 +84,9 @@ var mkv = function(v){
 test("parser", function(t){
   var tst = function(src, expected){
     var ast = parser(src);
+    if(ast.type === "ExpressionStatement"){
+      ast = ast.expression;
+    }
     t.deepEquals(rmLoc(ast), expected);
   };
   var tstFail = function(src){
@@ -113,21 +119,22 @@ test("parser", function(t){
   tst("{def: 1}", mk.struct([mk.sym("def"), mkv(1)]));
   tst("{1: \"a\"}", mk.struct([mkv(1), mkv("a")]));
 
+  var fn_body_a = [mk.stmt(mk.id("a"))];
   tstFail("fn \n    a");
   tstFail("fn []\n    a");
-  tst("fn args:\n    a", mk.fn(mk.id("args"), [mk.id("a")]));
-  tst("fn []:\n    a", mk.fn([], [mk.id("a")]));
-  tst("fn[]:\n    a", mk.fn([], [mk.id("a")]));
-  tst("fn [  ] :\n    a", mk.fn([], [mk.id("a")]));
+  tst("fn args:\n    a", mk.fn(mk.id("args"), fn_body_a));
+  tst("fn []:\n    a", mk.fn([], fn_body_a));
+  tst("fn[]:\n    a", mk.fn([], fn_body_a));
+  tst("fn [  ] :\n    a", mk.fn([], fn_body_a));
   tstFail("fn [,]:\n    a");
   tstFail("fn [1]:\n    a");
   tstFail("fn [1, 2]:\n    a");
-  tst("fn [a]:\n    a", mk.fn([mk.id("a")], [mk.id("a")]));
-  tst("fn [a,]:\n    a", mk.fn([mk.id("a")], [mk.id("a")]));
-  tst("fn [a, b]:\n    a", mk.fn([mk.id("a"), mk.id("b")], [mk.id("a")]));
-  tst("fn [a,b,]:\n    a", mk.fn([mk.id("a"), mk.id("b")], [mk.id("a")]));
-  tst("fn [a, b...]:\n    a", mk.fn([mk.id("a"), mk.ddd(mk.id("b"))], [mk.id("a")]));
-  tst("fn [a, b...]:\n    a", mk.fn([mk.id("a"), mk.ddd(mk.id("b"))], [mk.id("a")]));
+  tst("fn [a]:\n    a", mk.fn([mk.id("a")], fn_body_a));
+  tst("fn [a,]:\n    a", mk.fn([mk.id("a")], fn_body_a));
+  tst("fn [a, b]:\n    a", mk.fn([mk.id("a"), mk.id("b")], fn_body_a));
+  tst("fn [a,b,]:\n    a", mk.fn([mk.id("a"), mk.id("b")], fn_body_a));
+  tst("fn [a, b...]:\n    a", mk.fn([mk.id("a"), mk.ddd(mk.id("b"))], fn_body_a));
+  tst("fn [a, b...]:\n    a", mk.fn([mk.id("a"), mk.ddd(mk.id("b"))], fn_body_a));
 
   tst("add()", mk.app(mk.id("add"), []));
   tstFail("add(,)");

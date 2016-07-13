@@ -88,9 +88,19 @@ var infixOp = function(d){
 
 main -> Statement {% id %}
 
+################################################################################
+# Statement
 Statement ->
       Define {% id %}
-    | Expression {% id %}
+    | ExpressionStatement {% id %}
+
+ExpressionStatement -> Expression {% function(d){
+  return {
+    loc: d[0].loc,
+    type: "ExpressionStatement",
+    expression: d[0]
+  };
+} %}
 
 Define -> %tok_def Identifier (%tok_EQ Expression):? {% function(d){
   var loc = d[0].loc;
@@ -105,6 +115,8 @@ Define -> %tok_def Identifier (%tok_EQ Expression):? {% function(d){
   };
 } %}
 
+################################################################################
+# Expression
 Expression -> ConditionalExpression {% id %}
 
 ConditionalExpression -> exp_or {% id %}

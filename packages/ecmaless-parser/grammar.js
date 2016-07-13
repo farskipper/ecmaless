@@ -92,7 +92,14 @@ var grammar = {
     ParserRules: [
     {"name": "main", "symbols": ["Statement"], "postprocess": id},
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
-    {"name": "Statement", "symbols": ["Expression"], "postprocess": id},
+    {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
+    {"name": "ExpressionStatement", "symbols": ["Expression"], "postprocess":  function(d){
+          return {
+            loc: d[0].loc,
+            type: "ExpressionStatement",
+            expression: d[0]
+          };
+        } },
     {"name": "Define$ebnf$1$subexpression$1", "symbols": [tok_EQ, "Expression"]},
     {"name": "Define$ebnf$1", "symbols": ["Define$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "Define$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
