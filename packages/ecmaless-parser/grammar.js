@@ -3,6 +3,19 @@
 (function () {
 function id(x) {return x[0]; }
 
+var flatten = function(toFlatten){
+  var isArray = Object.prototype.toString.call(toFlatten) === '[object Array]';
+
+  if (isArray && toFlatten.length > 0) {
+    var head = toFlatten[0];
+    var tail = toFlatten.slice(1);
+
+    return flatten(head).concat(flatten(tail));
+  } else {
+    return [].concat(toFlatten);
+  }
+};
+
 var noop = function(){};
 var noopArr = function(){return [];};
 var idArr = function(d){return [d[0]];};
@@ -85,13 +98,25 @@ var mkMemberExpression = function(loc, method, object, path){
   };
 };
 
-var mkLoc = function(d, start_i, end_i){
-  return {start: d[start_i].loc.start, end: d[end_i].loc.end};
+var mkLoc = function(d){
+  var loc = {};
+  var elms = flatten(d);
+  var i = 0;
+  while(i < elms.length){
+    if(elms[i] && elms[i].loc){
+      if(!loc.start){
+        loc.start = elms[i].loc;
+      }
+      loc.end = elms[i].loc;
+    }
+    i++;
+  }
+  return loc;
 };
 
 var infixOp = function(d){
   return {
-    loc: mkLoc(d, 0, 2),
+    loc: mkLoc(d),
     type: "InfixOperator",
     op: d[1].src,
     left: d[0],
@@ -141,7 +166,7 @@ var grammar = {
             else_block = else_block.body;
           }
           return {
-            loc: {},//TODO
+            loc: mkLoc(d),
             type: "If",
             test: d[1],
             then: d[2].body,
@@ -150,7 +175,7 @@ var grammar = {
         } },
     {"name": "While", "symbols": [tok_while, "Expression", "Block"], "postprocess":  function(d){
           return {
-            loc: mkLoc(d, 0, 2),
+            loc: mkLoc(d),
             type: "While",
             test: d[1],
             body: d[2].body
@@ -160,7 +185,7 @@ var grammar = {
     {"name": "Cond$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Cond", "symbols": [tok_cond, tok_COLON, tok_INDENT, "CondBlocks", "Cond$ebnf$1", tok_DEDENT], "postprocess":  function(d){
           return {
-            loc: mkLoc(d, 0, 5),
+            loc: mkLoc(d),
             type: "Cond",
             blocks: d[3],
             "else": d[4]
@@ -171,7 +196,7 @@ var grammar = {
     {"name": "CondBlock", "symbols": ["Expression", "Block"], "postprocess": 
         function(d){
           return {
-            loc: mkLoc(d, 0, 1),
+            loc: mkLoc(d),
             type: "CondBlock",
             test: d[0],
             body: d[1].body
@@ -182,7 +207,7 @@ var grammar = {
     {"name": "Case$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Case", "symbols": [tok_case, "Expression", tok_COLON, tok_INDENT, "CaseBlocks", "Case$ebnf$1", tok_DEDENT], "postprocess":  function(d){
           return {
-            loc: mkLoc(d, 0, 6),
+            loc: mkLoc(d),
             type: "Case",
             to_test: d[1],
             blocks: d[4],
@@ -194,7 +219,7 @@ var grammar = {
     {"name": "CaseBlock", "symbols": ["Expression", "Block"], "postprocess": 
         function(d){
           return {
-            loc: mkLoc(d, 0, 1),
+            loc: mkLoc(d),
             type: "CaseBlock",
             value: d[0],
             body: d[1].body
@@ -207,7 +232,7 @@ var grammar = {
     {"name": "Block", "symbols": [tok_COLON, tok_INDENT, "Block$ebnf$1", tok_DEDENT], "postprocess": 
         function(d){
           return {
-            loc: mkLoc(d, 0, 3),
+            loc: mkLoc(d),
             type: "Block",
             body: d[2]
           };
@@ -218,7 +243,7 @@ var grammar = {
     {"name": "ConditionalExpression", "symbols": ["exp_or", tok_QUESTION, "exp_or", tok_COLON, "exp_or"], "postprocess": 
         function(d){
           return {
-            loc: mkLoc(d, 0, 4),
+            loc: mkLoc(d),
             type: "ConditionalExpression",
             test: d[0],
             consequent: d[2],
@@ -242,10 +267,10 @@ var grammar = {
     {"name": "exp_product", "symbols": ["exp_product", tok_MODULO, "MemberExpression"], "postprocess": infixOp},
     {"name": "MemberExpression", "symbols": ["PrimaryExpression"], "postprocess": id},
     {"name": "MemberExpression", "symbols": ["MemberExpression", tok_DOT, "Identifier"], "postprocess":  function(d){
-            return mkMemberExpression(mkLoc(d, 0, 2), "dot", d[0], d[2]);
+            return mkMemberExpression(mkLoc(d), "dot", d[0], d[2]);
         } },
     {"name": "MemberExpression", "symbols": ["MemberExpression", tok_OPEN_SQ, "Expression", tok_CLOSE_SQ], "postprocess":  function(d){
-            return mkMemberExpression(mkLoc(d, 0, 3), "index", d[0], d[2]);
+            return mkMemberExpression(mkLoc(d), "index", d[0], d[2]);
         } },
     {"name": "PrimaryExpression", "symbols": ["Number"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": ["String"], "postprocess": id},
@@ -257,7 +282,7 @@ var grammar = {
     {"name": "PrimaryExpression", "symbols": [tok_OPEN_PN, "Expression", tok_CLOSE_PN], "postprocess": idN(1)},
     {"name": "Application", "symbols": ["MemberExpression", tok_OPEN_PN, "Expression_list", tok_CLOSE_PN], "postprocess":  function(d){
           return {
-            loc: mkLoc(d, 0, 3),
+            loc: mkLoc(d),
             type: "Application",
             callee: d[0],
             args: d[2]
@@ -265,7 +290,7 @@ var grammar = {
         } },
     {"name": "Struct", "symbols": [tok_OPEN_CU, "KeyValPairs", tok_CLOSE_CU], "postprocess":  function(d){
           return {
-            loc: mkLoc(d, 0, 2),
+            loc: mkLoc(d),
             type: "Struct",
             value: d[1]
           };
@@ -284,7 +309,7 @@ var grammar = {
         } },
     {"name": "Array", "symbols": [tok_OPEN_SQ, "Expression_list", tok_CLOSE_SQ], "postprocess":  function(d){
           return {
-            loc: mkLoc(d, 0, 2),
+            loc: mkLoc(d),
             type: "Array",
             value: d[1]
           };
@@ -297,7 +322,7 @@ var grammar = {
     {"name": "Expression_list_body", "symbols": ["Expression_list_body", tok_COMMA, "Expression"], "postprocess": concatArr},
     {"name": "Function", "symbols": [tok_fn, "Params", "Block"], "postprocess":  function(d){
           return {
-            loc: mkLoc(d, 0, 2),
+            loc: mkLoc(d),
             type: "Function",
             params: d[1],
             body: d[2].body
@@ -318,7 +343,7 @@ var grammar = {
             return d[0];
           }
           return {
-            loc: mkLoc(d, 0, 1),
+            loc: mkLoc(d),
             type: "DotDotDot",
             value: d[0]
           };
