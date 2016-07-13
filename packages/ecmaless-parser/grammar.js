@@ -36,6 +36,8 @@ var tok_COMMA = tok(",");
 var tok_DOT = tok(".");
 var tok_DOTDOTDOT = tok("...");
 var tok_EQ = tok("=");
+var tok_OPEN_PN = tok("(");
+var tok_CLOSE_PN = tok(")");
 var tok_OPEN_SQ = tok("[");
 var tok_CLOSE_SQ = tok("]");
 var tok_OPEN_CU = tok("{");
@@ -70,12 +72,24 @@ var grammar = {
             init: d[2] ? d[2][1] : void 0
           };
         } },
-    {"name": "Expression", "symbols": ["Number"], "postprocess": id},
-    {"name": "Expression", "symbols": ["String"], "postprocess": id},
-    {"name": "Expression", "symbols": ["Identifier"], "postprocess": id},
-    {"name": "Expression", "symbols": ["Function"], "postprocess": id},
-    {"name": "Expression", "symbols": ["Array"], "postprocess": id},
-    {"name": "Expression", "symbols": ["Struct"], "postprocess": id},
+    {"name": "Expression", "symbols": ["MemberExpression"], "postprocess": id},
+    {"name": "MemberExpression", "symbols": ["PrimaryExpression"], "postprocess": id},
+    {"name": "PrimaryExpression", "symbols": ["Number"], "postprocess": id},
+    {"name": "PrimaryExpression", "symbols": ["String"], "postprocess": id},
+    {"name": "PrimaryExpression", "symbols": ["Identifier"], "postprocess": id},
+    {"name": "PrimaryExpression", "symbols": ["Function"], "postprocess": id},
+    {"name": "PrimaryExpression", "symbols": ["Application"], "postprocess": id},
+    {"name": "PrimaryExpression", "symbols": ["Array"], "postprocess": id},
+    {"name": "PrimaryExpression", "symbols": ["Struct"], "postprocess": id},
+    {"name": "PrimaryExpression", "symbols": [tok_OPEN_PN, "Expression", tok_CLOSE_PN], "postprocess": idN(1)},
+    {"name": "Application", "symbols": ["MemberExpression", tok_OPEN_PN, "Expression_list", tok_CLOSE_PN], "postprocess":  function(d){
+          return {
+            loc: {start: d[0].loc.start, end: d[3].loc.end},
+            type: "Application",
+            callee: d[0],
+            args: d[2]
+          };
+        } },
     {"name": "Struct", "symbols": [tok_OPEN_CU, "KeyValPairs", tok_CLOSE_CU], "postprocess":  function(d){
           return {
             loc: {start: d[0].loc.start, end: d[2].loc.end},

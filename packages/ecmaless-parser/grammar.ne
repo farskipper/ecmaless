@@ -32,6 +32,8 @@ var tok_COMMA = tok(",");
 var tok_DOT = tok(".");
 var tok_DOTDOTDOT = tok("...");
 var tok_EQ = tok("=");
+var tok_OPEN_PN = tok("(");
+var tok_CLOSE_PN = tok(")");
 var tok_OPEN_SQ = tok("[");
 var tok_CLOSE_SQ = tok("]");
 var tok_OPEN_CU = tok("{");
@@ -67,13 +69,28 @@ Define -> %tok_def Identifier (%tok_EQ Expression):? {% function(d){
   };
 } %}
 
-Expression ->
+Expression -> MemberExpression {% id %}
+
+MemberExpression -> PrimaryExpression {% id %}
+
+PrimaryExpression ->
       Number {% id %}
     | String {% id %}
     | Identifier {% id %}
     | Function {% id %}
+    | Application {% id %}
     | Array {% id %}
     | Struct {% id %}
+    | %tok_OPEN_PN Expression %tok_CLOSE_PN {% idN(1) %}
+
+Application -> MemberExpression %tok_OPEN_PN Expression_list %tok_CLOSE_PN {% function(d){
+  return {
+    loc: {start: d[0].loc.start, end: d[3].loc.end},
+    type: "Application",
+    callee: d[0],
+    args: d[2]
+  };
+} %}
 
 Struct -> %tok_OPEN_CU KeyValPairs %tok_CLOSE_CU {% function(d){
   return {

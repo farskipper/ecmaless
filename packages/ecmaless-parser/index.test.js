@@ -31,6 +31,9 @@ mk.def = function(id, init){
 mk.fn = function(params, body){
   return {type: "Function", params: params, body: body};
 };
+mk.app = function(callee, args){
+  return {type: "Application", callee: callee, args: args};
+};
 mk.arr = function(value){
   return {type: "Array", value: value};
 };
@@ -105,13 +108,15 @@ test("parser", function(t){
   tst("fn [a, b]:\n    a", mk.fn([mk.id("a"), mk.id("b")], [mk.id("a")]));
   tst("fn [a,b,]:\n    a", mk.fn([mk.id("a"), mk.id("b")], [mk.id("a")]));
   tst("fn [a, b...]:\n    a", mk.fn([mk.id("a"), mk.ddd(mk.id("b"))], [mk.id("a")]));
+  tst("fn [a, b...]:\n    a", mk.fn([mk.id("a"), mk.ddd(mk.id("b"))], [mk.id("a")]));
 
-  var src = "";
-  src += "def id = fn args :\n"
-  src += "    args"
-  tst(src, mk.def(mk.id("id"), mk.fn(mk.id("args"), [
-    mk.id("args")
-  ])));
+  tst("add()", mk.app(mk.id("add"), []));
+  tstFail("add(,)");
+  tst("add(1, 2)", mk.app(mk.id("add"), [mkv(1), mkv(2)]));
+  tst("add(1, 2,)", mk.app(mk.id("add"), [mkv(1), mkv(2)]));
+  tst("add  (1)", mk.app(mk.id("add"), [mkv(1)]));
+
+  tst("(1)", mkv(1));
 
   t.end();
 });
