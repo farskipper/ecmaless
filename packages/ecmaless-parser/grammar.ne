@@ -104,6 +104,7 @@ main -> Statement {% id %}
 Statement ->
       Define {% id %}
     | ExpressionStatement {% id %}
+    | If {% id %}
     | While {% id %}
     | Cond {% id %}
     | Case {% id %}
@@ -126,6 +127,20 @@ Define -> %tok_def Identifier (%tok_EQ Expression):? {% function(d){
     type: "Define",
     id: d[1],
     init: d[2] ? d[2][1] : void 0
+  };
+} %}
+
+If -> %tok_if Expression Block (%tok_else (If | Block)):? {% function(d){
+  var else_block = d[3] && d[3][1] && d[3][1][0];
+  if(else_block && else_block.type === "Block"){
+    else_block = else_block.body;
+  }
+  return {
+    loc: {},//TODO
+    type: "If",
+    test: d[1],
+    then: d[2].body,
+    "else": else_block
   };
 } %}
 

@@ -220,5 +220,44 @@ test("parser", function(t){
     "else": [mk.stmt(mk.id("d"))]
   });
 
+  src = "";
+  src += "if a:\n";
+  src += "    b\n";
+  tst(src, {
+    type: "If",
+    test: mk.id("a"),
+    then: [mk.stmt(mk.id("b"))],
+    "else": null
+  });
+  src = "";
+  src += "if a:\n";
+  src += "    b\n";
+  src += "else:\n";
+  src += "    c\n";
+  tst(src, {
+    type: "If",
+    test: mk.id("a"),
+    then: [mk.stmt(mk.id("b"))],
+    "else": [mk.stmt(mk.id("c"))]
+  });
+  src = "";
+  src += "if a:\n";
+  src += "    b\n";
+  src += "else if c:\n";
+  src += "    d\n";
+  src += "else:\n";
+  src += "    e\n";
+  tst(src, {
+    type: "If",
+    test: mk.id("a"),
+    then: [mk.stmt(mk.id("b"))],
+    "else": {
+      type: "If",
+      test: mk.id("c"),
+      then: [mk.stmt(mk.id("d"))],
+      "else": [mk.stmt(mk.id("e"))]
+    }
+  });
+
   t.end();
 });

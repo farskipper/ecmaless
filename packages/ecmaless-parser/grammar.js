@@ -104,6 +104,7 @@ var grammar = {
     {"name": "main", "symbols": ["Statement"], "postprocess": id},
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
     {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
+    {"name": "Statement", "symbols": ["If"], "postprocess": id},
     {"name": "Statement", "symbols": ["While"], "postprocess": id},
     {"name": "Statement", "symbols": ["Cond"], "postprocess": id},
     {"name": "Statement", "symbols": ["Case"], "postprocess": id},
@@ -127,6 +128,24 @@ var grammar = {
             type: "Define",
             id: d[1],
             init: d[2] ? d[2][1] : void 0
+          };
+        } },
+    {"name": "If$ebnf$1$subexpression$1$subexpression$1", "symbols": ["If"]},
+    {"name": "If$ebnf$1$subexpression$1$subexpression$1", "symbols": ["Block"]},
+    {"name": "If$ebnf$1$subexpression$1", "symbols": [tok_else, "If$ebnf$1$subexpression$1$subexpression$1"]},
+    {"name": "If$ebnf$1", "symbols": ["If$ebnf$1$subexpression$1"], "postprocess": id},
+    {"name": "If$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "If", "symbols": [tok_if, "Expression", "Block", "If$ebnf$1"], "postprocess":  function(d){
+          var else_block = d[3] && d[3][1] && d[3][1][0];
+          if(else_block && else_block.type === "Block"){
+            else_block = else_block.body;
+          }
+          return {
+            loc: {},//TODO
+            type: "If",
+            test: d[1],
+            then: d[2].body,
+            "else": else_block
           };
         } },
     {"name": "While", "symbols": [tok_while, "Expression", "Block"], "postprocess":  function(d){
