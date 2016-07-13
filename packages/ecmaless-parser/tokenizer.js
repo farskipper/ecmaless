@@ -69,7 +69,7 @@ module.exports = function(src){
   t.addRule(/(^""$)|(^"([^"]|\\")*[^\\]"$)/, "STRING");
   t.addRule(/^[0-9]+\.?[.0-9]*$/, "NUMBER");
   t.addRule(/^[a-zA-Z_][a-zA-Z0-9_]*$/, "SYMBOL");
-  t.addRule(/^[:+=,.]$/, "RAW");
+  t.addRule(/(^[:+=,]$)|(^\.\.?\.?$)/, "RAW");
 
   var key;
   for(key in groups){

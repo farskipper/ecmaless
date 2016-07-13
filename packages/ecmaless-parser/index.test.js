@@ -31,8 +31,8 @@ mk.fn = function(params, body){
 mk.arr = function(value){
   return {type: "Array", value: value};
 };
-mk.ddd = function(){
-  return {type: "DotDotDot"};
+mk.ddd = function(value){
+  return {type: "DotDotDot", value: value};
 };
 
 test("parser", function(t){
@@ -76,7 +76,7 @@ test("parser", function(t){
   tst("fn [a,]:\n    a", mk.fn([mk.sym("a")], [mk.sym("a")]));
   tst("fn [a, b]:\n    a", mk.fn([mk.sym("a"), mk.sym("b")], [mk.sym("a")]));
   tst("fn [a,b,]:\n    a", mk.fn([mk.sym("a"), mk.sym("b")], [mk.sym("a")]));
-  tst("fn [a, b...]:\n    a", mk.fn([mk.sym("a"), [mk.sym("b"), mk.ddd()]], [mk.sym("a")]));
+  tst("fn [a, b...]:\n    a", mk.fn([mk.sym("a"), mk.ddd(mk.sym("b"))], [mk.sym("a")]));
 
   var src = "";
   src += "def id = fn args :\n"

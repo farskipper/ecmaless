@@ -34,6 +34,7 @@ var tok_DEDENT = tok("DEDENT");
 var tok_COLON = tok(":");
 var tok_COMMA = tok(",");
 var tok_DOT = tok(".");
+var tok_DOTDOTDOT = tok("...");
 var tok_EQ = tok("=");
 var tok_OPEN_SQ = tok("[");
 var tok_CLOSE_SQ = tok("]");
@@ -100,22 +101,20 @@ var grammar = {
     {"name": "Params", "symbols": [tok_OPEN_SQ, "Params_body", "Params$ebnf$1", tok_CLOSE_SQ], "postprocess": idN(1)},
     {"name": "Params_body", "symbols": ["Param"], "postprocess": idArr},
     {"name": "Params_body", "symbols": ["Params_body", tok_COMMA, "Param"], "postprocess": concatArr},
-    {"name": "Param$ebnf$1", "symbols": ["DotDotDot"], "postprocess": id},
+    {"name": "Param$ebnf$1", "symbols": [tok_DOTDOTDOT], "postprocess": id},
     {"name": "Param$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Param", "symbols": ["Symbol", "Param$ebnf$1"], "postprocess": 
         function(d){
           if(!d[1]){
             return d[0];
           }
-          return [d[0], d[1]];
+          return {
+            loc: {start: d[0].loc.start, end: d[1].loc.end},
+            type: "DotDotDot",
+            value: d[0]
+          };
         }
         },
-    {"name": "DotDotDot", "symbols": [tok_DOT, tok_DOT, tok_DOT], "postprocess":  function(d){
-          return {
-            loc: {start: d[0].loc.start, end: d[2].loc.end},
-            type: "DotDotDot"
-          };
-        } },
     {"name": "Blok$ebnf$1", "symbols": []},
     {"name": "Blok$ebnf$1", "symbols": ["Statement", "Blok$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
     {"name": "Blok", "symbols": [tok_COLON, tok_INDENT, "Blok$ebnf$1", tok_DEDENT], "postprocess": 
