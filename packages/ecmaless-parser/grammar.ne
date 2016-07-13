@@ -52,7 +52,7 @@ Statement ->
       Define {% id %}
     | Expression {% id %}
 
-Define -> %tok_def Symbol (%tok_EQ Expression):? {% function(d){
+Define -> %tok_def Identifier (%tok_EQ Expression):? {% function(d){
   var loc = d[0].loc;
   if(d[2]){
     loc = {start: d[0].loc.start, end: d[2][1].loc.end};
@@ -68,7 +68,7 @@ Define -> %tok_def Symbol (%tok_EQ Expression):? {% function(d){
 Expression ->
       Number {% id %}
     | String {% id %}
-    | Symbol {% id %}
+    | Identifier {% id %}
     | Function {% id %}
     | Array {% id %}
 
@@ -95,7 +95,7 @@ Function -> %tok_fn Params Blok {% function(d){
   };
 } %}
 
-Params -> Symbol {% id %}
+Params -> Identifier {% id %}
     | %tok_OPEN_SQ %tok_CLOSE_SQ {% noopArr %}
     | %tok_OPEN_SQ Params_body %tok_COMMA:? %tok_CLOSE_SQ {% idN(1) %}
 
@@ -103,7 +103,7 @@ Params_body ->
       Param {% idArr %}
     | Params_body %tok_COMMA Param {% concatArr %}
 
-Param -> Symbol %tok_DOTDOTDOT:? {%
+Param -> Identifier %tok_DOTDOTDOT:? {%
   function(d){
     if(!d[1]){
       return d[0];
@@ -135,6 +135,6 @@ String -> %tok_STRING {% function(d){
   return mkType(d, "String", value);
 } %}
 
-Symbol -> %tok_SYMBOL {% function(d){
-  return mkType(d, "Symbol", d[0].src);
+Identifier -> %tok_SYMBOL {% function(d){
+  return mkType(d, "Identifier", d[0].src);
 } %}

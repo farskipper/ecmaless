@@ -19,8 +19,8 @@ mk.num = function(value){
 mk.str = function(value){
   return {type: "String", value: value};
 };
-mk.sym = function(value){
-  return {type: "Symbol", value: value};
+mk.id = function(value){
+  return {type: "Identifier", value: value};
 };
 mk.def = function(id, init){
   return {type: "Define", id: id, init: init};
@@ -53,8 +53,8 @@ test("parser", function(t){
   tst("\"ok\"", mk.str("ok"));
   tst("\"\\\"that\\\"\n\"", mk.str("\"that\"\n"));
 
-  tst("def a", mk.def(mk.sym("a")));
-  tst("def a = 1.2", mk.def(mk.sym("a"), mk.num(1.2)));
+  tst("def a", mk.def(mk.id("a")));
+  tst("def a = 1.2", mk.def(mk.id("a"), mk.num(1.2)));
 
   tst("[]", mk.arr([]));
   tstFail("[,]");
@@ -65,24 +65,24 @@ test("parser", function(t){
 
   tstFail("fn \n    a");
   tstFail("fn []\n    a");
-  tst("fn args:\n    a", mk.fn(mk.sym("args"), [mk.sym("a")]));
-  tst("fn []:\n    a", mk.fn([], [mk.sym("a")]));
-  tst("fn[]:\n    a", mk.fn([], [mk.sym("a")]));
-  tst("fn [  ] :\n    a", mk.fn([], [mk.sym("a")]));
+  tst("fn args:\n    a", mk.fn(mk.id("args"), [mk.id("a")]));
+  tst("fn []:\n    a", mk.fn([], [mk.id("a")]));
+  tst("fn[]:\n    a", mk.fn([], [mk.id("a")]));
+  tst("fn [  ] :\n    a", mk.fn([], [mk.id("a")]));
   tstFail("fn [,]:\n    a");
   tstFail("fn [1]:\n    a");
   tstFail("fn [1, 2]:\n    a");
-  tst("fn [a]:\n    a", mk.fn([mk.sym("a")], [mk.sym("a")]));
-  tst("fn [a,]:\n    a", mk.fn([mk.sym("a")], [mk.sym("a")]));
-  tst("fn [a, b]:\n    a", mk.fn([mk.sym("a"), mk.sym("b")], [mk.sym("a")]));
-  tst("fn [a,b,]:\n    a", mk.fn([mk.sym("a"), mk.sym("b")], [mk.sym("a")]));
-  tst("fn [a, b...]:\n    a", mk.fn([mk.sym("a"), mk.ddd(mk.sym("b"))], [mk.sym("a")]));
+  tst("fn [a]:\n    a", mk.fn([mk.id("a")], [mk.id("a")]));
+  tst("fn [a,]:\n    a", mk.fn([mk.id("a")], [mk.id("a")]));
+  tst("fn [a, b]:\n    a", mk.fn([mk.id("a"), mk.id("b")], [mk.id("a")]));
+  tst("fn [a,b,]:\n    a", mk.fn([mk.id("a"), mk.id("b")], [mk.id("a")]));
+  tst("fn [a, b...]:\n    a", mk.fn([mk.id("a"), mk.ddd(mk.id("b"))], [mk.id("a")]));
 
   var src = "";
   src += "def id = fn args :\n"
   src += "    args"
-  tst(src, mk.def(mk.sym("id"), mk.fn(mk.sym("args"), [
-    mk.sym("args")
+  tst(src, mk.def(mk.id("id"), mk.fn(mk.id("args"), [
+    mk.id("args")
   ])));
 
   t.end();

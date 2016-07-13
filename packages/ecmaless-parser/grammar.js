@@ -56,7 +56,7 @@ var grammar = {
     {"name": "Define$ebnf$1$subexpression$1", "symbols": [tok_EQ, "Expression"]},
     {"name": "Define$ebnf$1", "symbols": ["Define$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "Define$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Define", "symbols": [tok_def, "Symbol", "Define$ebnf$1"], "postprocess":  function(d){
+    {"name": "Define", "symbols": [tok_def, "Identifier", "Define$ebnf$1"], "postprocess":  function(d){
           var loc = d[0].loc;
           if(d[2]){
             loc = {start: d[0].loc.start, end: d[2][1].loc.end};
@@ -70,7 +70,7 @@ var grammar = {
         } },
     {"name": "Expression", "symbols": ["Number"], "postprocess": id},
     {"name": "Expression", "symbols": ["String"], "postprocess": id},
-    {"name": "Expression", "symbols": ["Symbol"], "postprocess": id},
+    {"name": "Expression", "symbols": ["Identifier"], "postprocess": id},
     {"name": "Expression", "symbols": ["Function"], "postprocess": id},
     {"name": "Expression", "symbols": ["Array"], "postprocess": id},
     {"name": "Array", "symbols": [tok_OPEN_SQ, "Expression_list", tok_CLOSE_SQ], "postprocess":  function(d){
@@ -94,7 +94,7 @@ var grammar = {
             body: d[2].body
           };
         } },
-    {"name": "Params", "symbols": ["Symbol"], "postprocess": id},
+    {"name": "Params", "symbols": ["Identifier"], "postprocess": id},
     {"name": "Params", "symbols": [tok_OPEN_SQ, tok_CLOSE_SQ], "postprocess": noopArr},
     {"name": "Params$ebnf$1", "symbols": [tok_COMMA], "postprocess": id},
     {"name": "Params$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
@@ -103,7 +103,7 @@ var grammar = {
     {"name": "Params_body", "symbols": ["Params_body", tok_COMMA, "Param"], "postprocess": concatArr},
     {"name": "Param$ebnf$1", "symbols": [tok_DOTDOTDOT], "postprocess": id},
     {"name": "Param$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Param", "symbols": ["Symbol", "Param$ebnf$1"], "postprocess": 
+    {"name": "Param", "symbols": ["Identifier", "Param$ebnf$1"], "postprocess": 
         function(d){
           if(!d[1]){
             return d[0];
@@ -133,8 +133,8 @@ var grammar = {
           var value = d[0].src.replace(/(^")|("$)/g, "").replace(/\\"/g, "\"");
           return mkType(d, "String", value);
         } },
-    {"name": "Symbol", "symbols": [tok_SYMBOL], "postprocess":  function(d){
-          return mkType(d, "Symbol", d[0].src);
+    {"name": "Identifier", "symbols": [tok_SYMBOL], "postprocess":  function(d){
+          return mkType(d, "Identifier", d[0].src);
         } }
 ]
   , ParserStart: "main"
