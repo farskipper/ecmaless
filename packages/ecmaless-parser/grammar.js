@@ -43,8 +43,11 @@ var tok_OPEN_SQ = tok("[");
 var tok_CLOSE_SQ = tok("]");
 var tok_OPEN_CU = tok("{");
 var tok_CLOSE_CU = tok("}");
+
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
+var tok_while = tok("SYMBOL", "while");
+
 
 var tok_OR = tok("||");
 var tok_AND = tok("&&");
@@ -93,6 +96,7 @@ var grammar = {
     {"name": "main", "symbols": ["Statement"], "postprocess": id},
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
     {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
+    {"name": "Statement", "symbols": ["While"], "postprocess": id},
     {"name": "ExpressionStatement", "symbols": ["Expression"], "postprocess":  function(d){
           return {
             loc: d[0].loc,
@@ -115,6 +119,25 @@ var grammar = {
             init: d[2] ? d[2][1] : void 0
           };
         } },
+    {"name": "While", "symbols": [tok_while, "Expression", "Block"], "postprocess":  function(d){
+          return {
+            loc: mkLoc(d, 0, 2),
+            type: "While",
+            test: d[1],
+            body: d[2].body
+          };
+        } },
+    {"name": "Block$ebnf$1", "symbols": []},
+    {"name": "Block$ebnf$1", "symbols": ["Statement", "Block$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+    {"name": "Block", "symbols": [tok_COLON, tok_INDENT, "Block$ebnf$1", tok_DEDENT], "postprocess": 
+        function(d){
+          return {
+            loc: mkLoc(d, 0, 3),
+            type: "Block",
+            body: d[2]
+          };
+        }
+        },
     {"name": "Expression", "symbols": ["ConditionalExpression"], "postprocess": id},
     {"name": "ConditionalExpression", "symbols": ["exp_or"], "postprocess": id},
     {"name": "ConditionalExpression", "symbols": ["exp_or", tok_QUESTION, "exp_or", tok_COLON, "exp_or"], "postprocess": 
@@ -197,7 +220,7 @@ var grammar = {
     {"name": "Expression_list", "symbols": ["Expression_list_body", "Expression_list$ebnf$1"], "postprocess": id},
     {"name": "Expression_list_body", "symbols": ["Expression"], "postprocess": idArr},
     {"name": "Expression_list_body", "symbols": ["Expression_list_body", tok_COMMA, "Expression"], "postprocess": concatArr},
-    {"name": "Function", "symbols": [tok_fn, "Params", "Blok"], "postprocess":  function(d){
+    {"name": "Function", "symbols": [tok_fn, "Params", "Block"], "postprocess":  function(d){
           return {
             loc: mkLoc(d, 0, 2),
             type: "Function",
@@ -223,17 +246,6 @@ var grammar = {
             loc: mkLoc(d, 0, 1),
             type: "DotDotDot",
             value: d[0]
-          };
-        }
-        },
-    {"name": "Blok$ebnf$1", "symbols": []},
-    {"name": "Blok$ebnf$1", "symbols": ["Statement", "Blok$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "Blok", "symbols": [tok_COLON, tok_INDENT, "Blok$ebnf$1", tok_DEDENT], "postprocess": 
-        function(d){
-          return {
-            loc: mkLoc(d, 0, 3),
-            type: "Block",
-            body: d[2]
           };
         }
         },
