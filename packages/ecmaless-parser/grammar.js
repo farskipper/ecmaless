@@ -34,6 +34,7 @@ var tok_DEDENT = tok("DEDENT");
 var tok_COLON = tok(":");
 var tok_COMMA = tok(",");
 var tok_DOT = tok(".");
+var tok_QUESTION = tok("?");
 var tok_DOTDOTDOT = tok("...");
 var tok_EQ = tok("=");
 var tok_OPEN_PN = tok("(");
@@ -87,7 +88,19 @@ var grammar = {
             init: d[2] ? d[2][1] : void 0
           };
         } },
-    {"name": "Expression", "symbols": ["MemberExpression"], "postprocess": id},
+    {"name": "Expression", "symbols": ["ConditionalExpression"], "postprocess": id},
+    {"name": "ConditionalExpression", "symbols": ["MemberExpression"], "postprocess": id},
+    {"name": "ConditionalExpression", "symbols": ["MemberExpression", tok_QUESTION, "MemberExpression", tok_COLON, "MemberExpression"], "postprocess": 
+        function(d){
+          return {
+            loc: mkLoc(d, 0, 4),
+            type: "ConditionalExpression",
+            test: d[0],
+            consequent: d[2],
+            alternate: d[4]
+          };
+        }
+        },
     {"name": "MemberExpression", "symbols": ["PrimaryExpression"], "postprocess": id},
     {"name": "MemberExpression", "symbols": ["MemberExpression", tok_DOT, "Identifier"], "postprocess":  function(d){
             return mkMemberExpression(mkLoc(d, 0, 2), "dot", d[0], d[2]);

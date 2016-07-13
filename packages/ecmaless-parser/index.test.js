@@ -46,6 +46,14 @@ mk.ddd = function(value){
 mk.mem = function(method, object, path){
   return {type: "MemberExpression", object: object, path: path, method: method};
 };
+mk.cond = function(test, consequent, alternate){
+  return {
+    type: "ConditionalExpression",
+    test: test,
+    consequent: consequent,
+    alternate: alternate
+  };
+};
 
 var mkv = function(v){
   if(_.isNumber(v)){
@@ -123,6 +131,13 @@ test("parser", function(t){
 
   tst("a.b.c", mk.mem("dot", mk.mem("dot", mk.id("a"), mk.id("b")), mk.id("c")));
   tst("a[b][0]", mk.mem("index", mk.mem("index", mk.id("a"), mk.id("b")), mkv(0)));
+
+  tst("a?1:2", mk.cond(mk.id("a"), mkv(1), mkv(2)));
+  tst("a ? 1 : 2", mk.cond(mk.id("a"), mkv(1), mkv(2)));
+  //Don't nest these without parans!
+  tstFail("1?2?3:4:5");
+  tstFail("1?2:3?4:5");
+  tst("1?2:(3?4:5)", mk.cond(mkv(1), mkv(2), mk.cond(mkv(3), mkv(4), mkv(5))));
 
   t.end();
 });
