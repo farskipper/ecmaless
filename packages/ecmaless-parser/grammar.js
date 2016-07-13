@@ -79,7 +79,8 @@ var grammar = {
           return mkType(d, "Number", parseFloat(d[0].src) || 0);
         } },
     {"name": "String", "symbols": [tok_STRING], "postprocess":  function(d){
-          return mkType(d, "String", JSON.parse(d[0].src));
+          var value = d[0].src.replace(/(^")|("$)/g, "").replace(/\\"/g, "\"");
+          return mkType(d, "String", value);
         } },
     {"name": "Symbol", "symbols": [tok_SYMBOL], "postprocess":  function(d){
           return mkType(d, "Symbol", d[0].src);

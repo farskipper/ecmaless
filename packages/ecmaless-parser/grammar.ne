@@ -80,7 +80,8 @@ Number -> %tok_NUMBER {% function(d){
 } %}
 
 String -> %tok_STRING {% function(d){
-  return mkType(d, "String", JSON.parse(d[0].src));
+  var value = d[0].src.replace(/(^")|("$)/g, "").replace(/\\"/g, "\"");
+  return mkType(d, "String", value);
 } %}
 
 Symbol -> %tok_SYMBOL {% function(d){

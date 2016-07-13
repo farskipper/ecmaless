@@ -37,7 +37,7 @@ test("parser", function(t){
 
   tst("123", mk.num(123));
   tst("\"ok\"", mk.str("ok"));
-  tst("\"\\\"that\\\"\"", mk.str("\"that\""));
+  tst("\"\\\"that\\\"\n\"", mk.str("\"that\"\n"));
 
   tst("def a", mk.def(mk.sym("a")));
   tst("def a = 1.2", mk.def(mk.sym("a"), mk.num(1.2)));
