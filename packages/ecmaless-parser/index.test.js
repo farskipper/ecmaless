@@ -259,5 +259,17 @@ test("parser", function(t){
     }
   });
 
+  src = "";
+  src += "try:\n";
+  src += "    a\n";
+  src += "catch b:\n";
+  src += "    c";
+  tst(src, {
+    type: "TryCatch",
+    try_block: [mk.stmt(mk.id("a"))],
+    catch_id: mk.id("b"),
+    catch_block: [mk.stmt(mk.id("c"))]
+  });
+
   t.end();
 });

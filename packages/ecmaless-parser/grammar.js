@@ -64,6 +64,8 @@ var tok_else = tok("SYMBOL", "else");
 var tok_cond = tok("SYMBOL", "cond");
 var tok_case = tok("SYMBOL", "case");
 var tok_while = tok("SYMBOL", "while");
+var tok_try = tok("SYMBOL", "try");
+var tok_catch = tok("SYMBOL", "catch");
 
 var isReserved = function(src){
   //TODO
@@ -133,6 +135,7 @@ var grammar = {
     {"name": "Statement", "symbols": ["While"], "postprocess": id},
     {"name": "Statement", "symbols": ["Cond"], "postprocess": id},
     {"name": "Statement", "symbols": ["Case"], "postprocess": id},
+    {"name": "Statement", "symbols": ["TryCatch"], "postprocess": id},
     {"name": "ExpressionStatement", "symbols": ["Expression"], "postprocess":  function(d){
           return {
             loc: d[0].loc,
@@ -226,6 +229,15 @@ var grammar = {
           };
         }
         },
+    {"name": "TryCatch", "symbols": [tok_try, "Block", tok_catch, "Identifier", "Block"], "postprocess":  function(d){
+          return {
+            loc: mkLoc(d),
+            type: "TryCatch",
+            try_block: d[1].body,
+            catch_id: d[3],
+            catch_block: d[4].body
+          };
+        } },
     {"name": "ElseBlock", "symbols": [tok_else, "Block"], "postprocess": function(d){return d[1].body;}},
     {"name": "Block$ebnf$1", "symbols": []},
     {"name": "Block$ebnf$1", "symbols": ["Statement", "Block$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
