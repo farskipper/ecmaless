@@ -42,8 +42,15 @@ var tok_CLOSE_CU = tok("}");
 
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
+var tok_if = tok("SYMBOL", "if");
+var tok_else = tok("SYMBOL", "else");
+var tok_cond = tok("SYMBOL", "cond");
 var tok_while = tok("SYMBOL", "while");
 
+var isReserved = function(src){
+  //TODO
+  return src === "else";
+};
 
 var tok_OR = tok("||");
 var tok_AND = tok("&&");
@@ -97,6 +104,7 @@ Statement ->
       Define {% id %}
     | ExpressionStatement {% id %}
     | While {% id %}
+    | Cond {% id %}
 
 ExpressionStatement -> Expression {% function(d){
   return {
@@ -127,6 +135,31 @@ While -> %tok_while Expression Block {% function(d){
     body: d[2].body
   };
 } %}
+
+Cond -> %tok_cond %tok_COLON %tok_INDENT CondBlocks ElseBlock:? %tok_DEDENT {% function(d){
+  return {
+    loc: mkLoc(d, 0, 5),
+    type: "Cond",
+    blocks: d[3],
+    "else": d[4]
+  };
+} %}
+
+CondBlocks -> CondBlock {% idArr %}
+    | CondBlocks CondBlock {% function(d){return d[0].concat(d[1])} %}
+
+CondBlock -> Expression Block {%
+  function(d){
+    return {
+      loc: mkLoc(d, 0, 1),
+      type: "CondBlock",
+      test: d[0],
+      body: d[1].body
+    };
+  }
+%}
+
+ElseBlock -> %tok_else Block {% function(d){return d[1].body;} %}
 
 Block -> %tok_COLON %tok_INDENT Statement:* %tok_DEDENT {%
   function(d){
@@ -274,8 +307,12 @@ String -> %tok_STRING {% function(d){
   return mkType(d, "String", value);
 } %}
 
-Identifier -> %tok_SYMBOL {% function(d){
-  return mkType(d, "Identifier", d[0].src);
+Identifier -> %tok_SYMBOL {% function(d, start, reject){
+  var src = d[0].src;
+  if(isReserved(src)){
+    return reject;
+  }
+  return mkType(d, "Identifier", src);
 } %}
 
 Symbol -> %tok_SYMBOL {% function(d){

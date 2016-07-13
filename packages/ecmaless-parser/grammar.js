@@ -46,8 +46,15 @@ var tok_CLOSE_CU = tok("}");
 
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
+var tok_if = tok("SYMBOL", "if");
+var tok_else = tok("SYMBOL", "else");
+var tok_cond = tok("SYMBOL", "cond");
 var tok_while = tok("SYMBOL", "while");
 
+var isReserved = function(src){
+  //TODO
+  return src === "else";
+};
 
 var tok_OR = tok("||");
 var tok_AND = tok("&&");
@@ -97,6 +104,7 @@ var grammar = {
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
     {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
     {"name": "Statement", "symbols": ["While"], "postprocess": id},
+    {"name": "Statement", "symbols": ["Cond"], "postprocess": id},
     {"name": "ExpressionStatement", "symbols": ["Expression"], "postprocess":  function(d){
           return {
             loc: d[0].loc,
@@ -127,6 +135,29 @@ var grammar = {
             body: d[2].body
           };
         } },
+    {"name": "Cond$ebnf$1", "symbols": ["ElseBlock"], "postprocess": id},
+    {"name": "Cond$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Cond", "symbols": [tok_cond, tok_COLON, tok_INDENT, "CondBlocks", "Cond$ebnf$1", tok_DEDENT], "postprocess":  function(d){
+          return {
+            loc: mkLoc(d, 0, 5),
+            type: "Cond",
+            blocks: d[3],
+            "else": d[4]
+          };
+        } },
+    {"name": "CondBlocks", "symbols": ["CondBlock"], "postprocess": idArr},
+    {"name": "CondBlocks", "symbols": ["CondBlocks", "CondBlock"], "postprocess": function(d){return d[0].concat(d[1])}},
+    {"name": "CondBlock", "symbols": ["Expression", "Block"], "postprocess": 
+        function(d){
+          return {
+            loc: mkLoc(d, 0, 1),
+            type: "CondBlock",
+            test: d[0],
+            body: d[1].body
+          };
+        }
+        },
+    {"name": "ElseBlock", "symbols": [tok_else, "Block"], "postprocess": function(d){return d[1].body;}},
     {"name": "Block$ebnf$1", "symbols": []},
     {"name": "Block$ebnf$1", "symbols": ["Statement", "Block$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
     {"name": "Block", "symbols": [tok_COLON, tok_INDENT, "Block$ebnf$1", tok_DEDENT], "postprocess": 
@@ -256,8 +287,12 @@ var grammar = {
           var value = d[0].src.replace(/(^")|("$)/g, "").replace(/\\"/g, "\"");
           return mkType(d, "String", value);
         } },
-    {"name": "Identifier", "symbols": [tok_SYMBOL], "postprocess":  function(d){
-          return mkType(d, "Identifier", d[0].src);
+    {"name": "Identifier", "symbols": [tok_SYMBOL], "postprocess":  function(d, start, reject){
+          var src = d[0].src;
+          if(isReserved(src)){
+            return reject;
+          }
+          return mkType(d, "Identifier", src);
         } },
     {"name": "Symbol", "symbols": [tok_SYMBOL], "postprocess":  function(d){
           return mkType(d, "Symbol", d[0].src);
