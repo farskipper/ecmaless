@@ -45,11 +45,12 @@ var tok_fn = tok("SYMBOL", "fn");
 var tok_if = tok("SYMBOL", "if");
 var tok_else = tok("SYMBOL", "else");
 var tok_cond = tok("SYMBOL", "cond");
+var tok_case = tok("SYMBOL", "case");
 var tok_while = tok("SYMBOL", "while");
 
 var isReserved = function(src){
   //TODO
-  return src === "else";
+  return src === "else" || src === "case";
 };
 
 var tok_OR = tok("||");
@@ -105,6 +106,7 @@ Statement ->
     | ExpressionStatement {% id %}
     | While {% id %}
     | Cond {% id %}
+    | Case {% id %}
 
 ExpressionStatement -> Expression {% function(d){
   return {
@@ -154,6 +156,30 @@ CondBlock -> Expression Block {%
       loc: mkLoc(d, 0, 1),
       type: "CondBlock",
       test: d[0],
+      body: d[1].body
+    };
+  }
+%}
+
+Case -> %tok_case Expression %tok_COLON %tok_INDENT CaseBlocks ElseBlock:? %tok_DEDENT {% function(d){
+  return {
+    loc: mkLoc(d, 0, 6),
+    type: "Case",
+    to_test: d[1],
+    blocks: d[4],
+    "else": d[5]
+  };
+} %}
+
+CaseBlocks -> CaseBlock {% idArr %}
+    | CaseBlocks CaseBlock {% function(d){return d[0].concat(d[1])} %}
+
+CaseBlock -> Expression Block {%
+  function(d){
+    return {
+      loc: mkLoc(d, 0, 1),
+      type: "CaseBlock",
+      value: d[0],
       body: d[1].body
     };
   }

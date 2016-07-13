@@ -202,5 +202,23 @@ test("parser", function(t){
     "else": [mk.stmt(mk.id("e"))]
   });
 
+  src = "";
+  src += "case a:\n";
+  src += "    1:\n";
+  src += "        b\n";
+  src += "    2:\n";
+  src += "        c\n";
+  src += "    else:\n";
+  src += "        d";
+  tst(src, {
+    type: "Case",
+    to_test: mk.id("a"),
+    blocks: [
+      {type: "CaseBlock", value: mkv(1), body: [mk.stmt(mk.id("b"))]},
+      {type: "CaseBlock", value: mkv(2), body: [mk.stmt(mk.id("c"))]}
+    ],
+    "else": [mk.stmt(mk.id("d"))]
+  });
+
   t.end();
 });

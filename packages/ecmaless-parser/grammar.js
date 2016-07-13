@@ -49,11 +49,12 @@ var tok_fn = tok("SYMBOL", "fn");
 var tok_if = tok("SYMBOL", "if");
 var tok_else = tok("SYMBOL", "else");
 var tok_cond = tok("SYMBOL", "cond");
+var tok_case = tok("SYMBOL", "case");
 var tok_while = tok("SYMBOL", "while");
 
 var isReserved = function(src){
   //TODO
-  return src === "else";
+  return src === "else" || src === "case";
 };
 
 var tok_OR = tok("||");
@@ -105,6 +106,7 @@ var grammar = {
     {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
     {"name": "Statement", "symbols": ["While"], "postprocess": id},
     {"name": "Statement", "symbols": ["Cond"], "postprocess": id},
+    {"name": "Statement", "symbols": ["Case"], "postprocess": id},
     {"name": "ExpressionStatement", "symbols": ["Expression"], "postprocess":  function(d){
           return {
             loc: d[0].loc,
@@ -153,6 +155,29 @@ var grammar = {
             loc: mkLoc(d, 0, 1),
             type: "CondBlock",
             test: d[0],
+            body: d[1].body
+          };
+        }
+        },
+    {"name": "Case$ebnf$1", "symbols": ["ElseBlock"], "postprocess": id},
+    {"name": "Case$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Case", "symbols": [tok_case, "Expression", tok_COLON, tok_INDENT, "CaseBlocks", "Case$ebnf$1", tok_DEDENT], "postprocess":  function(d){
+          return {
+            loc: mkLoc(d, 0, 6),
+            type: "Case",
+            to_test: d[1],
+            blocks: d[4],
+            "else": d[5]
+          };
+        } },
+    {"name": "CaseBlocks", "symbols": ["CaseBlock"], "postprocess": idArr},
+    {"name": "CaseBlocks", "symbols": ["CaseBlocks", "CaseBlock"], "postprocess": function(d){return d[0].concat(d[1])}},
+    {"name": "CaseBlock", "symbols": ["Expression", "Block"], "postprocess": 
+        function(d){
+          return {
+            loc: mkLoc(d, 0, 1),
+            type: "CaseBlock",
+            value: d[0],
             body: d[1].body
           };
         }
