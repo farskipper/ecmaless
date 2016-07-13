@@ -31,6 +31,9 @@ mk.fn = function(params, body){
 mk.arr = function(value){
   return {type: "Array", value: value};
 };
+mk.ddd = function(){
+  return {type: "DotDotDot"};
+};
 
 test("parser", function(t){
   var tst = function(src, expected){
@@ -59,6 +62,21 @@ test("parser", function(t){
   tst("[1, 2, 3,]", mk.arr([mk.num(1), mk.num(2), mk.num(3)]));
   tstFail("[1, 2, 3,,]");
   tstFail("[,1, 2, 3]");
+
+  tstFail("fn \n    a");
+  tstFail("fn []\n    a");
+  tst("fn args:\n    a", mk.fn(mk.sym("args"), [mk.sym("a")]));
+  tst("fn []:\n    a", mk.fn([], [mk.sym("a")]));
+  tst("fn[]:\n    a", mk.fn([], [mk.sym("a")]));
+  tst("fn [  ] :\n    a", mk.fn([], [mk.sym("a")]));
+  tstFail("fn [,]:\n    a");
+  tstFail("fn [1]:\n    a");
+  tstFail("fn [1, 2]:\n    a");
+  tst("fn [a]:\n    a", mk.fn([mk.sym("a")], [mk.sym("a")]));
+  tst("fn [a,]:\n    a", mk.fn([mk.sym("a")], [mk.sym("a")]));
+  tst("fn [a, b]:\n    a", mk.fn([mk.sym("a"), mk.sym("b")], [mk.sym("a")]));
+  tst("fn [a,b,]:\n    a", mk.fn([mk.sym("a"), mk.sym("b")], [mk.sym("a")]));
+  tst("fn [a, b...]:\n    a", mk.fn([mk.sym("a"), [mk.sym("b"), mk.ddd()]], [mk.sym("a")]));
 
   var src = "";
   src += "def id = fn args :\n"

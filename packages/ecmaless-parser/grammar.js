@@ -3,6 +3,18 @@
 (function () {
 function id(x) {return x[0]; }
 
+var noop = function(){};
+var noopArr = function(){return [];};
+var idArr = function(d){return [d[0]];};
+var concatArr = function(d){
+  return d[0].concat([d[2]]);
+};
+var idN = function(n){
+  return function(d){
+    return d[n];
+  };
+};
+
 var tok = function(type, value){
   return {test: function(x){
     if(!x || x.type !== type){
@@ -21,6 +33,7 @@ var tok_INDENT = tok("INDENT");
 var tok_DEDENT = tok("DEDENT");
 var tok_COLON = tok(":");
 var tok_COMMA = tok(",");
+var tok_DOT = tok(".");
 var tok_EQ = tok("=");
 var tok_OPEN_SQ = tok("[");
 var tok_CLOSE_SQ = tok("]");
@@ -66,14 +79,12 @@ var grammar = {
             value: d[1]
           };
         } },
-    {"name": "Expression_list", "symbols": [], "postprocess": function(){return [];}},
+    {"name": "Expression_list", "symbols": [], "postprocess": noopArr},
     {"name": "Expression_list$ebnf$1", "symbols": [tok_COMMA], "postprocess": id},
     {"name": "Expression_list$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Expression_list", "symbols": ["Expression_list_body", "Expression_list$ebnf$1"], "postprocess": id},
-    {"name": "Expression_list_body", "symbols": ["Expression"], "postprocess": function(d){return [d[0]];}},
-    {"name": "Expression_list_body", "symbols": ["Expression_list_body", tok_COMMA, "Expression"], "postprocess":  function(d){
-          return d[0].concat(d[2]);
-        } },
+    {"name": "Expression_list_body", "symbols": ["Expression"], "postprocess": idArr},
+    {"name": "Expression_list_body", "symbols": ["Expression_list_body", tok_COMMA, "Expression"], "postprocess": concatArr},
     {"name": "Function", "symbols": [tok_fn, "Params", "Blok"], "postprocess":  function(d){
           return {
             loc: {start: d[0].loc.start, end: d[2].loc.end},
@@ -83,6 +94,28 @@ var grammar = {
           };
         } },
     {"name": "Params", "symbols": ["Symbol"], "postprocess": id},
+    {"name": "Params", "symbols": [tok_OPEN_SQ, tok_CLOSE_SQ], "postprocess": noopArr},
+    {"name": "Params$ebnf$1", "symbols": [tok_COMMA], "postprocess": id},
+    {"name": "Params$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Params", "symbols": [tok_OPEN_SQ, "Params_body", "Params$ebnf$1", tok_CLOSE_SQ], "postprocess": idN(1)},
+    {"name": "Params_body", "symbols": ["Param"], "postprocess": idArr},
+    {"name": "Params_body", "symbols": ["Params_body", tok_COMMA, "Param"], "postprocess": concatArr},
+    {"name": "Param$ebnf$1", "symbols": ["DotDotDot"], "postprocess": id},
+    {"name": "Param$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Param", "symbols": ["Symbol", "Param$ebnf$1"], "postprocess": 
+        function(d){
+          if(!d[1]){
+            return d[0];
+          }
+          return [d[0], d[1]];
+        }
+        },
+    {"name": "DotDotDot", "symbols": [tok_DOT, tok_DOT, tok_DOT], "postprocess":  function(d){
+          return {
+            loc: {start: d[0].loc.start, end: d[2].loc.end},
+            type: "DotDotDot"
+          };
+        } },
     {"name": "Blok$ebnf$1", "symbols": []},
     {"name": "Blok$ebnf$1", "symbols": ["Statement", "Blok$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
     {"name": "Blok", "symbols": [tok_COLON, tok_INDENT, "Blok$ebnf$1", tok_DEDENT], "postprocess": 
