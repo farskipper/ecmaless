@@ -39,8 +39,11 @@ var tok_OPEN_SQ = tok("[");
 var tok_CLOSE_SQ = tok("]");
 var tok_OPEN_CU = tok("{");
 var tok_CLOSE_CU = tok("}");
+
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
+var tok_while = tok("SYMBOL", "while");
+
 
 var tok_OR = tok("||");
 var tok_AND = tok("&&");
@@ -93,6 +96,7 @@ main -> Statement {% id %}
 Statement ->
       Define {% id %}
     | ExpressionStatement {% id %}
+    | While {% id %}
 
 ExpressionStatement -> Expression {% function(d){
   return {
@@ -114,6 +118,25 @@ Define -> %tok_def Identifier (%tok_EQ Expression):? {% function(d){
     init: d[2] ? d[2][1] : void 0
   };
 } %}
+
+While -> %tok_while Expression Block {% function(d){
+  return {
+    loc: mkLoc(d, 0, 2),
+    type: "While",
+    test: d[1],
+    body: d[2].body
+  };
+} %}
+
+Block -> %tok_COLON %tok_INDENT Statement:* %tok_DEDENT {%
+  function(d){
+    return {
+      loc: mkLoc(d, 0, 3),
+      type: "Block",
+      body: d[2]
+    };
+  }
+%}
 
 ################################################################################
 # Expression
@@ -212,7 +235,7 @@ Expression_list_body ->
       Expression {% idArr %}
     | Expression_list_body %tok_COMMA Expression {% concatArr %}
 
-Function -> %tok_fn Params Blok {% function(d){
+Function -> %tok_fn Params Block {% function(d){
   return {
     loc: mkLoc(d, 0, 2),
     type: "Function",
@@ -238,16 +261,6 @@ Param -> Identifier %tok_DOTDOTDOT:? {%
       loc: mkLoc(d, 0, 1),
       type: "DotDotDot",
       value: d[0]
-    };
-  }
-%}
-
-Blok -> %tok_COLON %tok_INDENT Statement:* %tok_DEDENT {%
-  function(d){
-    return {
-      loc: mkLoc(d, 0, 3),
-      type: "Block",
-      body: d[2]
     };
   }
 %}

@@ -168,5 +168,11 @@ test("parser", function(t){
     tst("1 " + op + " 2", mk.infix(op, mkv(1), mkv(2)));
   });
 
+  tst("while a:\n    b", {
+    type: "While",
+    test: mk.id("a"),
+    body: [mk.stmt(mk.id("b"))]
+  });
+
   t.end();
 });
