@@ -38,6 +38,8 @@ var tok_DOTDOTDOT = tok("...");
 var tok_EQ = tok("=");
 var tok_OPEN_SQ = tok("[");
 var tok_CLOSE_SQ = tok("]");
+var tok_OPEN_CU = tok("{");
+var tok_CLOSE_CU = tok("}");
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
 
@@ -73,6 +75,26 @@ var grammar = {
     {"name": "Expression", "symbols": ["Identifier"], "postprocess": id},
     {"name": "Expression", "symbols": ["Function"], "postprocess": id},
     {"name": "Expression", "symbols": ["Array"], "postprocess": id},
+    {"name": "Expression", "symbols": ["Struct"], "postprocess": id},
+    {"name": "Struct", "symbols": [tok_OPEN_CU, "KeyValPairs", tok_CLOSE_CU], "postprocess":  function(d){
+          return {
+            loc: {start: d[0].loc.start, end: d[2].loc.end},
+            type: "Struct",
+            value: d[1]
+          };
+        } },
+    {"name": "KeyValPairs", "symbols": [], "postprocess": noopArr},
+    {"name": "KeyValPairs$ebnf$1", "symbols": [tok_COMMA], "postprocess": id},
+    {"name": "KeyValPairs$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "KeyValPairs", "symbols": ["KeyValPairs_body", "KeyValPairs$ebnf$1"], "postprocess": id},
+    {"name": "KeyValPairs_body", "symbols": ["KeyValPair"], "postprocess": id},
+    {"name": "KeyValPairs_body", "symbols": ["KeyValPairs_body", tok_COMMA, "KeyValPair"], "postprocess": concatArr},
+    {"name": "KeyValPair$subexpression$1", "symbols": ["String"]},
+    {"name": "KeyValPair$subexpression$1", "symbols": ["Number"]},
+    {"name": "KeyValPair$subexpression$1", "symbols": ["Symbol"]},
+    {"name": "KeyValPair", "symbols": ["KeyValPair$subexpression$1", tok_COLON, "Expression"], "postprocess":  function(d){
+          return [d[0][0], d[2]];
+        } },
     {"name": "Array", "symbols": [tok_OPEN_SQ, "Expression_list", tok_CLOSE_SQ], "postprocess":  function(d){
           return {
             loc: {start: d[0].loc.start, end: d[2].loc.end},
@@ -135,6 +157,9 @@ var grammar = {
         } },
     {"name": "Identifier", "symbols": [tok_SYMBOL], "postprocess":  function(d){
           return mkType(d, "Identifier", d[0].src);
+        } },
+    {"name": "Symbol", "symbols": [tok_SYMBOL], "postprocess":  function(d){
+          return mkType(d, "Symbol", d[0].src);
         } }
 ]
   , ParserStart: "main"

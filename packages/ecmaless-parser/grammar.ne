@@ -34,6 +34,8 @@ var tok_DOTDOTDOT = tok("...");
 var tok_EQ = tok("=");
 var tok_OPEN_SQ = tok("[");
 var tok_CLOSE_SQ = tok("]");
+var tok_OPEN_CU = tok("{");
+var tok_CLOSE_CU = tok("}");
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
 
@@ -71,6 +73,25 @@ Expression ->
     | Identifier {% id %}
     | Function {% id %}
     | Array {% id %}
+    | Struct {% id %}
+
+Struct -> %tok_OPEN_CU KeyValPairs %tok_CLOSE_CU {% function(d){
+  return {
+    loc: {start: d[0].loc.start, end: d[2].loc.end},
+    type: "Struct",
+    value: d[1]
+  };
+} %}
+
+KeyValPairs -> null {% noopArr %}
+    | KeyValPairs_body %tok_COMMA:? {% id %}
+KeyValPairs_body ->
+      KeyValPair {% id %}
+    | KeyValPairs_body %tok_COMMA KeyValPair {% concatArr %}
+
+KeyValPair -> (String|Number|Symbol) %tok_COLON Expression {% function(d){
+  return [d[0][0], d[2]];
+} %}
 
 Array -> %tok_OPEN_SQ Expression_list %tok_CLOSE_SQ {% function(d){
   return {
@@ -137,4 +158,8 @@ String -> %tok_STRING {% function(d){
 
 Identifier -> %tok_SYMBOL {% function(d){
   return mkType(d, "Identifier", d[0].src);
+} %}
+
+Symbol -> %tok_SYMBOL {% function(d){
+  return mkType(d, "Symbol", d[0].src);
 } %}

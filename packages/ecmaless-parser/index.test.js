@@ -22,6 +22,9 @@ mk.str = function(value){
 mk.id = function(value){
   return {type: "Identifier", value: value};
 };
+mk.sym = function(value){
+  return {type: "Symbol", value: value};
+};
 mk.def = function(id, init){
   return {type: "Define", id: id, init: init};
 };
@@ -31,8 +34,26 @@ mk.fn = function(params, body){
 mk.arr = function(value){
   return {type: "Array", value: value};
 };
+mk.struct = function(value){
+  return {type: "Struct", value: value};
+};
 mk.ddd = function(value){
   return {type: "DotDotDot", value: value};
+};
+
+var mkv = function(v){
+  if(_.isNumber(v)){
+    return mk.num(v);
+  }else if(_.isString(v)){
+    return mk.str(v);
+  }else if(_.isPlainObject(v)){
+    return mk.struct(_.flatten(_.map(v, function(v, k){
+      return [mkv(k + ''), v];
+    })));
+  }else if(_.isArray(v)){
+    return mk.arr(v);
+  }
+  return v;
 };
 
 test("parser", function(t){
@@ -62,6 +83,13 @@ test("parser", function(t){
   tst("[1, 2, 3,]", mk.arr([mk.num(1), mk.num(2), mk.num(3)]));
   tstFail("[1, 2, 3,,]");
   tstFail("[,1, 2, 3]");
+
+  tst("{}", mkv({}));
+  tst("{\"a\": 1}", mkv({a: mkv(1)}));
+  tst("{\"a\": 1,}", mkv({a: mkv(1)}));
+  tst("{a: 1}", mk.struct([mk.sym("a"), mkv(1)]));
+  tst("{def: 1}", mk.struct([mk.sym("def"), mkv(1)]));
+  tst("{1: \"a\"}", mk.struct([mkv(1), mkv("a")]));
 
   tstFail("fn \n    a");
   tstFail("fn []\n    a");
