@@ -20,7 +20,10 @@ var tok_SYMBOL = tok("SYMBOL");
 var tok_INDENT = tok("INDENT");
 var tok_DEDENT = tok("DEDENT");
 var tok_COLON = tok(":");
+var tok_COMMA = tok(",");
 var tok_EQ = tok("=");
+var tok_OPEN_SQ = tok("[");
+var tok_CLOSE_SQ = tok("]");
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
 
@@ -55,6 +58,22 @@ var grammar = {
     {"name": "Expression", "symbols": ["String"], "postprocess": id},
     {"name": "Expression", "symbols": ["Symbol"], "postprocess": id},
     {"name": "Expression", "symbols": ["Function"], "postprocess": id},
+    {"name": "Expression", "symbols": ["Array"], "postprocess": id},
+    {"name": "Array", "symbols": [tok_OPEN_SQ, "Expression_list", tok_CLOSE_SQ], "postprocess":  function(d){
+          return {
+            loc: {start: d[0].loc.start, end: d[2].loc.end},
+            type: "Array",
+            value: d[1]
+          };
+        } },
+    {"name": "Expression_list", "symbols": [], "postprocess": function(){return [];}},
+    {"name": "Expression_list$ebnf$1", "symbols": [tok_COMMA], "postprocess": id},
+    {"name": "Expression_list$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Expression_list", "symbols": ["Expression_list_body", "Expression_list$ebnf$1"], "postprocess": id},
+    {"name": "Expression_list_body", "symbols": ["Expression"], "postprocess": function(d){return [d[0]];}},
+    {"name": "Expression_list_body", "symbols": ["Expression_list_body", tok_COMMA, "Expression"], "postprocess":  function(d){
+          return d[0].concat(d[2]);
+        } },
     {"name": "Function", "symbols": [tok_fn, "Params", "Blok"], "postprocess":  function(d){
           return {
             loc: {start: d[0].loc.start, end: d[2].loc.end},

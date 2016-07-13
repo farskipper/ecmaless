@@ -16,7 +16,10 @@ var tok_SYMBOL = tok("SYMBOL");
 var tok_INDENT = tok("INDENT");
 var tok_DEDENT = tok("DEDENT");
 var tok_COLON = tok(":");
+var tok_COMMA = tok(",");
 var tok_EQ = tok("=");
+var tok_OPEN_SQ = tok("[");
+var tok_CLOSE_SQ = tok("]");
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
 
@@ -53,6 +56,24 @@ Expression ->
     | String {% id %}
     | Symbol {% id %}
     | Function {% id %}
+    | Array {% id %}
+
+Array -> %tok_OPEN_SQ Expression_list %tok_CLOSE_SQ {% function(d){
+  return {
+    loc: {start: d[0].loc.start, end: d[2].loc.end},
+    type: "Array",
+    value: d[1]
+  };
+} %}
+
+Expression_list -> null {% function(){return [];} %}
+    | Expression_list_body %tok_COMMA:? {% id %}
+
+Expression_list_body ->
+      Expression {% function(d){return [d[0]];} %}
+    | Expression_list_body %tok_COMMA Expression {% function(d){
+        return d[0].concat(d[2]);
+      } %}
 
 Function -> %tok_fn Params Blok {% function(d){
   return {

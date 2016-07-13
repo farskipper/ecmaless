@@ -28,11 +28,22 @@ mk.def = function(id, init){
 mk.fn = function(params, body){
   return {type: "Function", params: params, body: body};
 };
+mk.arr = function(value){
+  return {type: "Array", value: value};
+};
 
 test("parser", function(t){
   var tst = function(src, expected){
     var ast = parser(src);
     t.deepEquals(rmLoc(ast), expected);
+  };
+  var tstFail = function(src){
+    try{
+      parser(src);
+      t.ok(false, "This should have thrown a parsing exception");
+    }catch(e){
+      t.ok(true);
+    }
   };
 
   tst("123", mk.num(123));
@@ -41,6 +52,13 @@ test("parser", function(t){
 
   tst("def a", mk.def(mk.sym("a")));
   tst("def a = 1.2", mk.def(mk.sym("a"), mk.num(1.2)));
+
+  tst("[]", mk.arr([]));
+  tstFail("[,]");
+  tst("[1, 2, 3]", mk.arr([mk.num(1), mk.num(2), mk.num(3)]));
+  tst("[1, 2, 3,]", mk.arr([mk.num(1), mk.num(2), mk.num(3)]));
+  tstFail("[1, 2, 3,,]");
+  tstFail("[,1, 2, 3]");
 
   var src = "";
   src += "def id = fn args :\n"
