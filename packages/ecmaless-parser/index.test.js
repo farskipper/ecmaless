@@ -54,6 +54,14 @@ mk.cond = function(test, consequent, alternate){
     alternate: alternate
   };
 };
+mk.infix = function(op, left, right){
+  return {
+    type: "InfixOperator",
+    op: op,
+    left: left,
+    right: right
+  };
+};
 
 var mkv = function(v){
   if(_.isNumber(v)){
@@ -62,7 +70,7 @@ var mkv = function(v){
     return mk.str(v);
   }else if(_.isPlainObject(v)){
     return mk.struct(_.flatten(_.map(v, function(v, k){
-      return [mkv(k + ''), v];
+      return [mkv(k + ""), v];
     })));
   }else if(_.isArray(v)){
     return mk.arr(v);
@@ -138,6 +146,20 @@ test("parser", function(t){
   tstFail("1?2?3:4:5");
   tstFail("1?2:3?4:5");
   tst("1?2:(3?4:5)", mk.cond(mkv(1), mkv(2), mk.cond(mkv(3), mkv(4), mkv(5))));
+
+  _.each([
+    "||",
+    "&&",
+    "==",
+    "!=",
+    "+",
+    "-",
+    "*",
+    "/",
+    "%",
+  ], function(op){
+    tst("1 " + op + " 2", mk.infix(op, mkv(1), mkv(2)));
+  });
 
   t.end();
 });

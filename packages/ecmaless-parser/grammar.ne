@@ -42,6 +42,16 @@ var tok_CLOSE_CU = tok("}");
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
 
+var tok_OR = tok("||");
+var tok_AND = tok("&&");
+var tok_EQEQ = tok("==");
+var tok_NOTEQ = tok("!=");
+var tok_PLUS = tok("+");
+var tok_MINUS = tok("-");
+var tok_TIMES = tok("*");
+var tok_DIVIDE = tok("/");
+var tok_MODULO = tok("%");
+
 var mkType = function(d, type, value){
   return {
     loc: d[0].loc,
@@ -62,6 +72,16 @@ var mkMemberExpression = function(loc, method, object, path){
 
 var mkLoc = function(d, start_i, end_i){
   return {start: d[start_i].loc.start, end: d[end_i].loc.end};
+};
+
+var infixOp = function(d){
+  return {
+    loc: mkLoc(d, 0, 2),
+    type: "InfixOperator",
+    op: d[1].src,
+    left: d[0],
+    right: d[2]
+  };
 };
 
 %}
@@ -87,8 +107,8 @@ Define -> %tok_def Identifier (%tok_EQ Expression):? {% function(d){
 
 Expression -> ConditionalExpression {% id %}
 
-ConditionalExpression -> MemberExpression {% id %}
-    | MemberExpression %tok_QUESTION MemberExpression %tok_COLON MemberExpression {%
+ConditionalExpression -> exp_or {% id %}
+    | exp_or %tok_QUESTION exp_or %tok_COLON exp_or {%
   function(d){
     return {
       loc: mkLoc(d, 0, 4),
@@ -99,6 +119,25 @@ ConditionalExpression -> MemberExpression {% id %}
     };
   }
 %}
+
+exp_or -> exp_and {% id %}
+    | exp_or %tok_OR exp_and {% infixOp %}
+
+exp_and -> exp_comp {% id %}
+    | exp_and %tok_AND exp_comp {% infixOp %}
+
+exp_comp -> exp_sum {% id %}
+    | exp_comp %tok_EQEQ exp_sum {% infixOp %}
+    | exp_comp %tok_NOTEQ exp_sum {% infixOp %}
+
+exp_sum -> exp_product {% id %}
+    | exp_sum %tok_PLUS exp_product {% infixOp %}
+    | exp_sum %tok_MINUS exp_product {% infixOp %}
+
+exp_product -> MemberExpression {% id %}
+    | exp_product %tok_TIMES MemberExpression {% infixOp %}
+    | exp_product %tok_DIVIDE MemberExpression {% infixOp %}
+    | exp_product %tok_MODULO MemberExpression {% infixOp %}
 
 MemberExpression -> PrimaryExpression {% id %}
     | MemberExpression %tok_DOT Identifier

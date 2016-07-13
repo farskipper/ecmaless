@@ -46,6 +46,16 @@ var tok_CLOSE_CU = tok("}");
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
 
+var tok_OR = tok("||");
+var tok_AND = tok("&&");
+var tok_EQEQ = tok("==");
+var tok_NOTEQ = tok("!=");
+var tok_PLUS = tok("+");
+var tok_MINUS = tok("-");
+var tok_TIMES = tok("*");
+var tok_DIVIDE = tok("/");
+var tok_MODULO = tok("%");
+
 var mkType = function(d, type, value){
   return {
     loc: d[0].loc,
@@ -66,6 +76,16 @@ var mkMemberExpression = function(loc, method, object, path){
 
 var mkLoc = function(d, start_i, end_i){
   return {start: d[start_i].loc.start, end: d[end_i].loc.end};
+};
+
+var infixOp = function(d){
+  return {
+    loc: mkLoc(d, 0, 2),
+    type: "InfixOperator",
+    op: d[1].src,
+    left: d[0],
+    right: d[2]
+  };
 };
 
 var grammar = {
@@ -89,8 +109,8 @@ var grammar = {
           };
         } },
     {"name": "Expression", "symbols": ["ConditionalExpression"], "postprocess": id},
-    {"name": "ConditionalExpression", "symbols": ["MemberExpression"], "postprocess": id},
-    {"name": "ConditionalExpression", "symbols": ["MemberExpression", tok_QUESTION, "MemberExpression", tok_COLON, "MemberExpression"], "postprocess": 
+    {"name": "ConditionalExpression", "symbols": ["exp_or"], "postprocess": id},
+    {"name": "ConditionalExpression", "symbols": ["exp_or", tok_QUESTION, "exp_or", tok_COLON, "exp_or"], "postprocess": 
         function(d){
           return {
             loc: mkLoc(d, 0, 4),
@@ -101,6 +121,20 @@ var grammar = {
           };
         }
         },
+    {"name": "exp_or", "symbols": ["exp_and"], "postprocess": id},
+    {"name": "exp_or", "symbols": ["exp_or", tok_OR, "exp_and"], "postprocess": infixOp},
+    {"name": "exp_and", "symbols": ["exp_comp"], "postprocess": id},
+    {"name": "exp_and", "symbols": ["exp_and", tok_AND, "exp_comp"], "postprocess": infixOp},
+    {"name": "exp_comp", "symbols": ["exp_sum"], "postprocess": id},
+    {"name": "exp_comp", "symbols": ["exp_comp", tok_EQEQ, "exp_sum"], "postprocess": infixOp},
+    {"name": "exp_comp", "symbols": ["exp_comp", tok_NOTEQ, "exp_sum"], "postprocess": infixOp},
+    {"name": "exp_sum", "symbols": ["exp_product"], "postprocess": id},
+    {"name": "exp_sum", "symbols": ["exp_sum", tok_PLUS, "exp_product"], "postprocess": infixOp},
+    {"name": "exp_sum", "symbols": ["exp_sum", tok_MINUS, "exp_product"], "postprocess": infixOp},
+    {"name": "exp_product", "symbols": ["MemberExpression"], "postprocess": id},
+    {"name": "exp_product", "symbols": ["exp_product", tok_TIMES, "MemberExpression"], "postprocess": infixOp},
+    {"name": "exp_product", "symbols": ["exp_product", tok_DIVIDE, "MemberExpression"], "postprocess": infixOp},
+    {"name": "exp_product", "symbols": ["exp_product", tok_MODULO, "MemberExpression"], "postprocess": infixOp},
     {"name": "MemberExpression", "symbols": ["PrimaryExpression"], "postprocess": id},
     {"name": "MemberExpression", "symbols": ["MemberExpression", tok_DOT, "Identifier"], "postprocess":  function(d){
             return mkMemberExpression(mkLoc(d, 0, 2), "dot", d[0], d[2]);
