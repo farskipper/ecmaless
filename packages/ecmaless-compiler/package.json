@@ -1,0 +1,24 @@
+{
+  "name": "ecmaless-compiler",
+  "version": "0.0.0",
+  "description": "ecmaless AST -> ESTree",
+  "main": "index.js",
+  "scripts": {
+    "test": "node tests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/farskipper/ecmaless-compiler.git"
+  },
+  "keywords": [
+    "ecmaless",
+    "compiler",
+    "lang"
+  ],
+  "author": "farskipper",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/farskipper/ecmaless-compiler/issues"
+  },
+  "homepage": "https://github.com/farskipper/ecmaless-compiler#readme"
+}
