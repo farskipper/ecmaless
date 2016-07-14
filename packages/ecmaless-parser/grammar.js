@@ -19,8 +19,10 @@ var flatten = function(toFlatten){
 var noop = function(){};
 var noopArr = function(){return [];};
 var idArr = function(d){return [d[0]];};
-var concatArr = function(d){
-  return d[0].concat([d[2]]);
+var concatArr = function(i){
+  return function(d){
+    return d[0].concat([d[i]]);
+  };
 };
 var idN = function(n){
   return function(d){
@@ -248,7 +250,7 @@ var grammar = {
           };
         } },
     {"name": "CondBlocks", "symbols": ["CondBlock"], "postprocess": idArr},
-    {"name": "CondBlocks", "symbols": ["CondBlocks", "CondBlock"], "postprocess": function(d){return d[0].concat(d[1])}},
+    {"name": "CondBlocks", "symbols": ["CondBlocks", "CondBlock"], "postprocess": concatArr(1)},
     {"name": "CondBlock", "symbols": ["Expression", "Block"], "postprocess": 
         function(d){
           return {
@@ -271,7 +273,7 @@ var grammar = {
           };
         } },
     {"name": "CaseBlocks", "symbols": ["CaseBlock"], "postprocess": idArr},
-    {"name": "CaseBlocks", "symbols": ["CaseBlocks", "CaseBlock"], "postprocess": function(d){return d[0].concat(d[1])}},
+    {"name": "CaseBlocks", "symbols": ["CaseBlocks", "CaseBlock"], "postprocess": concatArr(1)},
     {"name": "CaseBlock", "symbols": ["Expression", "Block"], "postprocess": 
         function(d){
           return {
@@ -381,7 +383,7 @@ var grammar = {
     {"name": "KeyValPairs$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "KeyValPairs", "symbols": ["KeyValPairs_body", "KeyValPairs$ebnf$1"], "postprocess": id},
     {"name": "KeyValPairs_body", "symbols": ["KeyValPair"], "postprocess": id},
-    {"name": "KeyValPairs_body", "symbols": ["KeyValPairs_body", tok_COMMA, "KeyValPair"], "postprocess": concatArr},
+    {"name": "KeyValPairs_body", "symbols": ["KeyValPairs_body", tok_COMMA, "KeyValPair"], "postprocess": concatArr(2)},
     {"name": "KeyValPair$subexpression$1", "symbols": ["String"]},
     {"name": "KeyValPair$subexpression$1", "symbols": ["Number"]},
     {"name": "KeyValPair$subexpression$1", "symbols": ["Symbol"]},
@@ -400,7 +402,7 @@ var grammar = {
     {"name": "Expression_list$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Expression_list", "symbols": ["Expression_list_body", "Expression_list$ebnf$1"], "postprocess": id},
     {"name": "Expression_list_body", "symbols": ["Expression"], "postprocess": idArr},
-    {"name": "Expression_list_body", "symbols": ["Expression_list_body", tok_COMMA, "Expression"], "postprocess": concatArr},
+    {"name": "Expression_list_body", "symbols": ["Expression_list_body", tok_COMMA, "Expression"], "postprocess": concatArr(2)},
     {"name": "Function", "symbols": [tok_fn, "Params", "Block"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
@@ -415,7 +417,7 @@ var grammar = {
     {"name": "Params$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Params", "symbols": [tok_OPEN_SQ, "Params_body", "Params$ebnf$1", tok_CLOSE_SQ], "postprocess": idN(1)},
     {"name": "Params_body", "symbols": ["Param"], "postprocess": idArr},
-    {"name": "Params_body", "symbols": ["Params_body", tok_COMMA, "Param"], "postprocess": concatArr},
+    {"name": "Params_body", "symbols": ["Params_body", tok_COMMA, "Param"], "postprocess": concatArr(2)},
     {"name": "Param$ebnf$1", "symbols": [tok_DOTDOTDOT], "postprocess": id},
     {"name": "Param$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Param", "symbols": ["Identifier", "Param$ebnf$1"], "postprocess": 

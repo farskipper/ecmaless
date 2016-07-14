@@ -15,8 +15,10 @@ var flatten = function(toFlatten){
 var noop = function(){};
 var noopArr = function(){return [];};
 var idArr = function(d){return [d[0]];};
-var concatArr = function(d){
-  return d[0].concat([d[2]]);
+var concatArr = function(i){
+  return function(d){
+    return d[0].concat([d[i]]);
+  };
 };
 var idN = function(n){
   return function(d){
@@ -246,7 +248,7 @@ Cond -> %tok_cond %tok_COLON %tok_INDENT CondBlocks ElseBlock:? %tok_DEDENT {% f
 } %}
 
 CondBlocks -> CondBlock {% idArr %}
-    | CondBlocks CondBlock {% function(d){return d[0].concat(d[1])} %}
+    | CondBlocks CondBlock {% concatArr(1) %}
 
 CondBlock -> Expression Block {%
   function(d){
@@ -270,7 +272,7 @@ Case -> %tok_case Expression %tok_COLON %tok_INDENT CaseBlocks ElseBlock:? %tok_
 } %}
 
 CaseBlocks -> CaseBlock {% idArr %}
-    | CaseBlocks CaseBlock {% function(d){return d[0].concat(d[1])} %}
+    | CaseBlocks CaseBlock {% concatArr(1) %}
 
 CaseBlock -> Expression Block {%
   function(d){
@@ -402,7 +404,7 @@ KeyValPairs -> null {% noopArr %}
     | KeyValPairs_body %tok_COMMA:? {% id %}
 KeyValPairs_body ->
       KeyValPair {% id %}
-    | KeyValPairs_body %tok_COMMA KeyValPair {% concatArr %}
+    | KeyValPairs_body %tok_COMMA KeyValPair {% concatArr(2) %}
 
 KeyValPair -> (String|Number|Symbol) %tok_COLON Expression {% function(d){
   return [d[0][0], d[2]];
@@ -420,7 +422,7 @@ Expression_list -> null {% noopArr %}
     | Expression_list_body %tok_COMMA:? {% id %}
 Expression_list_body ->
       Expression {% idArr %}
-    | Expression_list_body %tok_COMMA Expression {% concatArr %}
+    | Expression_list_body %tok_COMMA Expression {% concatArr(2) %}
 
 Function -> %tok_fn Params Block {% function(d){
   return {
@@ -437,7 +439,7 @@ Params -> Identifier {% id %}
 
 Params_body ->
       Param {% idArr %}
-    | Params_body %tok_COMMA Param {% concatArr %}
+    | Params_body %tok_COMMA Param {% concatArr(2) %}
 
 Param -> Identifier %tok_DOTDOTDOT:? {%
   function(d){
