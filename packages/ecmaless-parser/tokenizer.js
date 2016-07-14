@@ -5,8 +5,7 @@ var escapeRegExp = require("escape-regexp");
 var groups = {
   "(": ")",
   "[": "]",
-  "{": "}",
-  "<": ">"
+  "{": "}"
 };
 
 var toIndent = function(src){
@@ -75,6 +74,8 @@ module.exports = function(src){
   t.addRule(/^&&?$/, "RAW");
   t.addRule(/^==?$/, "RAW");
   t.addRule(/^!=?$/, "RAW");
+  t.addRule(/^<=?$/, "RAW");
+  t.addRule(/^>=?$/, "RAW");
 
   var key;
   for(key in groups){

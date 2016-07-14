@@ -182,6 +182,10 @@ test("parser", function(t){
     "*",
     "/",
     "%",
+    "<",
+    "<=",
+    ">",
+    ">=",
   ], function(op){
     tst("1 " + op + " 2", mk.infix(op, mkv(1), mkv(2)));
   });
