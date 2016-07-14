@@ -24,7 +24,12 @@ var idN = function(n){
   };
 };
 
+var reserved = {};
+
 var tok = function(type, value){
+  if((type === "SYMBOL") && typeof value === "string"){
+    reserved[value] = true;
+  }
   return {test: function(x){
     if(!x || x.type !== type){
       return false;
@@ -62,10 +67,10 @@ var tok_case = tok("SYMBOL", "case");
 var tok_while = tok("SYMBOL", "while");
 var tok_try = tok("SYMBOL", "try");
 var tok_catch = tok("SYMBOL", "catch");
+var tok_return = tok("SYMBOL", "return");
 
 var isReserved = function(src){
-  //TODO
-  return src === "else" || src === "case";
+  return reserved[src] === true;
 };
 
 var tok_OR = tok("||");
@@ -141,6 +146,7 @@ main -> Statement {% id %}
 Statement ->
       Define {% id %}
     | ExpressionStatement {% id %}
+    | Return {% id %}
     | If {% id %}
     | While {% id %}
     | Cond {% id %}
@@ -152,6 +158,14 @@ ExpressionStatement -> Expression {% function(d){
     loc: d[0].loc,
     type: "ExpressionStatement",
     expression: d[0]
+  };
+} %}
+
+Return -> %tok_return Expression:? {% function(d){
+  return {
+    loc: mkLoc(d),
+    type: "Return",
+    expression: d[1]
   };
 } %}
 

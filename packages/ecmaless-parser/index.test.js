@@ -80,6 +80,9 @@ mk.assign = function(op, left, right){
 mk.stmt = function(e){
   return {type: "ExpressionStatement", expression: e};
 };
+mk.ret = function(e){
+  return {type: "Return", expression: e};
+};
 
 var mkv = function(v){
   if(_.isNumber(v)){
@@ -298,6 +301,9 @@ test("parser", function(t){
     mk.infix("+", mkv(1), mkv(1))
   ));
   tst("i = j = 0", mk.assign("=", mk.id("i"), mk.assign("=", mk.id("j"), mkv(0))));
+
+  tst("return", mk.ret(null));
+  tst("return 1", mk.ret(mkv(1)));
 
   t.end();
 });

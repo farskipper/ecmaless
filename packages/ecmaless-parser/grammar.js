@@ -28,7 +28,12 @@ var idN = function(n){
   };
 };
 
+var reserved = {};
+
 var tok = function(type, value){
+  if((type === "SYMBOL") && typeof value === "string"){
+    reserved[value] = true;
+  }
   return {test: function(x){
     if(!x || x.type !== type){
       return false;
@@ -66,10 +71,10 @@ var tok_case = tok("SYMBOL", "case");
 var tok_while = tok("SYMBOL", "while");
 var tok_try = tok("SYMBOL", "try");
 var tok_catch = tok("SYMBOL", "catch");
+var tok_return = tok("SYMBOL", "return");
 
 var isReserved = function(src){
-  //TODO
-  return src === "else" || src === "case";
+  return reserved[src] === true;
 };
 
 var tok_OR = tok("||");
@@ -141,6 +146,7 @@ var grammar = {
     {"name": "main", "symbols": ["Statement"], "postprocess": id},
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
     {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
+    {"name": "Statement", "symbols": ["Return"], "postprocess": id},
     {"name": "Statement", "symbols": ["If"], "postprocess": id},
     {"name": "Statement", "symbols": ["While"], "postprocess": id},
     {"name": "Statement", "symbols": ["Cond"], "postprocess": id},
@@ -151,6 +157,15 @@ var grammar = {
             loc: d[0].loc,
             type: "ExpressionStatement",
             expression: d[0]
+          };
+        } },
+    {"name": "Return$ebnf$1", "symbols": ["Expression"], "postprocess": id},
+    {"name": "Return$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Return", "symbols": [tok_return, "Return$ebnf$1"], "postprocess":  function(d){
+          return {
+            loc: mkLoc(d),
+            type: "Return",
+            expression: d[1]
           };
         } },
     {"name": "Define$ebnf$1$subexpression$1", "symbols": [tok_EQ, "Expression"]},
