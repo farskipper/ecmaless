@@ -23,13 +23,14 @@ test("tokenizer", function(t){
     t.deepEquals(_.map(tokenizer(src), "type"), tok_order);
   };
 
-  testOrder("123 \"four\"\nblah", ["NUMBER", "STRING", "SYMBOL"]);
+  testOrder("123 \"four\"\nblah", ["NUMBER", "STRING", "NEWLINE", "SYMBOL"]);
   testOrder("10 0.1 1.0", ["NUMBER", "NUMBER", "NUMBER"]);
 
-  testOrder("deps:\n    1", ["SYMBOL", ":", "INDENT", "NUMBER", "DEDENT"]);
+  testOrder("deps:\n    1", ["SYMBOL", ":", "NEWLINE", "INDENT", "NUMBER", "DEDENT"]);
   testOrder("deps:\n        1", [
     "SYMBOL",
     ":",
+    "NEWLINE",
     "INDENT",
     "INDENT",
     "NUMBER",
@@ -39,9 +40,11 @@ test("tokenizer", function(t){
   testOrder("deps:\n        1\n    2", [
     "SYMBOL",
     ":",
+    "NEWLINE",
     "INDENT",
     "INDENT",
     "NUMBER",
+    "NEWLINE",
     "DEDENT",
     "NUMBER",
     "DEDENT"
@@ -49,10 +52,12 @@ test("tokenizer", function(t){
   testOrder("deps:\n        1    3\n    2", [
     "SYMBOL",
     ":",
+    "NEWLINE",
     "INDENT",
     "INDENT",
     "NUMBER",
     "NUMBER",
+    "NEWLINE",
     "DEDENT",
     "NUMBER",
     "DEDENT"
@@ -66,12 +71,22 @@ test("tokenizer", function(t){
   testOrder(src, [
     "SYMBOL",
     ":",
+    "NEWLINE",
     "INDENT",
     "SYMBOL",
     "[",
+    "NEWLINE",
     "NUMBER",
+    "NEWLINE",
     "]",
+    "NEWLINE",
     "DEDENT"
+  ]);
+
+  testOrder("1;some comment\n2", [
+    "NUMBER",
+    "NEWLINE",
+    "NUMBER"
   ]);
 
   t.end();

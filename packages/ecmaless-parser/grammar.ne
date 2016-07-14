@@ -47,6 +47,7 @@ var tok_STRING = tok("STRING");
 var tok_SYMBOL = tok("SYMBOL");
 var tok_INDENT = tok("INDENT");
 var tok_DEDENT = tok("DEDENT");
+var tok_NL = tok("NEWLINE");
 var tok_COLON = tok(":");
 var tok_COMMA = tok(",");
 var tok_DOT = tok(".");
@@ -165,13 +166,13 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 
 %}
 
-main -> Statement_list {% id %}
+main -> _NL Statement_list _NL {% idN(1) %}
 
 ################################################################################
 # Statement
 
 Statement_list -> Statement {% idArr %}
-#TODO newlines    | Statement_list Statement {% concatArr(1) %}
+    | Statement_list NL Statement {% concatArr(1) %}
 
 Statement ->
       Define {% id %}
@@ -242,12 +243,12 @@ Break -> %tok_break
 Continue -> %tok_continue
     {% function(d){return {loc: d[0].loc, type: "Continue"};} %}
 
-Cond -> %tok_cond %tok_COLON %tok_INDENT CondBlocks ElseBlock:? %tok_DEDENT {% function(d){
+Cond -> %tok_cond %tok_COLON NL %tok_INDENT CondBlocks ElseBlock:? %tok_DEDENT {% function(d){
   return {
     loc: mkLoc(d),
     type: "Cond",
-    blocks: d[3],
-    "else": d[4]
+    blocks: d[4],
+    "else": d[5]
   };
 } %}
 
@@ -265,13 +266,13 @@ CondBlock -> Expression Block {%
   }
 %}
 
-Case -> %tok_case Expression %tok_COLON %tok_INDENT CaseBlocks ElseBlock:? %tok_DEDENT {% function(d){
+Case -> %tok_case Expression %tok_COLON NL %tok_INDENT CaseBlocks ElseBlock:? %tok_DEDENT {% function(d){
   return {
     loc: mkLoc(d),
     type: "Case",
     to_test: d[1],
-    blocks: d[4],
-    "else": d[5]
+    blocks: d[5],
+    "else": d[6]
   };
 } %}
 
@@ -297,12 +298,12 @@ TryCatch ->
 
 ElseBlock -> %tok_else Block {% function(d){return d[1].body;} %}
 
-Block -> %tok_COLON %tok_INDENT Statement_list %tok_DEDENT {%
+Block -> %tok_COLON NL %tok_INDENT _NL Statement_list _NL %tok_DEDENT {%
   function(d){
     return {
       loc: mkLoc(d),
       type: "Block",
-      body: d[2]
+      body: d[4]
     };
   }
 %}
@@ -487,3 +488,6 @@ Boolean -> (%tok_true | %tok_false) {% function(d){
 Symbol -> %tok_SYMBOL {% function(d){
   return mkType(d, "Symbol", d[0].src);
 } %}
+
+NL -> %tok_NL {% noop %}
+_NL -> null {% noop %} | %tok_NL {% noop %}

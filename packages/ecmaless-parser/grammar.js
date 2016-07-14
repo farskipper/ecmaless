@@ -51,6 +51,7 @@ var tok_STRING = tok("STRING");
 var tok_SYMBOL = tok("SYMBOL");
 var tok_INDENT = tok("INDENT");
 var tok_DEDENT = tok("DEDENT");
+var tok_NL = tok("NEWLINE");
 var tok_COLON = tok(":");
 var tok_COMMA = tok(",");
 var tok_DOT = tok(".");
@@ -169,8 +170,9 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 
 var grammar = {
     ParserRules: [
-    {"name": "main", "symbols": ["Statement_list"], "postprocess": id},
+    {"name": "main", "symbols": ["_NL", "Statement_list", "_NL"], "postprocess": idN(1)},
     {"name": "Statement_list", "symbols": ["Statement"], "postprocess": idArr},
+    {"name": "Statement_list", "symbols": ["Statement_list", "NL", "Statement"], "postprocess": concatArr(1)},
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
     {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
     {"name": "Statement", "symbols": ["Return"], "postprocess": id},
@@ -242,12 +244,12 @@ var grammar = {
     {"name": "Continue", "symbols": [tok_continue], "postprocess": function(d){return {loc: d[0].loc, type: "Continue"};}},
     {"name": "Cond$ebnf$1", "symbols": ["ElseBlock"], "postprocess": id},
     {"name": "Cond$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Cond", "symbols": [tok_cond, tok_COLON, tok_INDENT, "CondBlocks", "Cond$ebnf$1", tok_DEDENT], "postprocess":  function(d){
+    {"name": "Cond", "symbols": [tok_cond, tok_COLON, "NL", tok_INDENT, "CondBlocks", "Cond$ebnf$1", tok_DEDENT], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
             type: "Cond",
-            blocks: d[3],
-            "else": d[4]
+            blocks: d[4],
+            "else": d[5]
           };
         } },
     {"name": "CondBlocks", "symbols": ["CondBlock"], "postprocess": idArr},
@@ -264,13 +266,13 @@ var grammar = {
         },
     {"name": "Case$ebnf$1", "symbols": ["ElseBlock"], "postprocess": id},
     {"name": "Case$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Case", "symbols": [tok_case, "Expression", tok_COLON, tok_INDENT, "CaseBlocks", "Case$ebnf$1", tok_DEDENT], "postprocess":  function(d){
+    {"name": "Case", "symbols": [tok_case, "Expression", tok_COLON, "NL", tok_INDENT, "CaseBlocks", "Case$ebnf$1", tok_DEDENT], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
             type: "Case",
             to_test: d[1],
-            blocks: d[4],
-            "else": d[5]
+            blocks: d[5],
+            "else": d[6]
           };
         } },
     {"name": "CaseBlocks", "symbols": ["CaseBlock"], "postprocess": idArr},
@@ -289,12 +291,12 @@ var grammar = {
     {"name": "TryCatch", "symbols": [tok_try, "Block", tok_finally, "Block"], "postprocess": tryCatchMaker(-1, -1, 3)},
     {"name": "TryCatch", "symbols": [tok_try, "Block", tok_catch, "Identifier", "Block", tok_finally, "Block"], "postprocess": tryCatchMaker(3, 4, 6)},
     {"name": "ElseBlock", "symbols": [tok_else, "Block"], "postprocess": function(d){return d[1].body;}},
-    {"name": "Block", "symbols": [tok_COLON, tok_INDENT, "Statement_list", tok_DEDENT], "postprocess": 
+    {"name": "Block", "symbols": [tok_COLON, "NL", tok_INDENT, "_NL", "Statement_list", "_NL", tok_DEDENT], "postprocess": 
         function(d){
           return {
             loc: mkLoc(d),
             type: "Block",
-            body: d[2]
+            body: d[4]
           };
         }
         },
@@ -456,7 +458,10 @@ var grammar = {
         } },
     {"name": "Symbol", "symbols": [tok_SYMBOL], "postprocess":  function(d){
           return mkType(d, "Symbol", d[0].src);
-        } }
+        } },
+    {"name": "NL", "symbols": [tok_NL], "postprocess": noop},
+    {"name": "_NL", "symbols": [], "postprocess": noop},
+    {"name": "_NL", "symbols": [tok_NL], "postprocess": noop}
 ]
   , ParserStart: "main"
 }

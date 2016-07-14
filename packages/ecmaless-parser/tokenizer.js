@@ -35,7 +35,12 @@ module.exports = function(src){
   };
 
   var t = tokenizer2(function(tok){
-    if(tok.type === "SPACE"){
+    if(tok.type === "COMMENT"){
+      //ignore comments
+    }else if(tok.type === "SPACE"){
+      if(tok.src.indexOf("\n") >= 0){
+        pushTok("NEWLINE", tok.src);
+      }
       if(typeof stack[0] === "number"){
         var ind = toIndent(tok.src);
         if(ind >= 0){
