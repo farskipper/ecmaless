@@ -8,6 +8,9 @@ var comp_by_type = {
   "String": function(ast, comp){
     return e("string", ast.value, ast.loc);
   },
+  "Identifier": function(ast, comp){
+    return e("id", ast.value, ast.loc);
+  },
   "Nil": function(ast, comp){
     return e("void", e("number", 0, ast.loc), ast.loc);
   },
@@ -31,7 +34,11 @@ var comp_by_type = {
   },
   "ExpressionStatement": function(ast, comp){
     return e(";", comp(ast.expression), ast.loc);
-  }
+  },
+  "Define": function(ast, comp){
+      var init = comp(ast.init || {loc: ast.id.loc, type: "Nil"});
+    return e("var", comp(ast.id), init, ast.loc);
+  },
 };
 
 module.exports = function(ast){

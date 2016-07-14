@@ -28,5 +28,8 @@ test("compile", function(t){
   tc("[1, 2]", "[1,2];");
   tc("{a: 1, b: 2}", "({'a':1,'b':2});");
 
+  tc("def a", "var a=void 0;");
+  tc("def a = 1", "var a=1;");
+
   t.end();
 });
