@@ -3,15 +3,17 @@ var rmLoc = require("./rmLoc");
 var parser = require("./");
 var stringify = require("json-stringify-pretty-compact");
 
-var examples = {
+console.log("# AST Spec");
+console.log("All AST nodes will have a `loc` property. It's identical to the [estree loc](https://github.com/estree/estree/blob/master/spec.md#node-objects).");
+console.log();
+console.log("These examples omit the `loc` property for brevity.");
+_.each({
   "### Literals": [
     "100.25",
     "\"Hi!\"",
     "foo",
   ]
-};
-
-_.each(examples, function(srcs, head){
+}, function(srcs, head){
   console.log();
   console.log(head);
   if(_.isEmpty(srcs)){

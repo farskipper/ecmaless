@@ -1,3 +1,7 @@
+# AST Spec
+All AST nodes will have a `loc` property. It's identical to the [estree loc](https://github.com/estree/estree/blob/master/spec.md#node-objects).
+
+These examples omit the `loc` property for brevity.
 
 ### Literals
 
