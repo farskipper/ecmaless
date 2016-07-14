@@ -69,6 +69,7 @@ var tok_break = tok("SYMBOL", "break");
 var tok_continue = tok("SYMBOL", "continue");
 var tok_try = tok("SYMBOL", "try");
 var tok_catch = tok("SYMBOL", "catch");
+var tok_finally = tok("SYMBOL", "finally");
 var tok_return = tok("SYMBOL", "return");
 
 var isReserved = function(src){
@@ -136,6 +137,20 @@ var infixOp = function(d){
     op: d[1].src,
     left: d[0],
     right: d[2]
+  };
+};
+
+
+var tryCatchMaker = function(i_id, i_catch, i_finally){
+  return function(d){
+    return {
+      loc: mkLoc(d),
+      type: "TryCatch",
+      try_block: d[1].body,
+      catch_id: i_id > 0 ? d[i_id] : null,
+      catch_block: i_catch > 0 ? d[i_catch].body : null,
+      finally_block: i_finally > 0 ? d[i_finally].body : null
+    };
   };
 };
 
@@ -261,15 +276,11 @@ CaseBlock -> Expression Block {%
   }
 %}
 
-TryCatch -> %tok_try Block %tok_catch Identifier Block {% function(d){
-  return {
-    loc: mkLoc(d),
-    type: "TryCatch",
-    try_block: d[1].body,
-    catch_id: d[3],
-    catch_block: d[4].body
-  };
-} %}
+TryCatch ->
+      %tok_try Block %tok_catch Identifier Block {% tryCatchMaker(3, 4, -1) %}
+    | %tok_try Block %tok_finally Block {% tryCatchMaker(-1, -1, 3) %}
+    | %tok_try Block %tok_catch Identifier Block %tok_finally Block
+      {% tryCatchMaker(3, 4, 6) %}
 
 ElseBlock -> %tok_else Block {% function(d){return d[1].body;} %}
 

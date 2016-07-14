@@ -288,7 +288,34 @@ test("parser", function(t){
     type: "TryCatch",
     try_block: [mk.stmt(mk.id("a"))],
     catch_id: mk.id("b"),
-    catch_block: [mk.stmt(mk.id("c"))]
+    catch_block: [mk.stmt(mk.id("c"))],
+    finally_block: null
+  });
+  src = "";
+  src += "try:\n";
+  src += "    a\n";
+  src += "catch b:\n";
+  src += "    c\n";
+  src += "finally:\n";
+  src += "    d";
+  tst(src, {
+    type: "TryCatch",
+    try_block: [mk.stmt(mk.id("a"))],
+    catch_id: mk.id("b"),
+    catch_block: [mk.stmt(mk.id("c"))],
+    finally_block: [mk.stmt(mk.id("d"))]
+  });
+  src = "";
+  src += "try:\n";
+  src += "    a\n";
+  src += "finally:\n";
+  src += "    b";
+  tst(src, {
+    type: "TryCatch",
+    try_block: [mk.stmt(mk.id("a"))],
+    catch_id: null,
+    catch_block: null,
+    finally_block: [mk.stmt(mk.id("b"))]
   });
   //throw("something", {opts}) ... handled by compiler, not a keyword
 
