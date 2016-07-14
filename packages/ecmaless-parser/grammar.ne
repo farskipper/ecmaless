@@ -262,7 +262,20 @@ Block -> %tok_COLON %tok_INDENT Statement:* %tok_DEDENT {%
 
 ################################################################################
 # Expression
-Expression -> ConditionalExpression {% id %}
+Expression -> AssignmentExpression {% id %}
+
+AssignmentExpression -> ConditionalExpression {% id %}
+    | MemberExpression %tok_EQ AssignmentExpression {%
+  function(d){
+    return {
+      loc: mkLoc(d),
+      type: "AssignmentExpression",
+      op: d[1].src,
+      left: d[0],
+      right: d[2]
+    };
+  }
+%}
 
 ConditionalExpression -> exp_or {% id %}
     | exp_or %tok_QUESTION exp_or %tok_COLON exp_or {%

@@ -69,6 +69,14 @@ mk.infix = function(op, left, right){
     right: right
   };
 };
+mk.assign = function(op, left, right){
+  return {
+    type: "AssignmentExpression",
+    op: op,
+    left: left,
+    right: right
+  };
+};
 mk.stmt = function(e){
   return {type: "ExpressionStatement", expression: e};
 };
@@ -277,11 +285,19 @@ test("parser", function(t){
     catch_id: mk.id("b"),
     catch_block: [mk.stmt(mk.id("c"))]
   });
+  //throw("something", {opts}) ... handled by compiler, not a keyword
 
   tst("-1", mk.unary("-", mkv(1)));
   tst("+1", mk.unary("+", mkv(1)));
   tst("!a", mk.unary("!", mk.id("a")));
   tst("3--1", mk.infix("-", mkv(3), mk.unary("-", mkv(1))));
+
+  tst("i = 1", mk.assign("=", mk.id("i"), mkv(1)));
+  tst("a[i] = 1 + 1", mk.assign("=",
+    mk.mem("index", mk.id("a"), mk.id("i")),
+    mk.infix("+", mkv(1), mkv(1))
+  ));
+  tst("i = j = 0", mk.assign("=", mk.id("i"), mk.assign("=", mk.id("j"), mkv(0))));
 
   t.end();
 });

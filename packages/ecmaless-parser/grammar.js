@@ -260,7 +260,19 @@ var grammar = {
           };
         }
         },
-    {"name": "Expression", "symbols": ["ConditionalExpression"], "postprocess": id},
+    {"name": "Expression", "symbols": ["AssignmentExpression"], "postprocess": id},
+    {"name": "AssignmentExpression", "symbols": ["ConditionalExpression"], "postprocess": id},
+    {"name": "AssignmentExpression", "symbols": ["MemberExpression", tok_EQ, "AssignmentExpression"], "postprocess": 
+        function(d){
+          return {
+            loc: mkLoc(d),
+            type: "AssignmentExpression",
+            op: d[1].src,
+            left: d[0],
+            right: d[2]
+          };
+        }
+        },
     {"name": "ConditionalExpression", "symbols": ["exp_or"], "postprocess": id},
     {"name": "ConditionalExpression", "symbols": ["exp_or", tok_QUESTION, "exp_or", tok_COLON, "exp_or"], "postprocess": 
         function(d){
