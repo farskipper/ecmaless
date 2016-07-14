@@ -32,6 +32,38 @@ var comp_by_type = {
       return e("object-property", key, val, {start: key.loc.start, end: val.loc.end});
     }), ast.loc);
   },
+  "Function": function(ast, comp){
+    var params = [];
+    var body = [];
+    if(ast.params && ast.params.type === "Identifier"){
+      body.push(e("var",
+        comp(ast.params),
+        e("call",
+          e(".",
+            e("id", "arguments", ast.params.loc),
+            e("id", "slice", ast.params.loc),
+            ast.params.loc
+          ),
+          [e("number", 0, ast.params.loc)],
+          ast.params.loc
+        ),
+        ast.params.loc
+      ));
+    }else{
+      _.each(ast.params, function(p, i){
+        params.push(comp(p));
+      });
+    }
+    _.each(ast.body, function(b, i){
+      if((i === _.size(ast.body) - 1) && b.type === "ExpressionStatement"){
+        body.push(e("return", comp(b.expression), b.loc));
+      }else{
+        body.push(comp(b));
+      }
+    });
+    var id;
+    return e("function", params, body, id, ast.loc);
+  },
   "ExpressionStatement": function(ast, comp){
     return e(";", comp(ast.expression), ast.loc);
   },

@@ -28,6 +28,9 @@ test("compile", function(t){
   tc("[1, 2]", "[1,2];");
   tc("{a: 1, b: 2}", "({'a':1,'b':2});");
 
+  tc("fn args:\n    nil", "(function(){var args=arguments.slice(0);return void 0;});");
+  tc("fn [a, b]:\n    nil", "(function(a,b){return void 0;});");
+
   tc("def a", "var a=void 0;");
   tc("def a = 1", "var a=1;");
 
