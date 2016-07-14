@@ -13,6 +13,34 @@ _.each({
     "nil",
     "true",
     "false",
+    "[1, 2, 3]",
+    "{\"a\": 1, \"b\": 2}",
+  ],
+  "### Functions": [
+    "fn args:\n    nil",
+    "fn [a, b...]:\n    nil",
+    "return a",
+    "add(1, 2)",
+  ],
+  "### Operators": [
+    "-1",
+    "!a",
+    "1 + 2 * 3",
+    "a && b || c",
+  ],
+  "### Control Flow": [
+    "if a:\n    b\nelse:\n    c",
+    "cond:\n    a == 1:\n        b\n    c == 3:\n        d\n    else:\n        e",
+    "case a:\n    1:\n        b\n    2:\n        c\n    else:\n        d",
+    "while a:\n    b",
+    "break",
+    "continue",
+    "try:\n    a\ncatch err:\n    b\nfinally:\n    c",
+  ],
+  "### Data Access": [
+    "a.b.c",
+    "matrix[i][j]",
+    "obj[key]",
   ]
 }, function(srcs, head){
   console.log();
