@@ -32,13 +32,13 @@ false
     ]
 }
 
-{"a": 1, "b": 2}
+{"a": 1, b: 2}
 {
     "type": "Struct",
     "value": [
         {"type": "String", "value": "a"},
         {"type": "Number", "value": 1},
-        {"type": "String", "value": "b"},
+        {"type": "Symbol", "value": "b"},
         {"type": "Number", "value": 2}
     ]
 }
@@ -276,6 +276,28 @@ finally:
             "expression": {"type": "Identifier", "value": "c"}
         }
     ]
+}
+```
+
+### Variables
+
+```js
+def a
+{"type": "Define", "id": {"type": "Identifier", "value": "a"}}
+
+def a = 1
+{
+    "type": "Define",
+    "id": {"type": "Identifier", "value": "a"},
+    "init": {"type": "Number", "value": 1}
+}
+
+a = 2
+{
+    "type": "AssignmentExpression",
+    "op": "=",
+    "left": {"type": "Identifier", "value": "a"},
+    "right": {"type": "Number", "value": 2}
 }
 ```
 

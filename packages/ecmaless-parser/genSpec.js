@@ -14,7 +14,7 @@ _.each({
     "true",
     "false",
     "[1, 2, 3]",
-    "{\"a\": 1, \"b\": 2}",
+    "{\"a\": 1, b: 2}",
   ],
   "### Functions": [
     "fn args:\n    nil",
@@ -36,6 +36,11 @@ _.each({
     "break",
     "continue",
     "try:\n    a\ncatch err:\n    b\nfinally:\n    c",
+  ],
+  "### Variables": [
+    "def a",
+    "def a = 1",
+    "a = 2",
   ],
   "### Data Access": [
     "a.b.c",

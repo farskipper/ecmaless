@@ -341,5 +341,7 @@ test("parser", function(t){
   tst("true", {type: "Boolean", value: true});
   tst("false", {type: "Boolean", value: false});
 
+  tst("\"a\nb\"", {type: "String", value: "a\nb"});
+
   t.end();
 });
