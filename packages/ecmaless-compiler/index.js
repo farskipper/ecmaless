@@ -5,6 +5,30 @@ var comp_by_type = {
   "Number": function(ast, comp){
     return e("number", ast.value, ast.loc);
   },
+  "String": function(ast, comp){
+    return e("string", ast.value, ast.loc);
+  },
+  "Nil": function(ast, comp){
+    return e("void", e("number", 0, ast.loc), ast.loc);
+  },
+  "Boolean": function(ast, comp){
+    return e(ast.value ? "true" : "false", ast.loc);
+  },
+  "Array": function(ast, comp){
+    return e("array", comp(ast.value), ast.loc);
+  },
+  "Struct": function(ast, comp){
+    return e("object-raw", _.map(_.chunk(ast.value, 2), function(pair){
+      var key = pair[0];
+      if(key.type === "Symbol"){
+        key = e("string", key.value, key.loc);
+      }else{
+        key = comp(key);
+      }
+      var val = comp(pair[1] || {loc: key.loc, type: "Nil"});
+      return e("object-property", key, val, {start: key.loc.start, end: val.loc.end});
+    }), ast.loc);
+  },
   "ExpressionStatement": function(ast, comp){
     return e(";", comp(ast.expression), ast.loc);
   }
