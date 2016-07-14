@@ -1,6 +1,26 @@
 var _ = require("lodash");
 var e = require("estree-builder");
 
+var sliceArgs = function(loc, start, end){
+  var args = [e("number", start, loc)];
+  if(_.isNumber(end)){
+    if(end < 0){
+      args.push(e("-", e("number", -end, loc)));
+    }else{
+      args.push(e("number", end, loc));
+    }
+  }
+  return e("call",
+    e(".",
+      e("id", "arguments", loc),
+      e("id", "slice", loc),
+      loc
+    ),
+    args,
+    loc
+  );
+};
+
 var comp_by_type = {
   "Number": function(ast, comp){
     return e("number", ast.value, ast.loc);
@@ -38,20 +58,45 @@ var comp_by_type = {
     if(ast.params && ast.params.type === "Identifier"){
       body.push(e("var",
         comp(ast.params),
-        e("call",
-          e(".",
-            e("id", "arguments", ast.params.loc),
-            e("id", "slice", ast.params.loc),
-            ast.params.loc
-          ),
-          [e("number", 0, ast.params.loc)],
-          ast.params.loc
-        ),
+        sliceArgs(ast.params.loc, 0),
         ast.params.loc
       ));
     }else{
+      var has_ddd = false;
       _.each(ast.params, function(p, i){
-        params.push(comp(p));
+        if(p.type === "DotDotDot"){
+          if(has_ddd){
+            throw new Error("Only one ... allowed in an argument list");
+          }
+          has_ddd = true;
+          body.push(e("var",
+            comp(p.value),
+            sliceArgs(ast.params.loc, i, i - (_.size(ast.params) - 1)),
+            p.loc
+          ));
+        }else{
+          if(has_ddd){
+            body.push(e("var",
+              comp(p),
+              e("get",
+                e("id", "arguments", p.loc),
+                e("-",
+                  e(".",
+                    e("id", "arguments", p.loc),
+                    e("id", "length", p.loc),
+                    p.loc
+                  ),
+                  e("number", _.size(ast.params) - i, p.loc),
+                  p.loc
+                ),
+                p.loc
+              ),
+              p.loc
+            ));
+          }else{
+            params.push(comp(p));
+          }
+        }
       });
     }
     _.each(ast.body, function(b, i){
