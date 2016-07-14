@@ -19,7 +19,12 @@ var flatten = function(toFlatten){
 var noop = function(){};
 var noopArr = function(){return [];};
 var idArr = function(d){return [d[0]];};
-var concatArr = function(i){
+var concatArr = function(i, no_wrap){
+  if(no_wrap){
+    return function(d){
+      return d[0].concat(d[i]);
+    };
+  }
   return function(d){
     return d[0].concat([d[i]]);
   };
@@ -291,12 +296,12 @@ var grammar = {
     {"name": "TryCatch", "symbols": [tok_try, "Block", tok_finally, "Block"], "postprocess": tryCatchMaker(-1, -1, 3)},
     {"name": "TryCatch", "symbols": [tok_try, "Block", tok_catch, "Identifier", "Block", tok_finally, "Block"], "postprocess": tryCatchMaker(3, 4, 6)},
     {"name": "ElseBlock", "symbols": [tok_else, "Block"], "postprocess": function(d){return d[1].body;}},
-    {"name": "Block", "symbols": [tok_COLON, "NL", tok_INDENT, "_NL", "Statement_list", "_NL", tok_DEDENT], "postprocess": 
+    {"name": "Block", "symbols": [tok_COLON, "NL", tok_INDENT, "Statement_list", "_NL", tok_DEDENT], "postprocess": 
         function(d){
           return {
             loc: mkLoc(d),
             type: "Block",
-            body: d[4]
+            body: d[3]
           };
         }
         },
@@ -372,38 +377,38 @@ var grammar = {
             args: d[2]
           };
         } },
-    {"name": "Struct", "symbols": [tok_OPEN_CU, "KeyValPairs", tok_CLOSE_CU], "postprocess":  function(d){
+    {"name": "Struct", "symbols": [tok_OPEN_CU, "_NL", "KeyValPairs", tok_CLOSE_CU], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
             type: "Struct",
-            value: d[1]
+            value: d[2]
           };
         } },
     {"name": "KeyValPairs", "symbols": [], "postprocess": noopArr},
     {"name": "KeyValPairs$ebnf$1", "symbols": [tok_COMMA], "postprocess": id},
     {"name": "KeyValPairs$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "KeyValPairs", "symbols": ["KeyValPairs_body", "KeyValPairs$ebnf$1"], "postprocess": id},
+    {"name": "KeyValPairs", "symbols": ["KeyValPairs_body", "KeyValPairs$ebnf$1", "_NL"], "postprocess": id},
     {"name": "KeyValPairs_body", "symbols": ["KeyValPair"], "postprocess": id},
-    {"name": "KeyValPairs_body", "symbols": ["KeyValPairs_body", tok_COMMA, "KeyValPair"], "postprocess": concatArr(2)},
+    {"name": "KeyValPairs_body", "symbols": ["KeyValPairs_body", tok_COMMA, "_NL", "KeyValPair"], "postprocess": concatArr(3, true)},
     {"name": "KeyValPair$subexpression$1", "symbols": ["String"]},
     {"name": "KeyValPair$subexpression$1", "symbols": ["Number"]},
     {"name": "KeyValPair$subexpression$1", "symbols": ["Symbol"]},
     {"name": "KeyValPair", "symbols": ["KeyValPair$subexpression$1", tok_COLON, "Expression"], "postprocess":  function(d){
           return [d[0][0], d[2]];
         } },
-    {"name": "Array", "symbols": [tok_OPEN_SQ, "Expression_list", tok_CLOSE_SQ], "postprocess":  function(d){
+    {"name": "Array", "symbols": [tok_OPEN_SQ, "_NL", "Expression_list", tok_CLOSE_SQ], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
             type: "Array",
-            value: d[1]
+            value: d[2]
           };
         } },
     {"name": "Expression_list", "symbols": [], "postprocess": noopArr},
     {"name": "Expression_list$ebnf$1", "symbols": [tok_COMMA], "postprocess": id},
     {"name": "Expression_list$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Expression_list", "symbols": ["Expression_list_body", "Expression_list$ebnf$1"], "postprocess": id},
+    {"name": "Expression_list", "symbols": ["Expression_list_body", "Expression_list$ebnf$1", "_NL"], "postprocess": id},
     {"name": "Expression_list_body", "symbols": ["Expression"], "postprocess": idArr},
-    {"name": "Expression_list_body", "symbols": ["Expression_list_body", tok_COMMA, "Expression"], "postprocess": concatArr(2)},
+    {"name": "Expression_list_body", "symbols": ["Expression_list_body", tok_COMMA, "_NL", "Expression"], "postprocess": concatArr(3)},
     {"name": "Function", "symbols": [tok_fn, "Params", "Block"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),

@@ -119,6 +119,7 @@ test("parser", function(t){
   tstFail("[,]");
   tst("[1, 2, 3]", mk.arr([mk.num(1), mk.num(2), mk.num(3)]));
   tst("[1, 2, 3,]", mk.arr([mk.num(1), mk.num(2), mk.num(3)]));
+  tst("[\n    1,\n2,    \n    3,\n]", mk.arr([mk.num(1), mk.num(2), mk.num(3)]));
   tstFail("[1, 2, 3,,]");
   tstFail("[,1, 2, 3]");
 
@@ -128,6 +129,11 @@ test("parser", function(t){
   tst("{a: 1}", mk.struct([mk.sym("a"), mkv(1)]));
   tst("{def: 1}", mk.struct([mk.sym("def"), mkv(1)]));
   tst("{1: \"a\"}", mk.struct([mkv(1), mkv("a")]));
+  tst("{\n    1: \"a\"\n}", mk.struct([mkv(1), mkv("a")]));
+  tst("{\n    1: \"a\",\n    2: \"b\",\n}", mk.struct([
+    mkv(1), mkv("a"),
+    mkv(2), mkv("b")
+  ]));
 
   var fn_body_a = [mk.stmt(mk.id("a"))];
   tstFail("fn \n    a");
@@ -135,6 +141,7 @@ test("parser", function(t){
   tst("fn args:\n    a", mk.fn(mk.id("args"), fn_body_a));
   tst("fn []:\n    a", mk.fn([], fn_body_a));
   tst("fn[]:\n    a", mk.fn([], fn_body_a));
+  tst("fn[]:\n\n    a", mk.fn([], fn_body_a));
   tst("fn [  ] :\n    a", mk.fn([], fn_body_a));
   tstFail("fn [,]:\n    a");
   tstFail("fn [1]:\n    a");

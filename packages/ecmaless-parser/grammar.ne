@@ -15,7 +15,12 @@ var flatten = function(toFlatten){
 var noop = function(){};
 var noopArr = function(){return [];};
 var idArr = function(d){return [d[0]];};
-var concatArr = function(i){
+var concatArr = function(i, no_wrap){
+  if(no_wrap){
+    return function(d){
+      return d[0].concat(d[i]);
+    };
+  }
   return function(d){
     return d[0].concat([d[i]]);
   };
@@ -298,12 +303,12 @@ TryCatch ->
 
 ElseBlock -> %tok_else Block {% function(d){return d[1].body;} %}
 
-Block -> %tok_COLON NL %tok_INDENT _NL Statement_list _NL %tok_DEDENT {%
+Block -> %tok_COLON NL %tok_INDENT Statement_list _NL %tok_DEDENT {%
   function(d){
     return {
       loc: mkLoc(d),
       type: "Block",
-      body: d[4]
+      body: d[3]
     };
   }
 %}
@@ -397,37 +402,37 @@ Application -> MemberExpression %tok_OPEN_PN Expression_list %tok_CLOSE_PN {% fu
   };
 } %}
 
-Struct -> %tok_OPEN_CU KeyValPairs %tok_CLOSE_CU {% function(d){
+Struct -> %tok_OPEN_CU _NL KeyValPairs %tok_CLOSE_CU {% function(d){
   return {
     loc: mkLoc(d),
     type: "Struct",
-    value: d[1]
+    value: d[2]
   };
 } %}
 
 KeyValPairs -> null {% noopArr %}
-    | KeyValPairs_body %tok_COMMA:? {% id %}
+    | KeyValPairs_body %tok_COMMA:? _NL {% id %}
 KeyValPairs_body ->
       KeyValPair {% id %}
-    | KeyValPairs_body %tok_COMMA KeyValPair {% concatArr(2) %}
+    | KeyValPairs_body %tok_COMMA _NL KeyValPair {% concatArr(3, true) %}
 
 KeyValPair -> (String|Number|Symbol) %tok_COLON Expression {% function(d){
   return [d[0][0], d[2]];
 } %}
 
-Array -> %tok_OPEN_SQ Expression_list %tok_CLOSE_SQ {% function(d){
+Array -> %tok_OPEN_SQ _NL Expression_list %tok_CLOSE_SQ {% function(d){
   return {
     loc: mkLoc(d),
     type: "Array",
-    value: d[1]
+    value: d[2]
   };
 } %}
 
 Expression_list -> null {% noopArr %}
-    | Expression_list_body %tok_COMMA:? {% id %}
+    | Expression_list_body %tok_COMMA:? _NL {% id %}
 Expression_list_body ->
       Expression {% idArr %}
-    | Expression_list_body %tok_COMMA Expression {% concatArr(2) %}
+    | Expression_list_body %tok_COMMA _NL Expression {% concatArr(3) %}
 
 Function -> %tok_fn Params Block {% function(d){
   return {
