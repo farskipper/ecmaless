@@ -6,7 +6,12 @@ var escodegen = require("escodegen");
 
 var testCompile = function(t, src, expected){
   var ast = parser(src);
-  var est = compiler(ast);
+  var est = compiler(ast).estree;
+  est = {
+    "loc": {start: _.head(est).loc.start, end: _.last(est).loc.end},
+    "type": "Program",
+    "body": est
+  };
   var js = escodegen.generate(est, {format: {compact: true}});
   t.equals(js, expected);
 };
