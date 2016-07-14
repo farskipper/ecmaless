@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "onchange '*.js' '*.ne' -e 'grammar.js' -i -- npm test",
-    "build": "nearleyc grammar.ne > grammar.js",
+    "build": "nearleyc grammar.ne > grammar.js && node genSpec.js > spec.md",
     "test": "npm run build && node tests.js"
   },
   "repository": {
