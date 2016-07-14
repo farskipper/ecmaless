@@ -191,6 +191,8 @@ test("parser", function(t){
     test: mk.id("a"),
     body: [mk.stmt(mk.id("b"))]
   });
+  tst("break", {type: "Break"});
+  tst("continue", {type: "Continue"});
 
   var src = "";
   src += "cond:\n";
