@@ -4,6 +4,7 @@
   "description": "ecmaless AST -> ESTree",
   "main": "index.js",
   "scripts": {
+    "start": "onchange '*.js' 'test-files/' -i -- npm test",
     "test": "node tests.js"
   },
   "repository": {
@@ -20,5 +21,15 @@
   "bugs": {
     "url": "https://github.com/farskipper/ecmaless-compiler/issues"
   },
-  "homepage": "https://github.com/farskipper/ecmaless-compiler#readme"
+  "homepage": "https://github.com/farskipper/ecmaless-compiler#readme",
+  "devDependencies": {
+    "ecmaless-parser": "^0.2.0",
+    "escodegen": "^1.8.0",
+    "onchange": "^2.5.0",
+    "tape": "^4.6.0"
+  },
+  "dependencies": {
+    "estree-builder": "^1.3.1",
+    "lodash": "^4.13.1"
+  }
 }
