@@ -165,10 +165,14 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 
 %}
 
-main -> Statement {% id %}
+main -> Statement_list {% id %}
 
 ################################################################################
 # Statement
+
+Statement_list -> Statement {% idArr %}
+#TODO newlines    | Statement_list Statement {% concatArr(1) %}
+
 Statement ->
       Define {% id %}
     | ExpressionStatement {% id %}
@@ -293,7 +297,7 @@ TryCatch ->
 
 ElseBlock -> %tok_else Block {% function(d){return d[1].body;} %}
 
-Block -> %tok_COLON %tok_INDENT Statement:* %tok_DEDENT {%
+Block -> %tok_COLON %tok_INDENT Statement_list %tok_DEDENT {%
   function(d){
     return {
       loc: mkLoc(d),

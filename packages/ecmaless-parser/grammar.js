@@ -169,7 +169,8 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 
 var grammar = {
     ParserRules: [
-    {"name": "main", "symbols": ["Statement"], "postprocess": id},
+    {"name": "main", "symbols": ["Statement_list"], "postprocess": id},
+    {"name": "Statement_list", "symbols": ["Statement"], "postprocess": idArr},
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
     {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
     {"name": "Statement", "symbols": ["Return"], "postprocess": id},
@@ -288,9 +289,7 @@ var grammar = {
     {"name": "TryCatch", "symbols": [tok_try, "Block", tok_finally, "Block"], "postprocess": tryCatchMaker(-1, -1, 3)},
     {"name": "TryCatch", "symbols": [tok_try, "Block", tok_catch, "Identifier", "Block", tok_finally, "Block"], "postprocess": tryCatchMaker(3, 4, 6)},
     {"name": "ElseBlock", "symbols": [tok_else, "Block"], "postprocess": function(d){return d[1].body;}},
-    {"name": "Block$ebnf$1", "symbols": []},
-    {"name": "Block$ebnf$1", "symbols": ["Statement", "Block$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "Block", "symbols": [tok_COLON, tok_INDENT, "Block$ebnf$1", tok_DEDENT], "postprocess": 
+    {"name": "Block", "symbols": [tok_COLON, tok_INDENT, "Statement_list", tok_DEDENT], "postprocess": 
         function(d){
           return {
             loc: mkLoc(d),

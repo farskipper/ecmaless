@@ -93,6 +93,7 @@ var mkv = function(v){
 test("parser", function(t){
   var tst = function(src, expected){
     var ast = parser(src);
+    ast = _.isArray(ast) && _.size(ast) === 1 ? _.head(ast) : ast;
     if(ast.type === "ExpressionStatement"){
       ast = ast.expression;
     }
