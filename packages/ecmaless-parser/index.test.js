@@ -1,16 +1,7 @@
 var _ = require("lodash");
 var test = require("tape");
+var rmLoc = require("./rmLoc");
 var parser = require("./");
-
-var rmLoc = function(ast){
-  if(_.isPlainObject(ast)){
-    return _.mapValues(_.omit(ast, "loc"), rmLoc);
-  }
-  if(_.isArray(ast)){
-    return _.map(ast, rmLoc);
-  }
-  return ast;
-};
 
 var mk = {};
 mk.num = function(value){
