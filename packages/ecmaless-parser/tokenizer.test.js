@@ -6,16 +6,16 @@ test("tokenizer", function(t){
 
   t.deepEquals(tokenizer("123"), [
     {
-      type: 'NUMBER',
-      src: '123',
-      loc: {source: '123', start: {line: 1, column: 0}, end: {line: 1, column: 3}}
+      type: "NUMBER",
+      src: "123",
+      loc: {source: "123", start: {line: 1, column: 0}, end: {line: 1, column: 3}}
     }
   ]);
   t.deepEquals(tokenizer("123.45"), [
     {
-      type: 'NUMBER',
-      src: '123.45',
-      loc: {source: '123.45', start: {line: 1, column: 0}, end: {line: 1, column: 6}}
+      type: "NUMBER",
+      src: "123.45",
+      loc: {source: "123.45", start: {line: 1, column: 0}, end: {line: 1, column: 6}}
     }
   ]);
 
@@ -23,11 +23,11 @@ test("tokenizer", function(t){
     t.deepEquals(_.map(tokenizer(src), "type"), tok_order);
   };
 
-  testOrder('123 "four"\nblah', ["NUMBER", "STRING", "SYMBOL"]);
-  testOrder('10 0.1 1.0', ["NUMBER", "NUMBER", "NUMBER"]);
+  testOrder("123 \"four\"\nblah", ["NUMBER", "STRING", "SYMBOL"]);
+  testOrder("10 0.1 1.0", ["NUMBER", "NUMBER", "NUMBER"]);
 
-  testOrder('deps:\n    1', ["SYMBOL", ":", "INDENT", "NUMBER", "DEDENT"]);
-  testOrder('deps:\n        1', [
+  testOrder("deps:\n    1", ["SYMBOL", ":", "INDENT", "NUMBER", "DEDENT"]);
+  testOrder("deps:\n        1", [
     "SYMBOL",
     ":",
     "INDENT",
@@ -36,7 +36,7 @@ test("tokenizer", function(t){
     "DEDENT",
     "DEDENT"
   ]);
-  testOrder('deps:\n        1\n    2', [
+  testOrder("deps:\n        1\n    2", [
     "SYMBOL",
     ":",
     "INDENT",
@@ -46,7 +46,7 @@ test("tokenizer", function(t){
     "NUMBER",
     "DEDENT"
   ]);
-  testOrder('deps:\n        1    3\n    2', [
+  testOrder("deps:\n        1    3\n    2", [
     "SYMBOL",
     ":",
     "INDENT",
@@ -58,11 +58,11 @@ test("tokenizer", function(t){
     "DEDENT"
   ]);
 
-  var src = '';
-  src += 'deps:\n';
-  src += '    a [\n';
-  src += '        1\n';
-  src += '    ]\n';
+  var src = "";
+  src += "deps:\n";
+  src += "    a [\n";
+  src += "        1\n";
+  src += "    ]\n";
   testOrder(src, [
     "SYMBOL",
     ":",

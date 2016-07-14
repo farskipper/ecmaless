@@ -9,7 +9,7 @@ var groups = {
 };
 
 var toIndent = function(src){
-  var lines = src.split('\n');
+  var lines = src.split("\n");
   if(lines.length < 2){
     return -1;
   }

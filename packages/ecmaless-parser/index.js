@@ -1,5 +1,5 @@
-var nearley = require('nearley');
-var grammar = require('./grammar.js');
+var nearley = require("nearley");
+var grammar = require("./grammar.js");
 var tokenizer = require("./tokenizer");
 
 module.exports = function(src, opts){
@@ -12,7 +12,7 @@ module.exports = function(src, opts){
 
   if(p.results.length !== 1){
     throw new Error(
-      'Parsing Ambiguity: ' + p.results.length + ' parsings found'
+      "Parsing Ambiguity: " + p.results.length + " parsings found"
     );
   }
   return p.results[0];
