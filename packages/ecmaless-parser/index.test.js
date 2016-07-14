@@ -54,6 +54,13 @@ mk.ternary = function(test, consequent, alternate){
     alternate: alternate
   };
 };
+mk.unary = function(op, arg){
+  return {
+    type: "UnaryOperator",
+    op: op,
+    arg: arg
+  };
+};
 mk.infix = function(op, left, right){
   return {
     type: "InfixOperator",
@@ -270,6 +277,11 @@ test("parser", function(t){
     catch_id: mk.id("b"),
     catch_block: [mk.stmt(mk.id("c"))]
   });
+
+  tst("-1", mk.unary("-", mkv(1)));
+  tst("+1", mk.unary("+", mkv(1)));
+  tst("!a", mk.unary("!", mk.id("a")));
+  tst("3--1", mk.infix("-", mkv(3), mk.unary("-", mkv(1))));
 
   t.end();
 });

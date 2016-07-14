@@ -81,6 +81,7 @@ var tok_MINUS = tok("-");
 var tok_TIMES = tok("*");
 var tok_DIVIDE = tok("/");
 var tok_MODULO = tok("%");
+var tok_BANG = tok("!");
 
 var mkType = function(d, type, value){
   return {
@@ -114,6 +115,15 @@ var mkLoc = function(d){
     i++;
   }
   return loc;
+};
+
+var unaryOp = function(d){
+  return {
+    loc: mkLoc(d),
+    type: "UnaryOperator",
+    op: d[0].src,
+    arg: d[1]
+  };
 };
 
 var infixOp = function(d){
@@ -273,10 +283,14 @@ var grammar = {
     {"name": "exp_sum", "symbols": ["exp_product"], "postprocess": id},
     {"name": "exp_sum", "symbols": ["exp_sum", tok_PLUS, "exp_product"], "postprocess": infixOp},
     {"name": "exp_sum", "symbols": ["exp_sum", tok_MINUS, "exp_product"], "postprocess": infixOp},
-    {"name": "exp_product", "symbols": ["MemberExpression"], "postprocess": id},
-    {"name": "exp_product", "symbols": ["exp_product", tok_TIMES, "MemberExpression"], "postprocess": infixOp},
-    {"name": "exp_product", "symbols": ["exp_product", tok_DIVIDE, "MemberExpression"], "postprocess": infixOp},
-    {"name": "exp_product", "symbols": ["exp_product", tok_MODULO, "MemberExpression"], "postprocess": infixOp},
+    {"name": "exp_product", "symbols": ["UnaryOperator"], "postprocess": id},
+    {"name": "exp_product", "symbols": ["exp_product", tok_TIMES, "UnaryOperator"], "postprocess": infixOp},
+    {"name": "exp_product", "symbols": ["exp_product", tok_DIVIDE, "UnaryOperator"], "postprocess": infixOp},
+    {"name": "exp_product", "symbols": ["exp_product", tok_MODULO, "UnaryOperator"], "postprocess": infixOp},
+    {"name": "UnaryOperator", "symbols": ["MemberExpression"], "postprocess": id},
+    {"name": "UnaryOperator", "symbols": [tok_PLUS, "UnaryOperator"], "postprocess": unaryOp},
+    {"name": "UnaryOperator", "symbols": [tok_MINUS, "UnaryOperator"], "postprocess": unaryOp},
+    {"name": "UnaryOperator", "symbols": [tok_BANG, "UnaryOperator"], "postprocess": unaryOp},
     {"name": "MemberExpression", "symbols": ["PrimaryExpression"], "postprocess": id},
     {"name": "MemberExpression", "symbols": ["MemberExpression", tok_DOT, "Identifier"], "postprocess":  function(d){
             return mkMemberExpression(mkLoc(d), "dot", d[0], d[2]);

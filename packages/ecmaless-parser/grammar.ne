@@ -77,6 +77,7 @@ var tok_MINUS = tok("-");
 var tok_TIMES = tok("*");
 var tok_DIVIDE = tok("/");
 var tok_MODULO = tok("%");
+var tok_BANG = tok("!");
 
 var mkType = function(d, type, value){
   return {
@@ -110,6 +111,15 @@ var mkLoc = function(d){
     i++;
   }
   return loc;
+};
+
+var unaryOp = function(d){
+  return {
+    loc: mkLoc(d),
+    type: "UnaryOperator",
+    op: d[0].src,
+    arg: d[1]
+  };
 };
 
 var infixOp = function(d){
@@ -281,10 +291,15 @@ exp_sum -> exp_product {% id %}
     | exp_sum %tok_PLUS exp_product {% infixOp %}
     | exp_sum %tok_MINUS exp_product {% infixOp %}
 
-exp_product -> MemberExpression {% id %}
-    | exp_product %tok_TIMES MemberExpression {% infixOp %}
-    | exp_product %tok_DIVIDE MemberExpression {% infixOp %}
-    | exp_product %tok_MODULO MemberExpression {% infixOp %}
+exp_product -> UnaryOperator {% id %}
+    | exp_product %tok_TIMES UnaryOperator {% infixOp %}
+    | exp_product %tok_DIVIDE UnaryOperator {% infixOp %}
+    | exp_product %tok_MODULO UnaryOperator {% infixOp %}
+
+UnaryOperator -> MemberExpression {% id %}
+    | %tok_PLUS UnaryOperator {% unaryOp %}
+    | %tok_MINUS UnaryOperator {% unaryOp %}
+    | %tok_BANG UnaryOperator {% unaryOp %}
 
 MemberExpression -> PrimaryExpression {% id %}
     | MemberExpression %tok_DOT Identifier
