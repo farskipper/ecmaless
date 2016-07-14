@@ -75,6 +75,9 @@ var tok_try = tok("SYMBOL", "try");
 var tok_catch = tok("SYMBOL", "catch");
 var tok_finally = tok("SYMBOL", "finally");
 var tok_return = tok("SYMBOL", "return");
+var tok_nil = tok("SYMBOL", "nil");
+var tok_true = tok("SYMBOL", "true");
+var tok_false = tok("SYMBOL", "false");
 
 var isReserved = function(src){
   return reserved[src] === true;
@@ -351,6 +354,8 @@ var grammar = {
     {"name": "PrimaryExpression", "symbols": ["Number"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": ["String"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": ["Identifier"], "postprocess": id},
+    {"name": "PrimaryExpression", "symbols": ["Nil"], "postprocess": id},
+    {"name": "PrimaryExpression", "symbols": ["Boolean"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": ["Function"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": ["Application"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": ["Array"], "postprocess": id},
@@ -438,6 +443,15 @@ var grammar = {
             return reject;
           }
           return mkType(d, "Identifier", src);
+        } },
+    {"name": "Nil", "symbols": [tok_nil], "postprocess":  function(d){
+          return {loc: d[0].loc, type: "Nil"};
+        } },
+    {"name": "Boolean$subexpression$1", "symbols": [tok_true]},
+    {"name": "Boolean$subexpression$1", "symbols": [tok_false]},
+    {"name": "Boolean", "symbols": ["Boolean$subexpression$1"], "postprocess":  function(d){
+          var t = d[0][0];
+          return {loc: t.loc, type: "Boolean", value: t.src === "true"};
         } },
     {"name": "Symbol", "symbols": [tok_SYMBOL], "postprocess":  function(d){
           return mkType(d, "Symbol", d[0].src);

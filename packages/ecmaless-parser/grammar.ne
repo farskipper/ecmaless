@@ -71,6 +71,9 @@ var tok_try = tok("SYMBOL", "try");
 var tok_catch = tok("SYMBOL", "catch");
 var tok_finally = tok("SYMBOL", "finally");
 var tok_return = tok("SYMBOL", "return");
+var tok_nil = tok("SYMBOL", "nil");
+var tok_true = tok("SYMBOL", "true");
+var tok_false = tok("SYMBOL", "false");
 
 var isReserved = function(src){
   return reserved[src] === true;
@@ -370,6 +373,8 @@ PrimaryExpression ->
       Number {% id %}
     | String {% id %}
     | Identifier {% id %}
+    | Nil {% id %}
+    | Boolean {% id %}
     | Function {% id %}
     | Application {% id %}
     | Array {% id %}
@@ -462,6 +467,15 @@ Identifier -> %tok_SYMBOL {% function(d, start, reject){
     return reject;
   }
   return mkType(d, "Identifier", src);
+} %}
+
+Nil -> %tok_nil {% function(d){
+  return {loc: d[0].loc, type: "Nil"};
+} %}
+
+Boolean -> (%tok_true | %tok_false) {% function(d){
+  var t = d[0][0];
+  return {loc: t.loc, type: "Boolean", value: t.src === "true"};
 } %}
 
 Symbol -> %tok_SYMBOL {% function(d){

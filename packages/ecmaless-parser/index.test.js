@@ -329,5 +329,9 @@ test("parser", function(t){
   tst("return", mk.ret(null));
   tst("return 1", mk.ret(mkv(1)));
 
+  tst("nil", {type: "Nil"});
+  tst("true", {type: "Boolean", value: true});
+  tst("false", {type: "Boolean", value: false});
+
   t.end();
 });

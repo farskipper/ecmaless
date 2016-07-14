@@ -1,7 +1,5 @@
 # AST Specification
-All AST nodes will have a `loc` property. It's identical to the [estree loc](https://github.com/estree/estree/blob/master/spec.md#node-objects).
-
-These examples omit the `loc` property for brevity.
+All AST nodes will have a `loc` property. It's identical to the [estree loc](https://github.com/estree/estree/blob/master/spec.md#node-objects). These examples omit `loc` for brevity.
 
 ### Literals
 
@@ -14,4 +12,13 @@ These examples omit the `loc` property for brevity.
 
 foo
 {"type": "Identifier", "value": "foo"}
+
+nil
+{"type": "Nil"}
+
+true
+{"type": "Boolean", "value": true}
+
+false
+{"type": "Boolean", "value": false}
 ```
