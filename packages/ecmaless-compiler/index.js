@@ -1,5 +1,6 @@
 var _ = require("lodash");
 var e = require("estree-builder");
+var toId = require("to-js-identifier");
 
 var sliceArgs = function(loc, start, end){
   var args = [e("number", start, loc)];
@@ -29,7 +30,7 @@ var comp_by_type = {
     return e("string", ast.value, ast.loc);
   },
   "Identifier": function(ast, comp){
-    return e("id", ast.value, ast.loc);
+    return e("id", toId(ast.value), ast.loc);
   },
   "Nil": function(ast, comp){
     return e("void", e("number", 0, ast.loc), ast.loc);
@@ -112,8 +113,20 @@ var comp_by_type = {
     var id;
     return e("function", params, body, id, ast.loc);
   },
+  "UnaryOperator": function(ast, comp){
+    return e("call", e("id", toId(ast.op), ast.loc), [comp(ast.arg)], ast.loc);
+  },
+  "InfixOperator": function(ast, comp){
+    return e("call", e("id", toId(ast.op), ast.loc), [
+      comp(ast.left),
+      comp(ast.right)
+    ], ast.loc);
+  },
   "ExpressionStatement": function(ast, comp){
     return e(";", comp(ast.expression), ast.loc);
+  },
+  "Return": function(ast, comp){
+    return e("return", comp(ast.expression), ast.loc);
   },
   "Define": function(ast, comp){
       var init = comp(ast.init || {loc: ast.id.loc, type: "Nil"});

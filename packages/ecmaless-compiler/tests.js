@@ -46,6 +46,10 @@ test("compile", function(t){
     "fn [a...]:\n    nil",
     "(function(){var a=arguments.slice(0);return void 0;});"
   );
+  tc("return false", "return false;");
+
+  tc("-1", "$45$(1);");
+  tc("1 + 2", "$43$(1,2);");
 
   tc("def a", "var a=void 0;");
   tc("def a = 1", "var a=1;");
