@@ -51,6 +51,10 @@ test("compile", function(t){
   tc("-1", "$45$(1);");
   tc("1 + 2", "$43$(1,2);");
 
+  tc("if a:\n    b\nelse if c:\n    d\nelse:\n    e", "if(a){b;}else if(c){d;}else{e;}");
+  tc("cond:\n    a:\n        b\n    c:\n        d\n    else:\n        e", "if(a){b;}else if(c){d;}else{e;}");
+  //tc("case a:\n    1:\n        b\n    2:\n        c\n    else:\n        d", "if(a){b;}else if(c){d;}else{e;}");
+
   tc("def a", "var a=void 0;");
   tc("def a = 1", "var a=1;");
 

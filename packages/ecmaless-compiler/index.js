@@ -128,6 +128,33 @@ var comp_by_type = {
   "Return": function(ast, comp){
     return e("return", comp(ast.expression), ast.loc);
   },
+  "If": function(ast, comp){
+    return e("if", comp(ast.test),
+      e("block", comp(ast.then), ast.loc),
+      _.isArray(ast["else"])
+        ? e("block", comp(ast["else"]), ast.loc)
+        : comp(ast["else"]), ast.loc);
+  },
+  "Cond": function(ast, comp){
+    var head;
+    var prev = ast["else"]
+      ? e("block", comp(ast["else"]), ast["else"].loc)
+      : undefined;
+    var i = _.size(ast.blocks) - 1;
+    while(i >= 0){
+      var block = ast.blocks[i];
+      var me = e("if",
+        comp(block.test),
+        e("block", comp(block.body), block.loc),
+        prev,
+        block.loc
+      );
+
+      prev = me;
+      i--;
+    }
+    return prev;
+  },
   "Define": function(ast, comp){
       var init = comp(ast.init || {loc: ast.id.loc, type: "Nil"});
     return e("var", comp(ast.id), init, ast.loc);
