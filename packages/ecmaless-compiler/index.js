@@ -184,8 +184,19 @@ var comp_by_type = {
   "Continue": function(ast, comp){
     return e("continue", ast.loc);
   },
+  "TryCatch": function(ast, comp){
+    return e("try",
+      comp(ast.try_block),
+      ast.catch_id && ast.catch_id.type === "Identifier"
+        ? ast.catch_id.value
+        : undefined,
+      comp(ast.catch_block),
+      comp(ast.finally_block),
+      ast.loc
+    );
+  },
   "Define": function(ast, comp){
-      var init = comp(ast.init || {loc: ast.id.loc, type: "Nil"});
+    var init = comp(ast.init || {loc: ast.id.loc, type: "Nil"});
     return e("var", comp(ast.id), init, ast.loc);
   },
 };

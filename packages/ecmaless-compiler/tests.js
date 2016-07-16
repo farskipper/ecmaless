@@ -61,6 +61,8 @@ test("compile", function(t){
   tc("break", "break;");
   tc("continue", "continue;");
 
+  tc("try:\n    a\ncatch b:\n    c\nfinally:\n    d", "try{a;}catch(b){c;}finally{d;}");
+
   tc("def a", "var a=void 0;");
   tc("def a = 1", "var a=1;");
 
