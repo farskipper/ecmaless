@@ -175,6 +175,15 @@ var comp_by_type = {
     }
     return prev;
   },
+  "While": function(ast, comp){
+    return e("while", comp(ast.test), e("block", comp(ast.body), ast.loc), ast.loc);
+  },
+  "Break": function(ast, comp){
+    return e("break", ast.loc);
+  },
+  "Continue": function(ast, comp){
+    return e("continue", ast.loc);
+  },
   "Define": function(ast, comp){
       var init = comp(ast.init || {loc: ast.id.loc, type: "Nil"});
     return e("var", comp(ast.id), init, ast.loc);

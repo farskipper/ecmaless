@@ -57,6 +57,9 @@ test("compile", function(t){
     "case a:\n    1:\n        b\n    2:\n        c\n    else:\n        d",
     "if($61$$61$(a,1)){b;}else if($61$$61$(a,2)){c;}else{d;}"
   );
+  tc("while a:\n    b", "while(a){b;}");
+  tc("break", "break;");
+  tc("continue", "continue;");
 
   tc("def a", "var a=void 0;");
   tc("def a = 1", "var a=1;");
