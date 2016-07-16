@@ -136,21 +136,41 @@ var comp_by_type = {
         : comp(ast["else"]), ast.loc);
   },
   "Cond": function(ast, comp){
-    var head;
     var prev = ast["else"]
       ? e("block", comp(ast["else"]), ast["else"].loc)
       : undefined;
     var i = _.size(ast.blocks) - 1;
     while(i >= 0){
       var block = ast.blocks[i];
-      var me = e("if",
+      prev = e("if",
         comp(block.test),
         e("block", comp(block.body), block.loc),
         prev,
         block.loc
       );
-
-      prev = me;
+      i--;
+    }
+    return prev;
+  },
+  "Case": function(ast, comp){
+    var mkTest = function(val){
+      return e("call", e("id", toId("=="), val.loc), [
+        comp(ast.to_test),
+        comp(val)
+      ], val.loc);
+    };
+    var prev = ast["else"]
+      ? e("block", comp(ast["else"]), ast["else"].loc)
+      : undefined;
+    var i = _.size(ast.blocks) - 1;
+    while(i >= 0){
+      var block = ast.blocks[i];
+      prev = e("if",
+        mkTest(block.value),
+        e("block", comp(block.body), block.loc),
+        prev,
+        block.loc
+      );
       i--;
     }
     return prev;
