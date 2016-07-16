@@ -69,9 +69,12 @@ var comp_by_type = {
             throw new Error("Only one ... allowed in an argument list");
           }
           has_ddd = true;
+          var arg_i_from_end = i - _.size(ast.params) + 1;
           body.push(e("var",
             comp(p.value),
-            sliceArgs(ast.params.loc, i, i - (_.size(ast.params) - 1)),
+            arg_i_from_end < 0
+              ? sliceArgs(ast.params.loc, i, arg_i_from_end)
+              : sliceArgs(ast.params.loc, i),
             p.loc
           ));
         }else{

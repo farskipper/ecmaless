@@ -31,8 +31,20 @@ test("compile", function(t){
   tc("fn args:\n    nil", "(function(){var args=arguments.slice(0);return void 0;});");
   tc("fn [a, b]:\n    nil", "(function(a,b){return void 0;});");
   tc(
+    "fn [a, b...]:\n    nil",
+    "(function(a){var b=arguments.slice(1);return void 0;});"
+  );
+  tc(
     "fn [a, b..., c]:\n    nil",
     "(function(a){var b=arguments.slice(1,-1);var c=arguments[arguments.length-1];return void 0;});"
+  );
+  tc(
+    "fn [a..., b, c]:\n    nil",
+    "(function(){var a=arguments.slice(0,-2);var b=arguments[arguments.length-2];var c=arguments[arguments.length-1];return void 0;});"
+  );
+  tc(
+    "fn [a...]:\n    nil",
+    "(function(){var a=arguments.slice(0);return void 0;});"
   );
 
   tc("def a", "var a=void 0;");
