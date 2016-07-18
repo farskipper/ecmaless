@@ -178,6 +178,22 @@ var grammar = {
     {"name": "main", "symbols": ["_NL", "Statement_list", "_NL"], "postprocess": idN(1)},
     {"name": "Statement_list", "symbols": ["Statement"], "postprocess": idArr},
     {"name": "Statement_list", "symbols": ["Statement_list", "NL", "Statement"], "postprocess": concatArr(2)},
+    {"name": "Statement_list", "symbols": ["Statement_list", "Statement"], "postprocess": 
+        function(d, start, reject){
+          var ps = d[0][d[0].length - 1];
+          if(ps.type === "ExpressionStatement"){
+            ps = ps.expression;
+          }
+          var dont_need_nl_after_stmt = {
+            "If": true,
+            "Function": true
+          };
+          if(dont_need_nl_after_stmt[ps.type] !== true){
+            return reject;
+          }
+          return d[0].concat(d[1]);
+        }
+        },
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
     {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
     {"name": "Statement", "symbols": ["Return"], "postprocess": id},

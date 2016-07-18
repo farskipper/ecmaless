@@ -345,6 +345,19 @@ test("parser", function(t){
 
   tst("1\n2", [mk.stmt(mkv(1)), mk.stmt(mkv(2))]);
   tst("1\n2\n3", [mk.stmt(mkv(1)), mk.stmt(mkv(2)), mk.stmt(mkv(3))]);
+  tst("fn[]:\n    1\n2", [
+    mk.stmt(mk.fn([], [mk.stmt(mkv(1))])),
+    mk.stmt(mkv(2))
+  ]);
+  tst("if a:\n    1\n2", [
+    {
+      type: "If",
+      test: mk.id("a"),
+      then: [mk.stmt(mkv(1))],
+      "else": null
+    },
+    mk.stmt(mkv(2))
+  ]);
 
   t.end();
 });

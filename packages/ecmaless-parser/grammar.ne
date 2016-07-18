@@ -178,6 +178,23 @@ main -> _NL Statement_list _NL {% idN(1) %}
 
 Statement_list -> Statement {% idArr %}
     | Statement_list NL Statement {% concatArr(2) %}
+    | Statement_list Statement {%
+  function(d, start, reject){
+    var ps = d[0][d[0].length - 1];
+    if(ps.type === "ExpressionStatement"){
+      ps = ps.expression;
+    }
+    var dont_need_nl_after_stmt = {
+      "If": true,
+      "Function": true
+    };
+    if(dont_need_nl_after_stmt[ps.type] !== true){
+      return reject;
+    }
+    return d[0].concat(d[1]);
+  }
+%}
+
 
 Statement ->
       Define {% id %}
