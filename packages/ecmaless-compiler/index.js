@@ -125,6 +125,22 @@ var comp_by_type = {
   "AssignmentExpression": function(ast, comp){
     return e("=", comp(ast.left), comp(ast.right), ast.loc);
   },
+  "MemberExpression": function(ast, comp){
+    var path;
+    if(ast.method === "dot"){
+      if(ast.path && ast.path.type === "Identifier"){
+        path = e("string", ast.path.value, ast.path.loc);
+      }
+    }else if(ast.method === "index"){
+      path = comp(ast.path);
+    }else{
+      throw new Error("Unsupported MemberExpression method: " + ast.method);
+    }
+    return e("call", e("id", "get", ast.loc), [
+      comp(ast.object),
+      path
+    ], ast.loc);
+  },
   "ExpressionStatement": function(ast, comp){
     return e(";", comp(ast.expression), ast.loc);
   },
@@ -204,22 +220,6 @@ var comp_by_type = {
       init.id = comp(ast.id);
     }
     return e("var", comp(ast.id), init, ast.loc);
-  },
-  "MemberExpression": function(ast, comp){
-    var path;
-    if(ast.method === "dot"){
-      if(ast.path && ast.path.type === "Identifier"){
-        path = e("string", ast.path.value, ast.path.loc);
-      }
-    }else if(ast.method === "index"){
-      path = comp(ast.path);
-    }else{
-      throw new Error("Unsupported MemberExpression method: " + ast.method);
-    }
-    return e("call", e("id", "get", ast.loc), [
-      comp(ast.object),
-      path
-    ], ast.loc);
   },
 };
 
