@@ -200,6 +200,9 @@ var comp_by_type = {
   },
   "Define": function(ast, comp){
     var init = comp(ast.init || {loc: ast.id.loc, type: "Nil"});
+    if(init && init.type === "FunctionExpression"){
+      init.id = comp(ast.id);
+    }
     return e("var", comp(ast.id), init, ast.loc);
   },
   "MemberExpression": function(ast, comp){
