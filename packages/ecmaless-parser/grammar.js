@@ -177,7 +177,7 @@ var grammar = {
     ParserRules: [
     {"name": "main", "symbols": ["_NL", "Statement_list", "_NL"], "postprocess": idN(1)},
     {"name": "Statement_list", "symbols": ["Statement"], "postprocess": idArr},
-    {"name": "Statement_list", "symbols": ["Statement_list", "NL", "Statement"], "postprocess": concatArr(1)},
+    {"name": "Statement_list", "symbols": ["Statement_list", "NL", "Statement"], "postprocess": concatArr(2)},
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
     {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
     {"name": "Statement", "symbols": ["Return"], "postprocess": id},

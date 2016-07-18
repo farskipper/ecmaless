@@ -343,5 +343,8 @@ test("parser", function(t){
 
   tst("\"a\nb\"", {type: "String", value: "a\nb"});
 
+  tst("1\n2", [mk.stmt(mkv(1)), mk.stmt(mkv(2))]);
+  tst("1\n2\n3", [mk.stmt(mkv(1)), mk.stmt(mkv(2)), mk.stmt(mkv(3))]);
+
   t.end();
 });

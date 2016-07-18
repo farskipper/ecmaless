@@ -177,7 +177,7 @@ main -> _NL Statement_list _NL {% idN(1) %}
 # Statement
 
 Statement_list -> Statement {% idArr %}
-    | Statement_list NL Statement {% concatArr(1) %}
+    | Statement_list NL Statement {% concatArr(2) %}
 
 Statement ->
       Define {% id %}
