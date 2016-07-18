@@ -71,6 +71,9 @@ test("compile", function(t){
   tc("a[b]", "get(a,b);");
   tc("a.b[c][1][\"e\"]", "get(get(get(get(a,'b'),c),1),'e');");
 
+  tc("a.b = 1", "set(a,'b',1);");
+  tc("a.b.c = 1", "set(get(a,'b'),'c',1);");
+
   //named functions
   tc("def add = fn [a, b]:\n    nil", "var add=function add(a,b){return void 0;};");
 

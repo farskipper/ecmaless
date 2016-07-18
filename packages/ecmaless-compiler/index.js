@@ -123,7 +123,15 @@ var comp_by_type = {
     ], ast.loc);
   },
   "AssignmentExpression": function(ast, comp){
-    return e("=", comp(ast.left), comp(ast.right), ast.loc);
+    if(ast.left.type === "Identifier"){
+      return e("=", comp(ast.left), comp(ast.right), ast.loc);
+    }else if(ast.left.type === "MemberExpression"){
+      var left = comp(ast.left);
+      left.callee.name = "set";
+      left["arguments"].push(comp(ast.right));
+      return left;
+    }
+    throw new Error("Only Identifier or MemberExpression can be assigned");
   },
   "MemberExpression": function(ast, comp){
     var path;
