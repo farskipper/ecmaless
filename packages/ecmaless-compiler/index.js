@@ -115,6 +115,15 @@ var comp_by_type = {
     var id;
     return e("function", params, body, id, ast.loc);
   },
+  "Application": function(ast, comp){
+    return e("call",
+      e(".", comp(ast.callee), e("id", "call", ast.loc), ast.loc),
+      [
+        e("void", e("number", 0, ast.loc), ast.loc)
+      ].concat(comp(ast.args)),
+      ast.loc
+    );
+  },
   "UnaryOperator": function(ast, comp){
     return e("call", e("id", toId(ast.op), ast.loc), [comp(ast.arg)], ast.loc);
   },
