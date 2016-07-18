@@ -65,6 +65,11 @@ test("compile", function(t){
 
   tc("def a", "var a=void 0;");
   tc("def a = 1", "var a=1;");
+  tc("a = 1", "a=1;");
+
+  tc("a.b", "get(a,'b');");
+  tc("a[b]", "get(a,b);");
+  tc("a.b[c][1][\"e\"]", "get(get(get(get(a,'b'),c),1),'e');");
 
   t.end();
 });
