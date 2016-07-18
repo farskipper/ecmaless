@@ -79,3 +79,17 @@ test("compile", function(t){
 
   t.end();
 });
+
+test("scope", function(t){
+  var ts = function(src, expected){
+    var ast = parser(src);
+    var syms = compiler(ast).undefined_symbols;
+    t.deepEquals(syms, expected);
+  };
+
+  ts("1", []);
+  ts("a", ["a"]);
+  ts("def a = 1\na", []);
+
+  t.end();
+});

@@ -1,6 +1,7 @@
 var _ = require("lodash");
 var e = require("estree-builder");
 var toId = require("to-js-identifier");
+var SymbolTable = require("symbol-table");
 
 var sliceArgs = function(loc, start, end){
   var args = [e("number", start, loc)];
@@ -29,7 +30,8 @@ var comp_by_type = {
   "String": function(ast, comp){
     return e("string", ast.value, ast.loc);
   },
-  "Identifier": function(ast, comp){
+  "Identifier": function(ast, comp, ctx){
+    ctx.useIdentifier(ast.value);
     return e("id", toId(ast.value), ast.loc);
   },
   "Nil": function(ast, comp){
@@ -222,7 +224,11 @@ var comp_by_type = {
       ast.loc
     );
   },
-  "Define": function(ast, comp){
+  "Define": function(ast, comp, ctx){
+    if(ast.id.type !== "Identifier"){
+      throw new Error("Only Identifiers can be defined");
+    }
+    ctx.defIdentifier(ast.id.value);
     var init = comp(ast.init || {loc: ast.id.loc, type: "Nil"});
     if(init && init.type === "FunctionExpression"){
       init.id = comp(ast.id);
@@ -232,6 +238,27 @@ var comp_by_type = {
 };
 
 module.exports = function(ast){
+
+  var undefined_symbols = {};
+  var symt_stack = [SymbolTable()];
+  var ctx = {
+    pushScope: function(){
+      symt_stack.unshift(symt_stack[0].push());
+    },
+    popScope: function(){
+      symt_stack.shift();
+    },
+    defIdentifier: function(id){
+      symt_stack[0].set(id, {id: id});
+    },
+    useIdentifier: function(id){
+      if(!symt_stack[0].has(id)){
+        undefined_symbols[id] = true;
+      }else{
+        return symt_stack[0].get(id);
+      }
+    }
+  };
 
   var compile = function compile(ast){
     if(_.isArray(ast)){
@@ -243,10 +270,11 @@ module.exports = function(ast){
     }else if(!_.has(comp_by_type, ast.type)){
       throw new Error("Unsupported ast node type: " + ast.type);
     }
-    return comp_by_type[ast.type](ast, compile);
+    return comp_by_type[ast.type](ast, compile, ctx);
   };
 
   return {
-    estree: compile(ast)
+    estree: compile(ast),
+    undefined_symbols: _.keys(undefined_symbols)
   };
 };
