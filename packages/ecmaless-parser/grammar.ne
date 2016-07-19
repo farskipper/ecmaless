@@ -429,15 +429,15 @@ Struct -> %tok_OPEN_CU _NL KeyValPairs %tok_CLOSE_CU {% function(d){
 
 KeyValPairs -> null {% noopArr %}
     | KeyValPairs_body {% id %}
-    | NL INDENT KeyValPairs_body_nl %tok_COMMA NL DEDENT {% idN(2) %}
+    | NL INDENT KeyValPairs_body_nl COMMA NL DEDENT {% idN(2) %}
 
 KeyValPairs_body ->
       KeyValPair {% id %}
-    | KeyValPairs_body %tok_COMMA KeyValPair {% concatArr(2, true) %}
+    | KeyValPairs_body COMMA KeyValPair {% concatArr(2, true) %}
 
 KeyValPairs_body_nl ->
       KeyValPair {% id %}
-    | KeyValPairs_body_nl %tok_COMMA NL KeyValPair {% concatArr(3, true) %}
+    | KeyValPairs_body_nl COMMA NL KeyValPair {% concatArr(3, true) %}
 
 KeyValPair -> (String|Number|Symbol) %tok_COLON Expression {% function(d){
   return [d[0][0], d[2]];
@@ -453,15 +453,15 @@ Array -> %tok_OPEN_SQ Expression_list %tok_CLOSE_SQ {% function(d){
 
 Expression_list -> null {% noopArr %}
     | Expression_list_body {% id %}
-    | NL INDENT Expression_list_body_nl %tok_COMMA NL DEDENT {% idN(2) %}
+    | NL INDENT Expression_list_body_nl COMMA NL DEDENT {% idN(2) %}
 
 Expression_list_body ->
       Expression {% idArr %}
-    | Expression_list_body %tok_COMMA Expression {% concatArr(2) %}
+    | Expression_list_body COMMA Expression {% concatArr(2) %}
 
 Expression_list_body_nl ->
       Expression {% idArr %}
-    | Expression_list_body_nl %tok_COMMA NL Expression {% concatArr(3) %}
+    | Expression_list_body_nl COMMA NL Expression {% concatArr(3) %}
 
 
 Function -> %tok_fn Params Block {% function(d){
@@ -475,11 +475,11 @@ Function -> %tok_fn Params Block {% function(d){
 
 Params -> Identifier {% id %}
     | %tok_OPEN_SQ %tok_CLOSE_SQ {% noopArr %}
-    | %tok_OPEN_SQ Params_body %tok_COMMA:? %tok_CLOSE_SQ {% idN(1) %}
+    | %tok_OPEN_SQ Params_body COMMA:? %tok_CLOSE_SQ {% idN(1) %}
 
 Params_body ->
       Param {% idArr %}
-    | Params_body %tok_COMMA Param {% concatArr(2) %}
+    | Params_body COMMA Param {% concatArr(2) %}
 
 Param -> Identifier %tok_DOTDOTDOT:? {%
   function(d){
@@ -526,6 +526,8 @@ Symbol -> %tok_SYMBOL {% function(d){
 
 INDENT -> %tok_INDENT {% id %}
 DEDENT -> %tok_DEDENT {% id %}
+
+COMMA -> %tok_COMMA {% id %}
 
 NL -> %tok_NL {% noop %}
 _NL -> null {% noop %} | %tok_NL {% noop %}
