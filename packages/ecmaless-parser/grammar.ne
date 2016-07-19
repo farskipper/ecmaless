@@ -265,7 +265,7 @@ Break -> %tok_break
 Continue -> %tok_continue
     {% function(d){return {loc: d[0].loc, type: "Continue"};} %}
 
-Cond -> %tok_cond %tok_COLON NL %tok_INDENT CondBlocks ElseBlock:? %tok_DEDENT {% function(d){
+Cond -> %tok_cond %tok_COLON NL INDENT CondBlocks ElseBlock:? DEDENT {% function(d){
   return {
     loc: mkLoc(d),
     type: "Cond",
@@ -288,7 +288,7 @@ CondBlock -> Expression Block {%
   }
 %}
 
-Case -> %tok_case Expression %tok_COLON NL %tok_INDENT CaseBlocks ElseBlock:? %tok_DEDENT {% function(d){
+Case -> %tok_case Expression %tok_COLON NL INDENT CaseBlocks ElseBlock:? DEDENT {% function(d){
   return {
     loc: mkLoc(d),
     type: "Case",
@@ -320,7 +320,7 @@ TryCatch ->
 
 ElseBlock -> %tok_else Block {% function(d){return d[1].body;} %}
 
-Block -> %tok_COLON NL %tok_INDENT Statement_list _NL %tok_DEDENT {%
+Block -> %tok_COLON NL INDENT Statement_list _NL DEDENT {%
   function(d){
     return {
       loc: mkLoc(d),
@@ -428,28 +428,41 @@ Struct -> %tok_OPEN_CU _NL KeyValPairs %tok_CLOSE_CU {% function(d){
 } %}
 
 KeyValPairs -> null {% noopArr %}
-    | KeyValPairs_body %tok_COMMA:? _NL {% id %}
+    | KeyValPairs_body {% id %}
+    | NL INDENT KeyValPairs_body_nl %tok_COMMA NL DEDENT {% idN(2) %}
+
 KeyValPairs_body ->
       KeyValPair {% id %}
-    | KeyValPairs_body %tok_COMMA _NL KeyValPair {% concatArr(3, true) %}
+    | KeyValPairs_body %tok_COMMA KeyValPair {% concatArr(2, true) %}
+
+KeyValPairs_body_nl ->
+      KeyValPair {% id %}
+    | KeyValPairs_body_nl %tok_COMMA NL KeyValPair {% concatArr(3, true) %}
 
 KeyValPair -> (String|Number|Symbol) %tok_COLON Expression {% function(d){
   return [d[0][0], d[2]];
 } %}
 
-Array -> %tok_OPEN_SQ _NL Expression_list %tok_CLOSE_SQ {% function(d){
+Array -> %tok_OPEN_SQ Expression_list %tok_CLOSE_SQ {% function(d){
   return {
     loc: mkLoc(d),
     type: "Array",
-    value: d[2]
+    value: d[1]
   };
 } %}
 
 Expression_list -> null {% noopArr %}
-    | Expression_list_body %tok_COMMA:? _NL {% id %}
+    | Expression_list_body {% id %}
+    | NL INDENT Expression_list_body_nl %tok_COMMA NL DEDENT {% idN(2) %}
+
 Expression_list_body ->
       Expression {% idArr %}
-    | Expression_list_body %tok_COMMA _NL Expression {% concatArr(3) %}
+    | Expression_list_body %tok_COMMA Expression {% concatArr(2) %}
+
+Expression_list_body_nl ->
+      Expression {% idArr %}
+    | Expression_list_body_nl %tok_COMMA NL Expression {% concatArr(3) %}
+
 
 Function -> %tok_fn Params Block {% function(d){
   return {
@@ -510,6 +523,9 @@ Boolean -> (%tok_true | %tok_false) {% function(d){
 Symbol -> %tok_SYMBOL {% function(d){
   return mkType(d, "Symbol", d[0].src);
 } %}
+
+INDENT -> %tok_INDENT {% id %}
+DEDENT -> %tok_DEDENT {% id %}
 
 NL -> %tok_NL {% noop %}
 _NL -> null {% noop %} | %tok_NL {% noop %}

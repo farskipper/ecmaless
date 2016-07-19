@@ -118,18 +118,18 @@ test("parser", function(t){
   tst("[]", mk.arr([]));
   tstFail("[,]");
   tst("[1, 2, 3]", mk.arr([mk.num(1), mk.num(2), mk.num(3)]));
-  tst("[1, 2, 3,]", mk.arr([mk.num(1), mk.num(2), mk.num(3)]));
-  tst("[\n    1,\n2,    \n    3,\n]", mk.arr([mk.num(1), mk.num(2), mk.num(3)]));
-  tstFail("[1, 2, 3,,]");
+  tstFail("[1, 2, 3,]");
+  tst("[\n    1,\n    2,\n    3,\n]", mk.arr([mk.num(1), mk.num(2), mk.num(3)]));
+  tstFail("[\n    1,\n2,    \n    3,,\n]", mk.arr([mk.num(1), mk.num(2), mk.num(3)]));
   tstFail("[,1, 2, 3]");
 
   tst("{}", mkv({}));
   tst("{\"a\": 1}", mkv({a: mkv(1)}));
-  tst("{\"a\": 1,}", mkv({a: mkv(1)}));
+  tstFail("{\"a\": 1,}");
   tst("{a: 1}", mk.struct([mk.sym("a"), mkv(1)]));
   tst("{def: 1}", mk.struct([mk.sym("def"), mkv(1)]));
   tst("{1: \"a\"}", mk.struct([mkv(1), mkv("a")]));
-  tst("{\n    1: \"a\"\n}", mk.struct([mkv(1), mkv("a")]));
+  tst("{\n    1: \"a\",\n}", mk.struct([mkv(1), mkv("a")]));
   tst("{\n    1: \"a\",\n    2: \"b\",\n}", mk.struct([
     mkv(1), mkv("a"),
     mkv(2), mkv("b")
@@ -156,7 +156,8 @@ test("parser", function(t){
   tst("add()", mk.app(mk.id("add"), []));
   tstFail("add(,)");
   tst("add(1, 2)", mk.app(mk.id("add"), [mkv(1), mkv(2)]));
-  tst("add(1, 2,)", mk.app(mk.id("add"), [mkv(1), mkv(2)]));
+  tstFail("add(1, 2,)");
+  tst("add(\n    1,\n    2,\n)", mk.app(mk.id("add"), [mkv(1), mkv(2)]));
   tst("add  (1)", mk.app(mk.id("add"), [mkv(1)]));
 
   tst("(1)", mkv(1));
