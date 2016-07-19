@@ -15,9 +15,15 @@ module.exports = function(src){
     });
   };
 
+  var prev;
   var t = tokenizer2(function(tok){
-    var prev = tokens[tokens.length - 1];
     var prev_type = prev && prev.type;
+    if(prev_type === "NEWLINE" && tok.type !== "SPACE"){
+      while(0 < indent_stack[0]){
+        pushTok("DEDENT", tok.src);
+        indent_stack.shift();
+      }
+    }
     if(tok.type === "COMMENT"){
       //ignore comments
     }else if(tok.type === "NEWLINE"){
@@ -51,6 +57,7 @@ module.exports = function(src){
     }else{
       pushTok(tok.type, tok.src);
     }
+    prev = tok;
     index += tok.src.length;
   });
 

@@ -92,5 +92,15 @@ test("tokenizer", function(t){
     "NUMBER"
   ]);
 
+  testOrder("[\n    1,\n    2,\n]", [
+    "[",
+    "NEWLINE",
+    "INDENT",
+    "NUMBER", ",", "NEWLINE",
+    "NUMBER", ",", "NEWLINE",
+    "DEDENT",
+    "]"
+  ]);
+
   t.end();
 });
