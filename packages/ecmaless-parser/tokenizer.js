@@ -1,29 +1,10 @@
 var EStreeLoc = require("estree-loc");
 var tokenizer2 = require("tokenizer2/core");
-var escapeRegExp = require("escape-regexp");
-
-var groups = {
-  "(": ")",
-  "[": "]",
-  "{": "}"
-};
-
-var toIndent = function(src){
-  var lines = src.split("\n");
-  if(lines.length < 2){
-    return -1;
-  }
-  var last = lines[lines.length - 1];
-  if((last.length % 4) !== 0){
-    return -1;
-  }
-  return last.length / 4;
-};
 
 module.exports = function(src){
   var toLoc = EStreeLoc(src);
   var tokens = [];
-  var stack = [0];
+  var indent_stack = [0];
   var index = 0;
 
   var pushTok = function(type, src){
@@ -35,31 +16,36 @@ module.exports = function(src){
   };
 
   var t = tokenizer2(function(tok){
+    var prev = tokens[tokens.length - 1];
+    var prev_type = prev && prev.type;
     if(tok.type === "COMMENT"){
       //ignore comments
-    }else if(tok.type === "SPACE"){
-      if(tok.src.indexOf("\n") >= 0){
-        pushTok("NEWLINE", tok.src);
+    }else if(tok.type === "NEWLINE"){
+      if(prev_type === "SPACE"){
+        //TODO better error
+        throw new Error("Dangling whitespace: " + JSON.stringify(tok));
       }
-      if(typeof stack[0] === "number"){
-        var ind = toIndent(tok.src);
-        if(ind >= 0){
-          while(ind > stack[0]){
-            stack.unshift(stack[0] + 1);
-            pushTok("INDENT", tok.src);
-          }
-          while(ind < stack[0]){
-            pushTok("DEDENT", tok.src);
-            stack.shift();
-          }
+      if(prev_type !== "NEWLINE"){
+        pushTok(tok.type, tok.src);
+      }
+    }else if(tok.type === "SPACE"){
+      if(prev_type === "NEWLINE"){
+        var ind = (tok.src.length % 4) === 0
+          ? tok.src.length / 4
+          : -1;
+        if(ind < 0){
+          //TODO better error
+          throw new Error("Invalid indent: " + JSON.stringify(tok));
+        }
+        while(ind > indent_stack[0]){
+          indent_stack.unshift(indent_stack[0] + 1);
+          pushTok("INDENT", tok.src);
+        }
+        while(ind < indent_stack[0]){
+          pushTok("DEDENT", tok.src);
+          indent_stack.shift();
         }
       }
-    }else if(tok.type === "OPEN"){
-      pushTok(tok.src, tok.src);
-      stack.unshift(tok.src);
-    }else if(tok.type === "CLOSE"){
-      pushTok(tok.src, tok.src);
-      stack.shift();
     }else if(tok.type === "RAW"){
       pushTok(tok.src, tok.src);
     }else{
@@ -68,12 +54,13 @@ module.exports = function(src){
     index += tok.src.length;
   });
 
-  t.addRule(/^[ \n]+$/, "SPACE");
+  t.addRule(/^\n$/, "NEWLINE");
+  t.addRule(/^ +$/, "SPACE");
   t.addRule(/^;[^\n]*$/, "COMMENT");
   t.addRule(/(^""$)|(^"([^"]|\\")*[^\\]"$)/, "STRING");
   t.addRule(/^[0-9]+\.?[.0-9]*$/, "NUMBER");
   t.addRule(/^[a-zA-Z_][a-zA-Z0-9_]*$/, "SYMBOL");
-  t.addRule(/^[:+\-*\/%,?]$/, "RAW");
+  t.addRule(/^[:+\-*\/%,?({\[\]})]$/, "RAW");
   t.addRule(/^\.\.?\.?$/, "RAW");
   t.addRule(/^\|\|?$/, "RAW");
   t.addRule(/^&&?$/, "RAW");
@@ -82,20 +69,12 @@ module.exports = function(src){
   t.addRule(/^<=?$/, "RAW");
   t.addRule(/^>=?$/, "RAW");
 
-  var key;
-  for(key in groups){
-    if(groups.hasOwnProperty(key)){
-      t.addRule(new RegExp("^" + escapeRegExp(key) + "$"), "OPEN"); 
-      t.addRule(new RegExp("^" + escapeRegExp(groups[key]) + "$"), "CLOSE"); 
-    }
-  }
-
   t.onText(src);
   t.end();
 
-  while(0 < stack[0]){
+  while(0 < indent_stack[0]){
     pushTok("DEDENT", "");
-    stack.shift();
+    indent_stack.shift();
   }
   return tokens;
 };
