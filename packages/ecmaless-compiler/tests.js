@@ -99,5 +99,8 @@ test("scope", function(t){
   ts("fn args:\n    args", []);
   ts("fn a:\n    a\na", ["a"]);
 
+  ts("if 1:\n    def a\n    a\na", ["a"]);
+  ts("cond:\n    1:\n        def a\n        a\n    2:\n        a", ["a"]);
+
   t.end();
 });

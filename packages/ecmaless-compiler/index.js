@@ -166,7 +166,10 @@ var comp_by_type = {
     ], ast.loc);
   },
   "Block": function(ast, comp, ctx){
-    return e("block", comp(ast.body), ast.loc);
+    ctx.pushScope();
+    var body = comp(ast.body);
+    ctx.popScope();
+    return e("block", body, ast.loc);
   },
   "ExpressionStatement": function(ast, comp){
     return e(";", comp(ast.expression), ast.loc);
