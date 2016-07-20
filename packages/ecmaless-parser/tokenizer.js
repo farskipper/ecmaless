@@ -13,6 +13,9 @@ module.exports = function(src){
       src: src,
       loc: toLoc(index, index + src.length)
     });
+    if(type === "DEDENT"){
+      pushTok("NEWLINE", src);
+    }
   };
 
   var prev;

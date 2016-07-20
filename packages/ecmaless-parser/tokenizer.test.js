@@ -27,7 +27,7 @@ test("tokenizer", function(t){
   testOrder("10 0.1 1.0", ["NUMBER", "NUMBER", "NUMBER"]);
 
   testOrder("({[]})", ["(", "{", "[", "]", "}", ")"]);
-  testOrder("deps:\n    1", ["SYMBOL", ":", "NEWLINE", "INDENT", "NUMBER", "DEDENT"]);
+  testOrder("deps:\n    1", ["SYMBOL", ":", "NEWLINE", "INDENT", "NUMBER", "DEDENT", "NEWLINE"]);
   testOrder("deps:\n        1", [
     "SYMBOL",
     ":",
@@ -36,7 +36,9 @@ test("tokenizer", function(t){
     "INDENT",
     "NUMBER",
     "DEDENT",
-    "DEDENT"
+    "NEWLINE",
+    "DEDENT",
+    "NEWLINE",
   ]);
   testOrder("deps:\n        1\n    2", [
     "SYMBOL",
@@ -47,8 +49,10 @@ test("tokenizer", function(t){
     "NUMBER",
     "NEWLINE",
     "DEDENT",
+    "NEWLINE",
     "NUMBER",
-    "DEDENT"
+    "DEDENT",
+    "NEWLINE",
   ]);
   testOrder("deps:\n        1    3\n    2", [
     "SYMBOL",
@@ -60,8 +64,10 @@ test("tokenizer", function(t){
     "NUMBER",
     "NEWLINE",
     "DEDENT",
+    "NEWLINE",
     "NUMBER",
-    "DEDENT"
+    "DEDENT",
+    "NEWLINE",
   ]);
 
   var src = "";
@@ -81,9 +87,11 @@ test("tokenizer", function(t){
     "NUMBER",
     "NEWLINE",
     "DEDENT",
+    "NEWLINE",
     "]",
     "NEWLINE",
-    "DEDENT"
+    "DEDENT",
+    "NEWLINE",
   ]);
 
   testOrder("1;some comment\n2", [
@@ -99,6 +107,7 @@ test("tokenizer", function(t){
     "NUMBER", ",", "NEWLINE",
     "NUMBER", ",", "NEWLINE",
     "DEDENT",
+    "NEWLINE",
     "]"
   ]);
 

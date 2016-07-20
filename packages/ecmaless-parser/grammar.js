@@ -178,22 +178,6 @@ var grammar = {
     {"name": "main", "symbols": ["_NL", "Statement_list", "_NL"], "postprocess": idN(1)},
     {"name": "Statement_list", "symbols": ["Statement"], "postprocess": idArr},
     {"name": "Statement_list", "symbols": ["Statement_list", "NL", "Statement"], "postprocess": concatArr(2)},
-    {"name": "Statement_list", "symbols": ["Statement_list", "Statement"], "postprocess": 
-        function(d, start, reject){
-          var ps = d[0][d[0].length - 1];
-          if(ps.type === "ExpressionStatement"){
-            ps = ps.expression;
-          }
-          var dont_need_nl_after_stmt = {
-            "If": true,
-            "Function": true
-          };
-          if(dont_need_nl_after_stmt[ps.type] !== true){
-            return reject;
-          }
-          return d[0].concat(d[1]);
-        }
-        },
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
     {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
     {"name": "Statement", "symbols": ["Return"], "postprocess": id},
@@ -237,11 +221,11 @@ var grammar = {
         } },
     {"name": "If$ebnf$1$subexpression$1$subexpression$1", "symbols": ["If"]},
     {"name": "If$ebnf$1$subexpression$1$subexpression$1", "symbols": ["Block"]},
-    {"name": "If$ebnf$1$subexpression$1", "symbols": [tok_else, "If$ebnf$1$subexpression$1$subexpression$1"]},
+    {"name": "If$ebnf$1$subexpression$1", "symbols": ["NL", tok_else, "If$ebnf$1$subexpression$1$subexpression$1"]},
     {"name": "If$ebnf$1", "symbols": ["If$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "If$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "If", "symbols": [tok_if, "Expression", "Block", "If$ebnf$1"], "postprocess":  function(d){
-          var else_block = d[3] && d[3][1] && d[3][1][0];
+          var else_block = d[3] && d[3][2] && d[3][2][0];
           if(else_block && else_block.type === "Block"){
             else_block = else_block.body;
           }
@@ -263,19 +247,20 @@ var grammar = {
         } },
     {"name": "Break", "symbols": [tok_break], "postprocess": function(d){return {loc: d[0].loc, type: "Break"};}},
     {"name": "Continue", "symbols": [tok_continue], "postprocess": function(d){return {loc: d[0].loc, type: "Continue"};}},
-    {"name": "Cond$ebnf$1", "symbols": ["ElseBlock"], "postprocess": id},
+    {"name": "Cond$ebnf$1$subexpression$1", "symbols": ["ElseBlock", "NL"]},
+    {"name": "Cond$ebnf$1", "symbols": ["Cond$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "Cond$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Cond", "symbols": [tok_cond, tok_COLON, "NL", "INDENT", "CondBlocks", "Cond$ebnf$1", "DEDENT"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
             type: "Cond",
             blocks: d[4],
-            "else": d[5]
+            "else": d[5] && d[5][0]
           };
         } },
     {"name": "CondBlocks", "symbols": ["CondBlock"], "postprocess": idArr},
     {"name": "CondBlocks", "symbols": ["CondBlocks", "CondBlock"], "postprocess": concatArr(1)},
-    {"name": "CondBlock", "symbols": ["Expression", "Block"], "postprocess": 
+    {"name": "CondBlock", "symbols": ["Expression", "Block", "NL"], "postprocess": 
         function(d){
           return {
             loc: mkLoc(d),
@@ -285,7 +270,8 @@ var grammar = {
           };
         }
         },
-    {"name": "Case$ebnf$1", "symbols": ["ElseBlock"], "postprocess": id},
+    {"name": "Case$ebnf$1$subexpression$1", "symbols": ["ElseBlock", "NL"]},
+    {"name": "Case$ebnf$1", "symbols": ["Case$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "Case$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Case", "symbols": [tok_case, "Expression", tok_COLON, "NL", "INDENT", "CaseBlocks", "Case$ebnf$1", "DEDENT"], "postprocess":  function(d){
           return {
@@ -293,12 +279,12 @@ var grammar = {
             type: "Case",
             to_test: d[1],
             blocks: d[5],
-            "else": d[6]
+            "else": d[6] && d[6][0]
           };
         } },
     {"name": "CaseBlocks", "symbols": ["CaseBlock"], "postprocess": idArr},
     {"name": "CaseBlocks", "symbols": ["CaseBlocks", "CaseBlock"], "postprocess": concatArr(1)},
-    {"name": "CaseBlock", "symbols": ["Expression", "Block"], "postprocess": 
+    {"name": "CaseBlock", "symbols": ["Expression", "Block", "NL"], "postprocess": 
         function(d){
           return {
             loc: mkLoc(d),
@@ -308,9 +294,9 @@ var grammar = {
           };
         }
         },
-    {"name": "TryCatch", "symbols": [tok_try, "Block", tok_catch, "Identifier", "Block"], "postprocess": tryCatchMaker(3, 4, -1)},
-    {"name": "TryCatch", "symbols": [tok_try, "Block", tok_finally, "Block"], "postprocess": tryCatchMaker(-1, -1, 3)},
-    {"name": "TryCatch", "symbols": [tok_try, "Block", tok_catch, "Identifier", "Block", tok_finally, "Block"], "postprocess": tryCatchMaker(3, 4, 6)},
+    {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block"], "postprocess": tryCatchMaker(4, 5, -1)},
+    {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(-1, -1, 4)},
+    {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(4, 5, 8)},
     {"name": "ElseBlock", "symbols": [tok_else, "Block"], "postprocess": function(d){return d[1].body;}},
     {"name": "Block", "symbols": [tok_COLON, "NL", "INDENT", "Statement_list", "_NL", "DEDENT"], "postprocess": 
         function(d){
@@ -402,7 +388,7 @@ var grammar = {
         } },
     {"name": "KeyValPairs", "symbols": [], "postprocess": noopArr},
     {"name": "KeyValPairs", "symbols": ["KeyValPairs_body"], "postprocess": id},
-    {"name": "KeyValPairs", "symbols": ["NL", "INDENT", "KeyValPairs_body_nl", "COMMA", "NL", "DEDENT"], "postprocess": idN(2)},
+    {"name": "KeyValPairs", "symbols": ["NL", "INDENT", "KeyValPairs_body_nl", "COMMA", "NL", "DEDENT", "NL"], "postprocess": idN(2)},
     {"name": "KeyValPairs_body", "symbols": ["KeyValPair"], "postprocess": id},
     {"name": "KeyValPairs_body", "symbols": ["KeyValPairs_body", "COMMA", "KeyValPair"], "postprocess": concatArr(2, true)},
     {"name": "KeyValPairs_body_nl", "symbols": ["KeyValPair"], "postprocess": id},
@@ -422,7 +408,7 @@ var grammar = {
         } },
     {"name": "Expression_list", "symbols": [], "postprocess": noopArr},
     {"name": "Expression_list", "symbols": ["Expression_list_body"], "postprocess": id},
-    {"name": "Expression_list", "symbols": ["NL", "INDENT", "Expression_list_body_nl", "COMMA", "NL", "DEDENT"], "postprocess": idN(2)},
+    {"name": "Expression_list", "symbols": ["NL", "INDENT", "Expression_list_body_nl", "COMMA", "NL", "DEDENT", "NL"], "postprocess": idN(2)},
     {"name": "Expression_list_body", "symbols": ["Expression"], "postprocess": idArr},
     {"name": "Expression_list_body", "symbols": ["Expression_list_body", "COMMA", "Expression"], "postprocess": concatArr(2)},
     {"name": "Expression_list_body_nl", "symbols": ["Expression"], "postprocess": idArr},

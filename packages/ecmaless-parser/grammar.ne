@@ -178,23 +178,6 @@ main -> _NL Statement_list _NL {% idN(1) %}
 
 Statement_list -> Statement {% idArr %}
     | Statement_list NL Statement {% concatArr(2) %}
-    | Statement_list Statement {%
-  function(d, start, reject){
-    var ps = d[0][d[0].length - 1];
-    if(ps.type === "ExpressionStatement"){
-      ps = ps.expression;
-    }
-    var dont_need_nl_after_stmt = {
-      "If": true,
-      "Function": true
-    };
-    if(dont_need_nl_after_stmt[ps.type] !== true){
-      return reject;
-    }
-    return d[0].concat(d[1]);
-  }
-%}
-
 
 Statement ->
       Define {% id %}
@@ -237,8 +220,8 @@ Define -> %tok_def Identifier (%tok_EQ Expression):? {% function(d){
   };
 } %}
 
-If -> %tok_if Expression Block (%tok_else (If | Block)):? {% function(d){
-  var else_block = d[3] && d[3][1] && d[3][1][0];
+If -> %tok_if Expression Block (NL %tok_else (If | Block)):? {% function(d){
+  var else_block = d[3] && d[3][2] && d[3][2][0];
   if(else_block && else_block.type === "Block"){
     else_block = else_block.body;
   }
@@ -265,19 +248,19 @@ Break -> %tok_break
 Continue -> %tok_continue
     {% function(d){return {loc: d[0].loc, type: "Continue"};} %}
 
-Cond -> %tok_cond %tok_COLON NL INDENT CondBlocks ElseBlock:? DEDENT {% function(d){
+Cond -> %tok_cond %tok_COLON NL INDENT CondBlocks (ElseBlock NL):? DEDENT {% function(d){
   return {
     loc: mkLoc(d),
     type: "Cond",
     blocks: d[4],
-    "else": d[5]
+    "else": d[5] && d[5][0]
   };
 } %}
 
 CondBlocks -> CondBlock {% idArr %}
     | CondBlocks CondBlock {% concatArr(1) %}
 
-CondBlock -> Expression Block {%
+CondBlock -> Expression Block NL {%
   function(d){
     return {
       loc: mkLoc(d),
@@ -288,20 +271,20 @@ CondBlock -> Expression Block {%
   }
 %}
 
-Case -> %tok_case Expression %tok_COLON NL INDENT CaseBlocks ElseBlock:? DEDENT {% function(d){
+Case -> %tok_case Expression %tok_COLON NL INDENT CaseBlocks (ElseBlock NL):? DEDENT {% function(d){
   return {
     loc: mkLoc(d),
     type: "Case",
     to_test: d[1],
     blocks: d[5],
-    "else": d[6]
+    "else": d[6] && d[6][0]
   };
 } %}
 
 CaseBlocks -> CaseBlock {% idArr %}
     | CaseBlocks CaseBlock {% concatArr(1) %}
 
-CaseBlock -> Expression Block {%
+CaseBlock -> Expression Block NL {%
   function(d){
     return {
       loc: mkLoc(d),
@@ -313,10 +296,10 @@ CaseBlock -> Expression Block {%
 %}
 
 TryCatch ->
-      %tok_try Block %tok_catch Identifier Block {% tryCatchMaker(3, 4, -1) %}
-    | %tok_try Block %tok_finally Block {% tryCatchMaker(-1, -1, 3) %}
-    | %tok_try Block %tok_catch Identifier Block %tok_finally Block
-      {% tryCatchMaker(3, 4, 6) %}
+      %tok_try Block NL %tok_catch Identifier Block {% tryCatchMaker(4, 5, -1) %}
+    | %tok_try Block NL %tok_finally Block {% tryCatchMaker(-1, -1, 4) %}
+    | %tok_try Block NL %tok_catch Identifier Block NL %tok_finally Block
+      {% tryCatchMaker(4, 5, 8) %}
 
 ElseBlock -> %tok_else Block {% function(d){return d[1].body;} %}
 
@@ -429,7 +412,7 @@ Struct -> %tok_OPEN_CU _NL KeyValPairs %tok_CLOSE_CU {% function(d){
 
 KeyValPairs -> null {% noopArr %}
     | KeyValPairs_body {% id %}
-    | NL INDENT KeyValPairs_body_nl COMMA NL DEDENT {% idN(2) %}
+    | NL INDENT KeyValPairs_body_nl COMMA NL DEDENT NL {% idN(2) %}
 
 KeyValPairs_body ->
       KeyValPair {% id %}
@@ -453,7 +436,7 @@ Array -> %tok_OPEN_SQ Expression_list %tok_CLOSE_SQ {% function(d){
 
 Expression_list -> null {% noopArr %}
     | Expression_list_body {% id %}
-    | NL INDENT Expression_list_body_nl COMMA NL DEDENT {% idN(2) %}
+    | NL INDENT Expression_list_body_nl COMMA NL DEDENT NL {% idN(2) %}
 
 Expression_list_body ->
       Expression {% idArr %}
