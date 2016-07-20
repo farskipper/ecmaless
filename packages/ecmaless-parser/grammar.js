@@ -165,10 +165,10 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
     return {
       loc: mkLoc(d),
       type: "TryCatch",
-      try_block: d[1].body,
+      try_block: d[1],
       catch_id: i_id > 0 ? d[i_id] : null,
-      catch_block: i_catch > 0 ? d[i_catch].body : null,
-      finally_block: i_finally > 0 ? d[i_finally].body : null
+      catch_block: i_catch > 0 ? d[i_catch] : null,
+      finally_block: i_finally > 0 ? d[i_finally] : null
     };
   };
 };
@@ -227,13 +227,13 @@ var grammar = {
     {"name": "If", "symbols": [tok_if, "Expression", "Block", "If$ebnf$1"], "postprocess":  function(d){
           var else_block = d[3] && d[3][2] && d[3][2][0];
           if(else_block && else_block.type === "Block"){
-            else_block = else_block.body;
+            else_block = else_block;
           }
           return {
             loc: mkLoc(d),
             type: "If",
             test: d[1],
-            then: d[2].body,
+            then: d[2],
             "else": else_block
           };
         } },
@@ -242,7 +242,7 @@ var grammar = {
             loc: mkLoc(d),
             type: "While",
             test: d[1],
-            body: d[2].body
+            block: d[2]
           };
         } },
     {"name": "Break", "symbols": [tok_break], "postprocess": function(d){return {loc: d[0].loc, type: "Break"};}},
@@ -266,7 +266,7 @@ var grammar = {
             loc: mkLoc(d),
             type: "CondBlock",
             test: d[0],
-            body: d[1].body
+            block: d[1]
           };
         }
         },
@@ -290,14 +290,14 @@ var grammar = {
             loc: mkLoc(d),
             type: "CaseBlock",
             value: d[0],
-            body: d[1].body
+            block: d[1]
           };
         }
         },
     {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block"], "postprocess": tryCatchMaker(4, 5, -1)},
     {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(-1, -1, 4)},
     {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(4, 5, 8)},
-    {"name": "ElseBlock", "symbols": [tok_else, "Block"], "postprocess": function(d){return d[1].body;}},
+    {"name": "ElseBlock", "symbols": [tok_else, "Block"], "postprocess": idN(1)},
     {"name": "Block", "symbols": [tok_COLON, "NL", "INDENT", "Statement_list", "_NL", "DEDENT"], "postprocess": 
         function(d){
           return {
@@ -418,7 +418,7 @@ var grammar = {
             loc: mkLoc(d),
             type: "Function",
             params: d[1],
-            body: d[2].body
+            block: d[2]
           };
         } },
     {"name": "Params", "symbols": ["Identifier"], "postprocess": id},

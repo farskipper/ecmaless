@@ -161,10 +161,10 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
     return {
       loc: mkLoc(d),
       type: "TryCatch",
-      try_block: d[1].body,
+      try_block: d[1],
       catch_id: i_id > 0 ? d[i_id] : null,
-      catch_block: i_catch > 0 ? d[i_catch].body : null,
-      finally_block: i_finally > 0 ? d[i_finally].body : null
+      catch_block: i_catch > 0 ? d[i_catch] : null,
+      finally_block: i_finally > 0 ? d[i_finally] : null
     };
   };
 };
@@ -223,13 +223,13 @@ Define -> %tok_def Identifier (%tok_EQ Expression):? {% function(d){
 If -> %tok_if Expression Block (NL %tok_else (If | Block)):? {% function(d){
   var else_block = d[3] && d[3][2] && d[3][2][0];
   if(else_block && else_block.type === "Block"){
-    else_block = else_block.body;
+    else_block = else_block;
   }
   return {
     loc: mkLoc(d),
     type: "If",
     test: d[1],
-    then: d[2].body,
+    then: d[2],
     "else": else_block
   };
 } %}
@@ -239,7 +239,7 @@ While -> %tok_while Expression Block {% function(d){
     loc: mkLoc(d),
     type: "While",
     test: d[1],
-    body: d[2].body
+    block: d[2]
   };
 } %}
 
@@ -266,7 +266,7 @@ CondBlock -> Expression Block NL {%
       loc: mkLoc(d),
       type: "CondBlock",
       test: d[0],
-      body: d[1].body
+      block: d[1]
     };
   }
 %}
@@ -290,7 +290,7 @@ CaseBlock -> Expression Block NL {%
       loc: mkLoc(d),
       type: "CaseBlock",
       value: d[0],
-      body: d[1].body
+      block: d[1]
     };
   }
 %}
@@ -301,7 +301,7 @@ TryCatch ->
     | %tok_try Block NL %tok_catch Identifier Block NL %tok_finally Block
       {% tryCatchMaker(4, 5, 8) %}
 
-ElseBlock -> %tok_else Block {% function(d){return d[1].body;} %}
+ElseBlock -> %tok_else Block {% idN(1) %}
 
 Block -> %tok_COLON NL INDENT Statement_list _NL DEDENT {%
   function(d){
@@ -452,7 +452,7 @@ Function -> %tok_fn Params Block {% function(d){
     loc: mkLoc(d),
     type: "Function",
     params: d[1],
-    body: d[2].body
+    block: d[2]
   };
 } %}
 

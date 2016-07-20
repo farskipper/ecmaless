@@ -52,7 +52,10 @@ fn args:
 {
     "type": "Function",
     "params": {"type": "Identifier", "value": "args"},
-    "body": [{"type": "ExpressionStatement", "expression": {"type": "Nil"}}]
+    "block": {
+        "type": "Block",
+        "body": [{"type": "ExpressionStatement", "expression": {"type": "Nil"}}]
+    }
 }
 
 fn [a, b...]:
@@ -63,7 +66,10 @@ fn [a, b...]:
         {"type": "Identifier", "value": "a"},
         {"type": "DotDotDot", "value": {"type": "Identifier", "value": "b"}}
     ],
-    "body": [{"type": "ExpressionStatement", "expression": {"type": "Nil"}}]
+    "block": {
+        "type": "Block",
+        "body": [{"type": "ExpressionStatement", "expression": {"type": "Nil"}}]
+    }
 }
 
 return a
@@ -127,18 +133,24 @@ else:
 {
     "type": "If",
     "test": {"type": "Identifier", "value": "a"},
-    "then": [
-        {
-            "type": "ExpressionStatement",
-            "expression": {"type": "Identifier", "value": "b"}
-        }
-    ],
-    "else": [
-        {
-            "type": "ExpressionStatement",
-            "expression": {"type": "Identifier", "value": "c"}
-        }
-    ]
+    "then": {
+        "type": "Block",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {"type": "Identifier", "value": "b"}
+            }
+        ]
+    },
+    "else": {
+        "type": "Block",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {"type": "Identifier", "value": "c"}
+            }
+        ]
+    }
 }
 
 cond:
@@ -159,12 +171,15 @@ cond:
                 "left": {"type": "Identifier", "value": "a"},
                 "right": {"type": "Number", "value": 1}
             },
-            "body": [
-                {
-                    "type": "ExpressionStatement",
-                    "expression": {"type": "Identifier", "value": "b"}
-                }
-            ]
+            "block": {
+                "type": "Block",
+                "body": [
+                    {
+                        "type": "ExpressionStatement",
+                        "expression": {"type": "Identifier", "value": "b"}
+                    }
+                ]
+            }
         },
         {
             "type": "CondBlock",
@@ -174,20 +189,26 @@ cond:
                 "left": {"type": "Identifier", "value": "c"},
                 "right": {"type": "Number", "value": 3}
             },
-            "body": [
-                {
-                    "type": "ExpressionStatement",
-                    "expression": {"type": "Identifier", "value": "d"}
-                }
-            ]
+            "block": {
+                "type": "Block",
+                "body": [
+                    {
+                        "type": "ExpressionStatement",
+                        "expression": {"type": "Identifier", "value": "d"}
+                    }
+                ]
+            }
         }
     ],
-    "else": [
-        {
-            "type": "ExpressionStatement",
-            "expression": {"type": "Identifier", "value": "e"}
-        }
-    ]
+    "else": {
+        "type": "Block",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {"type": "Identifier", "value": "e"}
+            }
+        ]
+    }
 }
 
 case a:
@@ -204,30 +225,39 @@ case a:
         {
             "type": "CaseBlock",
             "value": {"type": "Number", "value": 1},
-            "body": [
-                {
-                    "type": "ExpressionStatement",
-                    "expression": {"type": "Identifier", "value": "b"}
-                }
-            ]
+            "block": {
+                "type": "Block",
+                "body": [
+                    {
+                        "type": "ExpressionStatement",
+                        "expression": {"type": "Identifier", "value": "b"}
+                    }
+                ]
+            }
         },
         {
             "type": "CaseBlock",
             "value": {"type": "Number", "value": 2},
-            "body": [
-                {
-                    "type": "ExpressionStatement",
-                    "expression": {"type": "Identifier", "value": "c"}
-                }
-            ]
+            "block": {
+                "type": "Block",
+                "body": [
+                    {
+                        "type": "ExpressionStatement",
+                        "expression": {"type": "Identifier", "value": "c"}
+                    }
+                ]
+            }
         }
     ],
-    "else": [
-        {
-            "type": "ExpressionStatement",
-            "expression": {"type": "Identifier", "value": "d"}
-        }
-    ]
+    "else": {
+        "type": "Block",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {"type": "Identifier", "value": "d"}
+            }
+        ]
+    }
 }
 
 while a:
@@ -235,12 +265,15 @@ while a:
 {
     "type": "While",
     "test": {"type": "Identifier", "value": "a"},
-    "body": [
-        {
-            "type": "ExpressionStatement",
-            "expression": {"type": "Identifier", "value": "b"}
-        }
-    ]
+    "block": {
+        "type": "Block",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {"type": "Identifier", "value": "b"}
+            }
+        ]
+    }
 }
 
 break
@@ -257,25 +290,34 @@ finally:
     c
 {
     "type": "TryCatch",
-    "try_block": [
-        {
-            "type": "ExpressionStatement",
-            "expression": {"type": "Identifier", "value": "a"}
-        }
-    ],
+    "try_block": {
+        "type": "Block",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {"type": "Identifier", "value": "a"}
+            }
+        ]
+    },
     "catch_id": {"type": "Identifier", "value": "err"},
-    "catch_block": [
-        {
-            "type": "ExpressionStatement",
-            "expression": {"type": "Identifier", "value": "b"}
-        }
-    ],
-    "finally_block": [
-        {
-            "type": "ExpressionStatement",
-            "expression": {"type": "Identifier", "value": "c"}
-        }
-    ]
+    "catch_block": {
+        "type": "Block",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {"type": "Identifier", "value": "b"}
+            }
+        ]
+    },
+    "finally_block": {
+        "type": "Block",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {"type": "Identifier", "value": "c"}
+            }
+        ]
+    }
 }
 ```
 

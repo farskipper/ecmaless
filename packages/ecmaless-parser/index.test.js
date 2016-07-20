@@ -19,8 +19,11 @@ mk.sym = function(value){
 mk.def = function(id, init){
   return {type: "Define", id: id, init: init};
 };
+mk.block = function(body){
+  return {type: "Block", body: body};
+};
 mk.fn = function(params, body){
-  return {type: "Function", params: params, body: body};
+  return {type: "Function", params: params, block: mk.block(body)};
 };
 mk.app = function(callee, args){
   return {type: "Application", callee: callee, args: args};
@@ -193,7 +196,7 @@ test("parser", function(t){
   tst("while a:\n    b", {
     type: "While",
     test: mk.id("a"),
-    body: [mk.stmt(mk.id("b"))]
+    block: mk.block([mk.stmt(mk.id("b"))])
   });
   tst("break", {type: "Break"});
   tst("continue", {type: "Continue"});
@@ -205,7 +208,7 @@ test("parser", function(t){
   tst(src, {
     type: "Cond",
     blocks: [
-      {type: "CondBlock", test: mk.id("a"), body: [mk.stmt(mk.id("b"))]}
+      {type: "CondBlock", test: mk.id("a"), block: mk.block([mk.stmt(mk.id("b"))])}
     ],
     "else": null
   });
@@ -220,10 +223,10 @@ test("parser", function(t){
   tst(src, {
     type: "Cond",
     blocks: [
-      {type: "CondBlock", test: mk.id("a"), body: [mk.stmt(mk.id("b"))]},
-      {type: "CondBlock", test: mk.id("c"), body: [mk.stmt(mk.id("d"))]}
+      {type: "CondBlock", test: mk.id("a"), block: mk.block([mk.stmt(mk.id("b"))])},
+      {type: "CondBlock", test: mk.id("c"), block: mk.block([mk.stmt(mk.id("d"))])}
     ],
-    "else": [mk.stmt(mk.id("e"))]
+    "else": mk.block([mk.stmt(mk.id("e"))])
   });
 
   src = "";
@@ -238,10 +241,10 @@ test("parser", function(t){
     type: "Case",
     to_test: mk.id("a"),
     blocks: [
-      {type: "CaseBlock", value: mkv(1), body: [mk.stmt(mk.id("b"))]},
-      {type: "CaseBlock", value: mkv(2), body: [mk.stmt(mk.id("c"))]}
+      {type: "CaseBlock", value: mkv(1), block: mk.block([mk.stmt(mk.id("b"))])},
+      {type: "CaseBlock", value: mkv(2), block: mk.block([mk.stmt(mk.id("c"))])}
     ],
-    "else": [mk.stmt(mk.id("d"))]
+    "else": mk.block([mk.stmt(mk.id("d"))])
   });
 
   src = "";
@@ -250,7 +253,7 @@ test("parser", function(t){
   tst(src, {
     type: "If",
     test: mk.id("a"),
-    then: [mk.stmt(mk.id("b"))],
+    then: mk.block([mk.stmt(mk.id("b"))]),
     "else": null
   });
   src = "";
@@ -261,8 +264,8 @@ test("parser", function(t){
   tst(src, {
     type: "If",
     test: mk.id("a"),
-    then: [mk.stmt(mk.id("b"))],
-    "else": [mk.stmt(mk.id("c"))]
+    then: mk.block([mk.stmt(mk.id("b"))]),
+    "else": mk.block([mk.stmt(mk.id("c"))])
   });
   src = "";
   src += "if a:\n";
@@ -274,12 +277,12 @@ test("parser", function(t){
   tst(src, {
     type: "If",
     test: mk.id("a"),
-    then: [mk.stmt(mk.id("b"))],
+    then: mk.block([mk.stmt(mk.id("b"))]),
     "else": {
       type: "If",
       test: mk.id("c"),
-      then: [mk.stmt(mk.id("d"))],
-      "else": [mk.stmt(mk.id("e"))]
+      then: mk.block([mk.stmt(mk.id("d"))]),
+      "else": mk.block([mk.stmt(mk.id("e"))])
     }
   });
 
@@ -290,9 +293,9 @@ test("parser", function(t){
   src += "    c";
   tst(src, {
     type: "TryCatch",
-    try_block: [mk.stmt(mk.id("a"))],
+    try_block: mk.block([mk.stmt(mk.id("a"))]),
     catch_id: mk.id("b"),
-    catch_block: [mk.stmt(mk.id("c"))],
+    catch_block: mk.block([mk.stmt(mk.id("c"))]),
     finally_block: null
   });
   src = "";
@@ -304,10 +307,10 @@ test("parser", function(t){
   src += "    d";
   tst(src, {
     type: "TryCatch",
-    try_block: [mk.stmt(mk.id("a"))],
+    try_block: mk.block([mk.stmt(mk.id("a"))]),
     catch_id: mk.id("b"),
-    catch_block: [mk.stmt(mk.id("c"))],
-    finally_block: [mk.stmt(mk.id("d"))]
+    catch_block: mk.block([mk.stmt(mk.id("c"))]),
+    finally_block: mk.block([mk.stmt(mk.id("d"))])
   });
   src = "";
   src += "try:\n";
@@ -316,10 +319,10 @@ test("parser", function(t){
   src += "    b";
   tst(src, {
     type: "TryCatch",
-    try_block: [mk.stmt(mk.id("a"))],
+    try_block: mk.block([mk.stmt(mk.id("a"))]),
     catch_id: null,
     catch_block: null,
-    finally_block: [mk.stmt(mk.id("b"))]
+    finally_block: mk.block([mk.stmt(mk.id("b"))])
   });
   //throw("something", {opts}) ... handled by compiler, not a keyword
 
@@ -354,7 +357,7 @@ test("parser", function(t){
     {
       type: "If",
       test: mk.id("a"),
-      then: [mk.stmt(mkv(1))],
+      then: mk.block([mk.stmt(mkv(1))]),
       "else": null
     },
     mk.stmt(mkv(2))
