@@ -109,8 +109,8 @@ var comp_by_type = {
         }
       });
     }
-    _.each(ast.body, function(b, i){
-      if((i === _.size(ast.body) - 1) && b.type === "ExpressionStatement"){
+    _.each(ast.block.body, function(b, i){
+      if((i === _.size(ast.block.body) - 1) && b.type === "ExpressionStatement"){
         body.push(e("return", comp(b.expression), b.loc));
       }else{
         body.push(comp(b));
@@ -165,6 +165,9 @@ var comp_by_type = {
       path
     ], ast.loc);
   },
+  "Block": function(ast, comp, ctx){
+    return e("block", comp(ast.body), ast.loc);
+  },
   "ExpressionStatement": function(ast, comp){
     return e(";", comp(ast.expression), ast.loc);
   },
@@ -173,25 +176,20 @@ var comp_by_type = {
   },
   "If": function(ast, comp){
     var test = comp(ast.test);
-    var then = e("block", comp(ast.then), ast.loc);
-    var els_;
-    if(_.isArray(ast["else"])){
-      els_ = e("block", comp(ast["else"]), ast.loc);
-    }else if(ast["else"]){
-      els_ = comp(ast["else"]);
-    }
+    var then = comp(ast.then);
+    var els_ = ast["else"] ? comp(ast["else"]) : void 0;
     return e("if", test, then, els_, ast.loc)
   },
   "Cond": function(ast, comp){
     var prev = ast["else"]
-      ? e("block", comp(ast["else"]), ast["else"].loc)
+      ? comp(ast["else"])
       : undefined;
     var i = _.size(ast.blocks) - 1;
     while(i >= 0){
       var block = ast.blocks[i];
       prev = e("if",
         comp(block.test),
-        e("block", comp(block.body), block.loc),
+        comp(block.block),
         prev,
         block.loc
       );
@@ -207,14 +205,14 @@ var comp_by_type = {
       ], val.loc);
     };
     var prev = ast["else"]
-      ? e("block", comp(ast["else"]), ast["else"].loc)
+      ? comp(ast["else"])
       : undefined;
     var i = _.size(ast.blocks) - 1;
     while(i >= 0){
       var block = ast.blocks[i];
       prev = e("if",
         mkTest(block.value),
-        e("block", comp(block.body), block.loc),
+        comp(block.block),
         prev,
         block.loc
       );
@@ -223,7 +221,7 @@ var comp_by_type = {
     return prev;
   },
   "While": function(ast, comp){
-    return e("while", comp(ast.test), e("block", comp(ast.body), ast.loc), ast.loc);
+    return e("while", comp(ast.test), comp(ast.block), ast.loc);
   },
   "Break": function(ast, comp){
     return e("break", ast.loc);
@@ -234,9 +232,7 @@ var comp_by_type = {
   "TryCatch": function(ast, comp){
     return e("try",
       comp(ast.try_block),
-      ast.catch_id && ast.catch_id.type === "Identifier"
-        ? ast.catch_id.value
-        : undefined,
+      comp(ast.catch_id),
       comp(ast.catch_block),
       comp(ast.finally_block),
       ast.loc
