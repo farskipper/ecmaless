@@ -172,11 +172,15 @@ var comp_by_type = {
     return e("return", comp(ast.expression), ast.loc);
   },
   "If": function(ast, comp){
-    return e("if", comp(ast.test),
-      e("block", comp(ast.then), ast.loc),
-      _.isArray(ast["else"])
-        ? e("block", comp(ast["else"]), ast.loc)
-        : comp(ast["else"]), ast.loc);
+    var test = comp(ast.test);
+    var then = e("block", comp(ast.then), ast.loc);
+    var els_;
+    if(_.isArray(ast["else"])){
+      els_ = e("block", comp(ast["else"]), ast.loc);
+    }else if(ast["else"]){
+      els_ = comp(ast["else"]);
+    }
+    return e("if", test, then, els_, ast.loc)
   },
   "Cond": function(ast, comp){
     var prev = ast["else"]

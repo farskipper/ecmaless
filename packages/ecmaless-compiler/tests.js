@@ -53,6 +53,7 @@ test("compile", function(t){
   tc("-1", "$45$(1);");
   tc("1 + 2", "$43$(1,2);");
 
+  tc("if a:\n    b", "if(a){b;}");
   tc("if a:\n    b\nelse if c:\n    d\nelse:\n    e", "if(a){b;}else if(c){d;}else{e;}");
   tc("cond:\n    a:\n        b\n    c:\n        d\n    else:\n        e", "if(a){b;}else if(c){d;}else{e;}");
   tc(
