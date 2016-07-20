@@ -92,6 +92,11 @@ test("scope", function(t){
   ts("1", []);
   ts("a", ["a"]);
   ts("def a = 1\na", []);
+  ts("def a\na", []);
+  ts("fn[a]:\n    a", []);
+  ts("fn[a,b...,c]:\n    a(b,c)", []);
+  ts("fn args:\n    args", []);
+  ts("fn a:\n    a\na", ["a"]);
 
   t.end();
 });

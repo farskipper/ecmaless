@@ -55,10 +55,12 @@ var comp_by_type = {
       return e("object-property", key, val, {start: key.loc.start, end: val.loc.end});
     }), ast.loc);
   },
-  "Function": function(ast, comp){
+  "Function": function(ast, comp, ctx){
+    ctx.pushScope();
     var params = [];
     var body = [];
     if(ast.params && ast.params.type === "Identifier"){
+      ctx.defIdentifier(ast.params.value);
       body.push(e("var",
         comp(ast.params),
         sliceArgs(ast.params.loc, 0),
@@ -71,6 +73,7 @@ var comp_by_type = {
           if(has_ddd){
             throw new Error("Only one ... allowed in an argument list");
           }
+          ctx.defIdentifier(p.value.value);
           has_ddd = true;
           var arg_i_from_end = i - _.size(ast.params) + 1;
           body.push(e("var",
@@ -81,6 +84,7 @@ var comp_by_type = {
             p.loc
           ));
         }else{
+          ctx.defIdentifier(p.value);
           if(has_ddd){
             body.push(e("var",
               comp(p),
@@ -112,6 +116,7 @@ var comp_by_type = {
         body.push(comp(b));
       }
     });
+    ctx.popScope();
     var id;
     return e("function", params, body, id, ast.loc);
   },
