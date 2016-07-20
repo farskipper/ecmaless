@@ -1,6 +1,6 @@
 {
   "name": "ecmaless-parser",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Parser for the ecmaless language",
   "main": "index.js",
   "scripts": {
