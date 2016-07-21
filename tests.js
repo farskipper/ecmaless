@@ -19,7 +19,7 @@ test("it", function(t){
   }, function(err, js){
     if(err) return t.end(err);
 
-    t.equals(js, "");
+    t.equals(eval(js), 100);
 
     t.end();
   });

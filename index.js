@@ -3,6 +3,9 @@ var e = require("estree-builder");
 var parser = require("ecmaless-parser");
 var compiler = require("ecmaless-compiler");
 var escodegen = require("escodegen");
+var req_est_orig = require("./req_est");
+
+var req_est = _.omit(req_est_orig.body[0], "id");
 
 var getMainLoc = function(tree){
   if(!_.isArray(tree)){
@@ -146,9 +149,10 @@ module.exports = function(conf, callback){
     _.each(modules, function(m, path){
       mods.push(e("array", [m.est].concat(_.map(m.deps, toReqPath)), m.est.loc));
     });
-    var est = e("call",
-        e("fn", ["mdefs", "main"], []),
-        [e("array", mods), toReqPath(conf.start_path)]);
+    var est = e("call", req_est, [
+      e("array", mods),
+      toReqPath(conf.start_path)
+    ]);
     callback(void 0, toJSFile(est, conf));
   });
 };
