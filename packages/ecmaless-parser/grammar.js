@@ -176,7 +176,7 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 
 var grammar = {
     ParserRules: [
-    {"name": "main$ebnf$1", "symbols": ["Deps"], "postprocess": id},
+    {"name": "main$ebnf$1", "symbols": ["Dependencies"], "postprocess": id},
     {"name": "main$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "main", "symbols": ["_NL", "main$ebnf$1", "Statement_list", "_NL"], "postprocess":  function(d){
           if(d[1]){
@@ -184,16 +184,16 @@ var grammar = {
           }
           return d[2];
         } },
-    {"name": "Deps", "symbols": [tok_deps, tok_COLON, "NL", "INDENT", "DepPairs", "NL", "DEDENT", "NL"], "postprocess":  function(d){
+    {"name": "Dependencies", "symbols": [tok_deps, tok_COLON, "NL", "INDENT", "Dependency_list", "NL", "DEDENT", "NL"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
             type: "Dependencies",
             dependencies: d[4]
           };
         } },
-    {"name": "DepPairs", "symbols": ["DepPair"], "postprocess": idArr},
-    {"name": "DepPairs", "symbols": ["DepPairs", "NL", "DepPair"], "postprocess": concatArr(2)},
-    {"name": "DepPair", "symbols": ["Identifier", "String"], "postprocess":  function(d){
+    {"name": "Dependency_list", "symbols": ["Dependency"], "postprocess": idArr},
+    {"name": "Dependency_list", "symbols": ["Dependency_list", "NL", "Dependency"], "postprocess": concatArr(2)},
+    {"name": "Dependency", "symbols": ["Identifier", "String"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
             type: "Dependency",

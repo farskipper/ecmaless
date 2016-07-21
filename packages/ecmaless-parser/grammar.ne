@@ -172,14 +172,14 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 
 %}
 
-main -> _NL Deps:? Statement_list _NL {% function(d){
+main -> _NL Dependencies:? Statement_list _NL {% function(d){
   if(d[1]){
     return [d[1]].concat(d[2]);
   }
   return d[2];
 } %}
 
-Deps -> %tok_deps %tok_COLON NL INDENT DepPairs NL DEDENT NL {% function(d){
+Dependencies -> %tok_deps %tok_COLON NL INDENT Dependency_list NL DEDENT NL {% function(d){
   return {
     loc: mkLoc(d),
     type: "Dependencies",
@@ -187,10 +187,10 @@ Deps -> %tok_deps %tok_COLON NL INDENT DepPairs NL DEDENT NL {% function(d){
   };
 } %}
 
-DepPairs -> DepPair {% idArr %}
-    | DepPairs NL DepPair {% concatArr(2) %}
+Dependency_list -> Dependency {% idArr %}
+    | Dependency_list NL Dependency {% concatArr(2) %}
 
-DepPair -> Identifier String {% function(d){
+Dependency -> Identifier String {% function(d){
   return {
     loc: mkLoc(d),
     type: "Dependency",
