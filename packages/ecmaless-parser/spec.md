@@ -380,3 +380,38 @@ obj[key]
     "method": "index"
 }
 ```
+
+### Dependencies
+
+```js
+deps:
+    a "./a"
+    b "./b"
+
+a(b)
+[
+    {
+        "type": "Dependencies",
+        "dependencies": [
+            {
+                "type": "Dependency",
+                "id": {"type": "Identifier", "value": "a"},
+                "path": {"type": "String", "value": "./a"}
+            },
+            {
+                "type": "Dependency",
+                "id": {"type": "Identifier", "value": "b"},
+                "path": {"type": "String", "value": "./b"}
+            }
+        ]
+    },
+    {
+        "type": "ExpressionStatement",
+        "expression": {
+            "type": "Application",
+            "callee": {"type": "Identifier", "value": "a"},
+            "args": [{"type": "Identifier", "value": "b"}]
+        }
+    }
+]
+```

@@ -46,6 +46,9 @@ _.each({
     "a.b.c",
     "matrix[i][j]",
     "obj[key]",
+  ],
+  "### Dependencies": [
+    "deps:\n    a \"./a\"\n    b \"./b\"\n\na(b)",
   ]
 }, function(srcs, head){
   console.log();
