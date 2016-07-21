@@ -32,15 +32,13 @@
   "homepage": "https://github.com/farskipper/ecmaless#readme",
   "dependencies": {
     "concat-stream": "^1.5.1",
-    "escape-regexp": "0.0.1",
+    "ecmaless-compiler": "^0.1.0",
+    "ecmaless-parser": "^0.4.0",
     "escodegen": "^1.8.0",
-    "estree-builder": "^1.1.0",
-    "lodash": "^4.6.1",
-    "tokenizer2": "^2.0.0"
+    "lodash": "^4.13.1"
   },
   "devDependencies": {
-    "onchange": "^2.1.2",
-    "tap-min": "^1.1.0",
-    "tape": "^4.5.1"
+    "onchange": "^2.5.0",
+    "tape": "^4.6.0"
   }
 }
