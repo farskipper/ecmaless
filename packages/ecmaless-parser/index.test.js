@@ -411,3 +411,33 @@ test("deps", function(t){
 
   t.end();
 });
+
+test("errors", function(t){
+  try{
+    parser("one two@three", {filename: "some-file"});
+    t.ok(false, "should fail");
+  }catch(e){
+    t.equals(e.message, "unable to tokenize\nsome-file:1:7\n \none two@three\n       ^")
+    t.deepEquals(e.where, {
+      filename: "some-file",
+      line: 1,
+      col: 7,
+      excerpt: "one two@three\n       ^"
+    })
+  }
+
+  try{
+    parser("if 1:blah", {filename: "some-file"});
+    t.ok(false, "should fail");
+  }catch(e){
+    t.equals(e.message, "No possible parsings\nsome-file:1:5\n \nif 1:blah\n     ^")
+    t.deepEquals(e.where, {
+      filename: "some-file",
+      line: 1,
+      col: 5,
+      excerpt: "if 1:blah\n     ^"
+    })
+  }
+
+  t.end();
+});
