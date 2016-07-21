@@ -7,8 +7,7 @@
     "ecmaless": "bin/ecmaless"
   },
   "scripts": {
-    "dev": "onchange '**/*.ecmaless' '**/*.js' -i -- npm run dev:test -s",
-    "dev:test": "npm test -s | tap-min",
+    "start": "onchange '**/*.js' -i -- npm test -s",
     "test": "node tests.js"
   },
   "repository": {
@@ -35,6 +34,7 @@
     "ecmaless-compiler": "^0.1.0",
     "ecmaless-parser": "^0.4.0",
     "escodegen": "^1.8.0",
+    "estree-builder": "^1.4.1",
     "lodash": "^4.13.1"
   },
   "devDependencies": {
