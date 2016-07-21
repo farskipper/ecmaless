@@ -70,6 +70,7 @@ var tok_CLOSE_SQ = tok("]");
 var tok_OPEN_CU = tok("{");
 var tok_CLOSE_CU = tok("}");
 
+var tok_deps = tok("SYMBOL", "deps");
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
 var tok_if = tok("SYMBOL", "if");
@@ -175,7 +176,31 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 
 var grammar = {
     ParserRules: [
-    {"name": "main", "symbols": ["_NL", "Statement_list", "_NL"], "postprocess": idN(1)},
+    {"name": "main$ebnf$1", "symbols": ["Deps"], "postprocess": id},
+    {"name": "main$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "main", "symbols": ["_NL", "main$ebnf$1", "Statement_list", "_NL"], "postprocess":  function(d){
+          if(d[1]){
+            return [d[1]].concat(d[2]);
+          }
+          return d[2];
+        } },
+    {"name": "Deps", "symbols": [tok_deps, tok_COLON, "NL", "INDENT", "DepPairs", "NL", "DEDENT", "NL"], "postprocess":  function(d){
+          return {
+            loc: mkLoc(d),
+            type: "Dependencies",
+            dependencies: d[4]
+          };
+        } },
+    {"name": "DepPairs", "symbols": ["DepPair"], "postprocess": idArr},
+    {"name": "DepPairs", "symbols": ["DepPairs", "NL", "DepPair"], "postprocess": concatArr(2)},
+    {"name": "DepPair", "symbols": ["Identifier", "String"], "postprocess":  function(d){
+          return {
+            loc: mkLoc(d),
+            type: "Dependency",
+            id: d[0],
+            path: d[1]
+          };
+        } },
     {"name": "Statement_list", "symbols": ["Statement"], "postprocess": idArr},
     {"name": "Statement_list", "symbols": ["Statement_list", "NL", "Statement"], "postprocess": concatArr(2)},
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},

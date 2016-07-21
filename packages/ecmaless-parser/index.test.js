@@ -365,3 +365,29 @@ test("parser", function(t){
 
   t.end();
 });
+
+test("deps", function(t){
+  var tst = function(src, expected){
+    ast = _.isArray(ast) && _.size(ast) === 1 ? _.head(ast) : ast;
+    if(ast.type === "ExpressionStatement"){
+      ast = ast.expression;
+    }
+  };
+
+  var ast = parser("deps:\n    a \"./a\"\na()");
+  t.deepEquals(rmLoc(ast), [
+    {
+      type: "Dependencies",
+      dependencies: [
+        {
+          type: "Dependency",
+          id: mk.id("a"),
+          path: mkv("./a")
+        }
+      ]
+    },
+    mk.stmt(mk.app(mk.id("a"), []))
+  ]);
+
+  t.end();
+});

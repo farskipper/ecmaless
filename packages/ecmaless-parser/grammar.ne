@@ -66,6 +66,7 @@ var tok_CLOSE_SQ = tok("]");
 var tok_OPEN_CU = tok("{");
 var tok_CLOSE_CU = tok("}");
 
+var tok_deps = tok("SYMBOL", "deps");
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
 var tok_if = tok("SYMBOL", "if");
@@ -171,7 +172,32 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 
 %}
 
-main -> _NL Statement_list _NL {% idN(1) %}
+main -> _NL Deps:? Statement_list _NL {% function(d){
+  if(d[1]){
+    return [d[1]].concat(d[2]);
+  }
+  return d[2];
+} %}
+
+Deps -> %tok_deps %tok_COLON NL INDENT DepPairs NL DEDENT NL {% function(d){
+  return {
+    loc: mkLoc(d),
+    type: "Dependencies",
+    dependencies: d[4]
+  };
+} %}
+
+DepPairs -> DepPair {% idArr %}
+    | DepPairs NL DepPair {% concatArr(2) %}
+
+DepPair -> Identifier String {% function(d){
+  return {
+    loc: mkLoc(d),
+    type: "Dependency",
+    id: d[0],
+    path: d[1]
+  };
+} %}
 
 ################################################################################
 # Statement
