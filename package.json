@@ -1,7 +1,7 @@
 {
   "name": "ecmaless",
   "version": "0.0.0",
-  "description": "A compile to JS language that is minimal, yet powerful, and promotes freedom to extend the language.",
+  "description": "A small compile to JS language.",
   "main": "index.js",
   "bin": {
     "ecmaless": "bin/ecmaless"
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/smallhelm/ecmaless.git"
+    "url": "git+https://github.com/farskipper/ecmaless.git"
   },
   "keywords": [
     "language",
@@ -24,12 +24,12 @@
     "freedom",
     "minimalism"
   ],
-  "author": "smallhelm",
+  "author": "farskipper",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/smallhelm/ecmaless/issues"
+    "url": "https://github.com/farskipper/ecmaless/issues"
   },
-  "homepage": "https://github.com/smallhelm/ecmaless#readme",
+  "homepage": "https://github.com/farskipper/ecmaless#readme",
   "dependencies": {
     "concat-stream": "^1.5.1",
     "escape-regexp": "0.0.1",
