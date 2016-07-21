@@ -40,21 +40,47 @@ module.exports = function(conf, callback){
     conf.loadPath(path, function(err, src){
       if(err)return callback(err);
 
-      var p = extractDeps(parser(src, {filename: path}));
-      var c = compiler(p.ast);
+      var ast = parser(src, {filename: path});
+      var mloc;//TODO
+      var mast = [
+        {
+          loc: mloc,
+          type: "Function",
+          params: [],
+          block: {
+            loc: mloc,
+            type: "Block",
+            body: []
+          }
+        }
+      ];
+      var deps = {};
+      if(ast[0] && ast[0].type === "Dependencies"){
+        _.each(ast[0].dependencies, function(d){
+          deps[d.id.value] = d.path.value;
+          mast[0].params.push(d.id)
+        });
+        mast[0].block.body = ast.slice(1);
+      }else{
+        mast[0].block.body = ast;
+      }
+
+      var c = compiler(mast);
 
       modules[path] = {
         src: src,
-        ast: p.ast,
-        est: c.estree
+        ast: ast,
+        est: c.estree[0],
+        mast: mast,
+        deps: deps,
       };
 
-      if(_.isEmpty(p.deps)){
+      if(_.isEmpty(deps)){
         return callback();
       }
       var done = (function(){
         var error;
-        var after = _.after(_.size(p.deps), function(){
+        var after = _.after(_.size(deps), function(){
           callback(error);
         });
         return function(err){
@@ -64,8 +90,8 @@ module.exports = function(conf, callback){
           after();
         };
       }());
-      _.each(p.deps, function(dep){
-        load(dep.path.value, done);
+      _.each(deps, function(path){
+        load(path, done);
       });
     });
   };
@@ -73,9 +99,13 @@ module.exports = function(conf, callback){
   load(conf.start_path, function(err){
     if(err)return callback(err);
 
+    var toReqPath = function(path){
+      return e("string", path);
+    };
+
     var mods = {};
     _.each(modules, function(m, path){
-      mods[path] = e("array", [e("fn", [], m.est)]);
+      mods[path] = e("array", [m.est].concat(_.map(m.deps, toReqPath)));
     });
     var est = e("call",
         e("fn", ["mdefs", "main"], []),
