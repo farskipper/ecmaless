@@ -4,6 +4,38 @@ var parser = require("ecmaless-parser");
 var compiler = require("ecmaless-compiler");
 var escodegen = require("escodegen");
 
+var getMainLoc = function(tree){
+  if(!_.isArray(tree)){
+    return tree && tree.loc;
+  }
+  var parts = _.flattenDeep(tree);
+  var first_loc;
+  var last_loc;
+  var i = 0;
+  while(i < parts.length){
+    if(_.has(parts[i], "loc")){
+      first_loc = parts[i].loc;
+      break;
+    }
+    i++;
+  }
+  i = parts.length - 1;
+  while(i >= 0){
+    if(_.has(parts[i], "loc")){
+      last_loc = parts[i].loc;
+      break;
+    }
+    i--;
+  }
+  if(!first_loc || !last_loc){
+    return;
+  }
+  return {
+    start: first_loc.start,
+    end: first_loc.end
+  };
+};
+
 var toJSFile = function(estree, opts){
   opts = opts || {};
 
@@ -11,7 +43,7 @@ var toJSFile = function(estree, opts){
     estree = [estree];
   }
   return escodegen.generate({
-    "loc": _.size(estree) > 0 ? _.head(estree).loc : undefined,
+    "loc": getMainLoc(estree),
     "type": "Program",
     "body": estree
   }, opts.escodegen);
@@ -41,7 +73,7 @@ module.exports = function(conf, callback){
       if(err)return callback(err);
 
       var ast = parser(src, {filename: path});
-      var mloc;//TODO
+      var mloc = getMainLoc(ast);
       var mast = [
         {
           loc: mloc,
