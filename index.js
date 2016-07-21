@@ -131,17 +131,24 @@ module.exports = function(conf, callback){
   load(conf.start_path, function(err){
     if(err)return callback(err);
 
+    var path_to_i = {};
+    var i = 0;
+    _.each(modules, function(m, path){
+      path_to_i[path] = i;
+      i++;
+    });
+
     var toReqPath = function(path){
-      return e("string", path);
+      return e("number", path_to_i[path]);
     };
 
-    var mods = {};
+    var mods = [];
     _.each(modules, function(m, path){
-      mods[path] = e("array", [m.est].concat(_.map(m.deps, toReqPath)));
+      mods.push(e("array", [m.est].concat(_.map(m.deps, toReqPath)), m.est.loc));
     });
     var est = e("call",
         e("fn", ["mdefs", "main"], []),
-        [e("object", mods), e("string", conf.start_path)]);
+        [e("array", mods), toReqPath(conf.start_path)]);
     callback(void 0, toJSFile(est, conf));
   });
 };
