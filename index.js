@@ -17,25 +17,56 @@ var toJSFile = function(estree, opts){
   }, opts.escodegen);
 };
 
+var extractDeps = function(ast){
+  var deps = {};
+  var new_ast = ast;
+  if(ast[0] && ast[0].type === "Dependencies"){
+    _.each(ast[0].dependencies, function(d){
+      deps[d.id.value] = d;
+    });
+    new_ast = ast.slice(1);
+  }
+  return {deps: deps, ast: new_ast};
+};
+
 module.exports = function(conf, callback){
 
   var modules = {};
 
-  var load = function(path, callback){
-
+  var load = function load(path, callback){
+    if(_.has(modules, path)){
+      return callback();
+    }
     conf.loadPath(path, function(err, src){
       if(err)return callback(err);
 
-      var ast = parser(src);
-      var c = compiler(ast);
+      var p = extractDeps(parser(src, {filename: path}));
+      var c = compiler(p.ast);
 
       modules[path] = {
         src: src,
-        ast: ast,
+        ast: p.ast,
         est: c.estree
       };
 
-      callback();
+      if(_.isEmpty(p.deps)){
+        return callback();
+      }
+      var done = (function(){
+        var error;
+        var after = _.after(_.size(p.deps), function(){
+          callback(error);
+        });
+        return function(err){
+          if(!error && err){
+            error = err;
+          }
+          after();
+        };
+      }());
+      _.each(p.deps, function(dep){
+        load(dep.path.value, done);
+      });
     });
   };
 

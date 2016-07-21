@@ -7,7 +7,11 @@ test("it", function(t){
     start_path: "./a",
     loadPath: function(path, callback){
       if(path === "./a"){
-        callback(undefined, "def a = 1");
+        callback(undefined, "deps:\n    b \"./b\"\n\nb");
+        return;
+      }
+      if(path === "./b"){
+        callback(undefined, "100");
         return;
       }
       callback(new Error("Unknown path: " + path));
