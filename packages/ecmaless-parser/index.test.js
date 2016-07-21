@@ -389,5 +389,25 @@ test("deps", function(t){
     mk.stmt(mk.app(mk.id("a"), []))
   ]);
 
+  ast = parser("deps:\n    a \"./a\"\n    b    \"b\"\na(b)");
+  t.deepEquals(rmLoc(ast), [
+    {
+      type: "Dependencies",
+      dependencies: [
+        {
+          type: "Dependency",
+          id: mk.id("a"),
+          path: mkv("./a")
+        },
+        {
+          type: "Dependency",
+          id: mk.id("b"),
+          path: mkv("b")
+        }
+      ]
+    },
+    mk.stmt(mk.app(mk.id("a"), [mk.id("b")]))
+  ]);
+
   t.end();
 });
