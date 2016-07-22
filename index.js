@@ -2,6 +2,7 @@ var _ = require("lodash");
 var e = require("estree-builder");
 var parser = require("ecmaless-parser");
 var compiler = require("ecmaless-compiler");
+var path_fns = require("path");
 var escodegen = require("escodegen");
 var req_est_orig = require("./req_est");
 
@@ -52,19 +53,16 @@ var toJSFile = function(estree, opts){
   }, opts.escodegen);
 };
 
-var extractDeps = function(ast){
-  var deps = {};
-  var new_ast = ast;
-  if(ast[0] && ast[0].type === "Dependencies"){
-    _.each(ast[0].dependencies, function(d){
-      deps[d.id.value] = d;
-    });
-    new_ast = ast.slice(1);
+var normalizePath = function(base, path){
+  if(path[0] === "."){
+    return path_fns.resolve(base, path);
   }
-  return {deps: deps, ast: new_ast};
+  return path;
 };
 
 module.exports = function(conf, callback){
+  var base = conf.base || process.cwd();
+  var start_path = normalizePath(base, conf.start_path);
 
   var modules = {};
 
@@ -125,13 +123,15 @@ module.exports = function(conf, callback){
           after();
         };
       }());
+      var dir = path_fns.dirname(path);
       _.each(deps, function(path){
+        console.log("dirdir----", normalizePath(dir, path));
         load(path, done);
       });
     });
   };
 
-  load(conf.start_path, function(err){
+  load(start_path, function(err){
     if(err)return callback(err);
 
     var path_to_i = {};
@@ -151,7 +151,7 @@ module.exports = function(conf, callback){
     });
     var est = e("call", req_est, [
       e("array", mods),
-      toReqPath(conf.start_path)
+      toReqPath(start_path)
     ]);
     callback(void 0, toJSFile(est, conf));
   });

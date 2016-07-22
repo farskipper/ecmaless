@@ -6,11 +6,11 @@ test("it", function(t){
   main({
     start_path: "./a",
     loadPath: function(path, callback){
-      if(path === "./a"){
+      if(/\/a$/.test(path)){
         callback(undefined, "deps:\n    b \"./b\"\n\nb");
         return;
       }
-      if(path === "./b"){
+      if(/\/b$/.test(path)){
         callback(undefined, "100");
         return;
       }
