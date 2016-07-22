@@ -92,6 +92,7 @@ module.exports = function(conf, callback){
         var dir = path_fns.dirname(path);
         _.each(ast[0].dependencies, function(d){
           deps[d.id.value] = {
+            loc: d.path.loc,
             path: normalizePath(dir, d.path.value)
           };
           mast[0].params.push(d.id)
@@ -142,14 +143,14 @@ module.exports = function(conf, callback){
       i++;
     });
 
-    var toReqPath = function(path){
-      return e("number", path_to_i[path]);
+    var toReqPath = function(path, loc){
+      return e("number", path_to_i[path], loc);
     };
 
     var mods = [];
     _.each(modules, function(m, path){
       mods.push(e("array", [m.est].concat(_.map(m.deps, function(dep){
-        return toReqPath(dep.path);
+        return toReqPath(dep.path, dep.loc);
       })), m.est.loc));
     });
     var est = e("call", req_est, [
