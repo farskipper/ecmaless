@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 
-var concat = require("concat-stream");
-var compile = require("../");
+var fs = require("fs");
+var main = require("../");
 
-process.stdin.pipe(concat(function(stdin){
-  var src = stdin.toString();
-  console.log(compile(src));
-}));
+main({
+  start_path: process.argv[2],
+  loadPath: function(path, callback){
+    fs.readFile(path, "utf-8", callback);
+  }
+}, function(err, js){
+  if(err) throw err;
+  console.log(js);
+});
