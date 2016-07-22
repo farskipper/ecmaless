@@ -89,8 +89,11 @@ module.exports = function(conf, callback){
       ];
       var deps = {};
       if(ast[0] && ast[0].type === "Dependencies"){
+        var dir = path_fns.dirname(path);
         _.each(ast[0].dependencies, function(d){
-          deps[d.id.value] = d.path.value;
+          deps[d.id.value] = {
+            path: normalizePath(dir, d.path.value)
+          };
           mast[0].params.push(d.id)
         });
         mast[0].block.body = ast.slice(1);
@@ -123,10 +126,8 @@ module.exports = function(conf, callback){
           after();
         };
       }());
-      var dir = path_fns.dirname(path);
-      _.each(deps, function(path){
-        console.log("dirdir----", normalizePath(dir, path));
-        load(path, done);
+      _.each(deps, function(dep){
+        load(dep.path, done);
       });
     });
   };
@@ -147,7 +148,9 @@ module.exports = function(conf, callback){
 
     var mods = [];
     _.each(modules, function(m, path){
-      mods.push(e("array", [m.est].concat(_.map(m.deps, toReqPath)), m.est.loc));
+      mods.push(e("array", [m.est].concat(_.map(m.deps, function(dep){
+        return toReqPath(dep.path);
+      })), m.est.loc));
     });
     var est = e("call", req_est, [
       e("array", mods),
