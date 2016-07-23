@@ -1,0 +1,30 @@
+{
+  "name": "ecmaless-stdlib",
+  "version": "0.0.0",
+  "description": "Standard library for ecmaless",
+  "main": "index.js",
+  "scripts": {
+    "start": "onchange '**/*.js' -i -- npm test -s",
+    "test": "node tests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/farskipper/ecmaless-stdlib.git"
+  },
+  "keywords": [
+    "ecmaless",
+    "stdlib",
+    "lang",
+    "functions"
+  ],
+  "author": "farskipper",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/farskipper/ecmaless-stdlib/issues"
+  },
+  "homepage": "https://github.com/farskipper/ecmaless-stdlib#readme",
+  "devDependencies": {
+    "onchange": "^2.5.0",
+    "tape": "^4.6.0"
+  }
+}
