@@ -1,4 +1,7 @@
 var objectToString = Object.prototype.toString;
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+var funcToString = Function.prototype.toString;
+var objectCtorString = funcToString.call(Object);
 var isTag = function(v, tag){
   return !!v && typeof v == "object" && (objectToString.call(v) === tag);
 };
@@ -7,6 +10,19 @@ var isJSNumber = function(v){
 };
 var isNaN = function(v){
   return isJSNumber(v) && v != +v;
+};
+var isHostObject = function(v){
+  var result = false;
+  if (v != null && typeof v.toString != "function") {
+    try {
+      result = !!(v + '');
+    } catch (e) {}
+  }
+  return result;
+};
+var nativeGetPrototype = Object.getPrototypeOf;
+var getPrototype = function(v){
+  return nativeGetPrototype(Object(v));
 };
 
 var stdlib = {};
@@ -25,9 +41,23 @@ stdlib.isString = function(v){
 };
 
 stdlib.isBoolean = function(v){
-  return (v === true) || (v === false) || isTag(v, '[object Boolean]');
+  return (v === true) || (v === false) || isTag(v, "[object Boolean]");
 };
 
 stdlib.isArray = Array.isArray;
+
+stdlib.isStruct = function(v){
+  if(!isTag(v, "[object Object]") || isHostObject(v)){
+    return false;
+  }
+  var proto = getPrototype(v);
+  if(proto === null){
+    return true;
+  }
+  var Ctor = hasOwnProperty.call(proto, "constructor") && proto.constructor;
+  return typeof Ctor == "function"
+      && Ctor instanceof Ctor
+      && funcToString.call(Ctor) == objectCtorString;
+};
 
 module.exports = stdlib;

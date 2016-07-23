@@ -42,5 +42,14 @@ test("is", function(t){
   t.equals(lib.isArray(null), false);
   t.equals(lib.isArray(arguments), false);
 
+  t.equals(lib.isStruct({}), true);
+  t.equals(lib.isStruct({name: "bob"}), true);
+  function User(name){this.name = name;}
+  t.equals(lib.isStruct(new User("bob")), false);
+  t.equals(lib.isStruct([]), false);
+  t.equals(lib.isStruct([1, 2]), false);
+  t.equals(lib.isStruct(arguments), false);
+  t.equals(lib.isStruct(null), false);
+
   t.end();
 });
