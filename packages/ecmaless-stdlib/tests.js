@@ -51,5 +51,15 @@ test("is", function(t){
   t.equals(lib.isStruct(arguments), false);
   t.equals(lib.isStruct(null), false);
 
+  t.equals(lib.isFunction(function(){}), true);
+  t.equals(lib.isFunction(lib.isFunction), true);
+  t.equals(lib.isFunction(Array.isArray), true);
+  t.notOk(lib.isFunction(/a/));
+  t.notOk(lib.isFunction([]));
+  t.notOk(lib.isFunction({}));
+  t.notOk(lib.isFunction(arguments));
+  t.notOk(lib.isFunction(void 0));
+  t.notOk(lib.isFunction(null));
+
   t.end();
 });

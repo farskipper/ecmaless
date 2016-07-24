@@ -2,11 +2,15 @@ var objectToString = Object.prototype.toString;
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 var funcToString = Function.prototype.toString;
 var objectCtorString = funcToString.call(Object);
+var isObject = function(v){
+  var type = typeof v;
+  return !!v && (type == "object" || type == "function");
+};
 var isTag = function(v, tag){
   return !!v && typeof v == "object" && (objectToString.call(v) === tag);
 };
 var isJSNumber = function(v){
-  return (typeof v === "number") || isTag(v, "[object Number]")
+  return (typeof v == "number") || isTag(v, "[object Number]")
 };
 var isNaN = function(v){
   return isJSNumber(v) && v != +v;
@@ -15,7 +19,7 @@ var isHostObject = function(v){
   var result = false;
   if (v != null && typeof v.toString != "function") {
     try {
-      result = !!(v + '');
+      result = !!(v + "");
     } catch (e) {}
   }
   return result;
@@ -36,7 +40,7 @@ stdlib.isNumber = function(v){
 };
 
 stdlib.isString = function(v){
-  return (typeof v === "string")
+  return (typeof v == "string")
     || (!stdlib.isArray(v) && isTag(v, "[object String]"));
 };
 
@@ -58,6 +62,11 @@ stdlib.isStruct = function(v){
   return typeof Ctor == "function"
       && Ctor instanceof Ctor
       && funcToString.call(Ctor) == objectCtorString;
+};
+
+stdlib.isFunction = function(v){
+  var tag = isObject(v) ? objectToString.call(v) : "";
+  return tag === "[object Function]" || tag === "[object GeneratorFunction]";
 };
 
 module.exports = stdlib;
