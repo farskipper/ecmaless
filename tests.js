@@ -1,26 +1,39 @@
+var λ = require("contra");
+var _ = require("lodash");
 var test = require("tape");
 var main = require("./");
 
-test("it", function(t){
-
-  main({
-    start_path: "./a",
-    loadPath: function(path, callback){
-      if(/\/a$/.test(path)){
-        callback(undefined, "deps:\n    b \"./b\"\n\nb");
-        return;
-      }
-      if(/\/b$/.test(path)){
-        callback(undefined, "100");
-        return;
-      }
+var StructLoader = function(files){
+  return function(path, callback){
+    if(_.has(files, path)){
+      callback(undefined, files[path]);
+    }else{
       callback(new Error("Unknown path: " + path));
     }
-  }, function(err, js){
-    if(err) return t.end(err);
+  };
+};
 
-    t.equals(eval(js), 100);
+test("it", function(t){
 
-    t.end();
-  });
+  λ.each([
+    {
+      files: {
+        "/test/a": "deps:\n    b \"./b\"\n\nb",
+        "/test/b": "100"
+      },
+      out: 100
+    }
+  ], function(info, next){
+    main({
+      base: "/test/",
+      start_path: "./a",
+      loadPath: StructLoader(info.files)
+    }, function(err, js){
+      if(err) return next(err);
+
+      t.equals(eval(js), info.out);
+
+      next();
+    });
+  }, t.end);
 });
