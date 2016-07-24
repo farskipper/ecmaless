@@ -69,4 +69,8 @@ stdlib.isFunction = function(v){
   return tag === "[object Function]" || tag === "[object GeneratorFunction]";
 };
 
+stdlib.truthy = function(v){
+  return !stdlib.isNil(v) && v !== false;
+};
+
 module.exports = stdlib;

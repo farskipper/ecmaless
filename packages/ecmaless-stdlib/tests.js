@@ -61,5 +61,19 @@ test("is", function(t){
   t.notOk(lib.isFunction(void 0));
   t.notOk(lib.isFunction(null));
 
+  t.equals(lib.truthy(1), true);
+  t.equals(lib.truthy({}), true);
+  t.equals(lib.truthy([]), true);
+  t.equals(lib.truthy(""), true);
+  t.equals(lib.truthy(lib), true);
+  t.equals(lib.truthy(true), true);
+  t.equals(lib.truthy(/a/), true);
+  t.equals(lib.truthy(1), true);
+  t.equals(lib.truthy(0), true);
+  t.notOk(lib.truthy(false));
+  t.notOk(lib.truthy(void 0));
+  t.notOk(lib.truthy(null));
+  t.notOk(lib.truthy(NaN));
+
   t.end();
 });
