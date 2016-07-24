@@ -87,7 +87,7 @@ test("scope", function(t){
   var ts = function(src, expected){
     var ast = parser(src);
     var syms = compiler(ast).undefined_symbols;
-    t.deepEquals(syms, expected);
+    t.deepEquals(_.keys(syms), expected);
   };
 
   ts("1", []);
@@ -101,6 +101,12 @@ test("scope", function(t){
 
   ts("if 1:\n    def a\n    a\na", ["a"]);
   ts("cond:\n    1:\n        def a\n        a\n    2:\n        a", ["a"]);
+
+  t.deepEquals({
+    a: {
+      loc: {end: {column: 1, line: 1}, source: 'a', start: {column: 0, line: 1}}
+    }
+  }, compiler(parser("a\na\na")).undefined_symbols);
 
   t.end();
 });

@@ -31,7 +31,7 @@ var comp_by_type = {
     return e("string", ast.value, ast.loc);
   },
   "Identifier": function(ast, comp, ctx){
-    ctx.useIdentifier(ast.value);
+    ctx.useIdentifier(ast.value, ast.loc);
     return e("id", toId(ast.value), ast.loc);
   },
   "Nil": function(ast, comp){
@@ -268,9 +268,11 @@ module.exports = function(ast){
     defIdentifier: function(id){
       symt_stack[0].set(id, {id: id});
     },
-    useIdentifier: function(id){
+    useIdentifier: function(id, loc){
       if(!symt_stack[0].has(id)){
-        undefined_symbols[id] = true;
+        if(!_.has(undefined_symbols, id)){
+          undefined_symbols[id] = {loc: loc};
+        }
       }else{
         return symt_stack[0].get(id);
       }
@@ -292,6 +294,6 @@ module.exports = function(ast){
 
   return {
     estree: compile(ast),
-    undefined_symbols: _.keys(undefined_symbols)
+    undefined_symbols: undefined_symbols
   };
 };
