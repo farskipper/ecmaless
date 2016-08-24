@@ -77,3 +77,16 @@ test("is", function(t){
 
   t.end();
 });
+
+test("data access", function(t){
+
+  t.equals(lib.has({}, "prototype"), false);
+  t.equals(lib.has({a: 1}, "a"), true);
+
+  t.equals(lib.get(), void 0);
+  t.equals(lib.get({}, "prototype"), void 0);
+  t.equals(lib.get({}, "prototype", "not found"), "not found");
+  t.equals(lib.get({a: 1}, "a"), 1);
+
+  t.end();
+});

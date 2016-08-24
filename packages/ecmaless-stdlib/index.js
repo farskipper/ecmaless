@@ -73,4 +73,15 @@ stdlib.truthy = function(v){
   return !stdlib.isNil(v) && v !== false;
 };
 
+stdlib.has = function(obj, key){
+  return obj != null && hasOwnProperty.call(obj, key);
+};
+
+stdlib.get = function(o, key, deflt){
+  if(stdlib.has(o, key)){
+    return o[key];
+  }
+  return deflt;
+};
+
 module.exports = stdlib;
