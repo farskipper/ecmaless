@@ -1,6 +1,7 @@
 var _ = require("lodash");
 var e = require("estree-builder");
 var parser = require("ecmaless-parser");
+var stdlib = require("ecmaless-stdlib");
 var compiler = require("ecmaless-compiler");
 var path_fns = require("path");
 var escodegen = require("escodegen");
@@ -70,6 +71,51 @@ module.exports = function(conf, callback){
     if(_.has(modules, path)){
       return callback();
     }
+    if(/^stdlib\:\/\//.test(path)){
+      //TODO actually embed the code, rather than falling back on require?
+      modules[path] = {
+        src: "require(\"ecmaless-stdlib\")[\""
+          + path.replace(/^stdlib\:\/\//, "")
+          + "\"]",
+        //ast: ast,
+        //mast: mast,
+        est: {
+          type: "FunctionExpression",
+          params: [],
+          body: {
+            type: "BlockStatement",
+            body: [
+              {
+                type: "ReturnStatement",
+                argument: {
+                  type: "MemberExpression",
+                  object: {
+                    type: "CallExpression",
+                    callee: {
+                      type: "Identifier",
+                      name: "require"
+                    },
+                    "arguments": [
+                      {
+                        type: "Literal",
+                        value: "ecmaless-stdlib"
+                      }
+                    ]
+                  },
+                  property: {
+                    type: "Literal",
+                    value: path.replace(/^stdlib\:\/\//, "")
+                  },
+                  computed: true
+                }
+              }
+            ]
+          }
+        },
+        deps: {},
+      };
+      return callback();
+    }
     conf.loadPath(path, function(err, src){
       if(err)return callback(err);
 
@@ -103,6 +149,22 @@ module.exports = function(conf, callback){
       }
 
       var c = compiler(mast);
+
+      _.each(c.undefined_symbols, function(info, sym){
+        if(_.has(stdlib, sym)){
+          c.estree[0].params.push(compiler([
+            {
+              loc: info.loc,
+              type: "Identifier",
+              value: sym
+            }
+          ]).estree[0]);
+          deps[sym] = {
+            loc: info.loc,
+            path: "stdlib://" + sym
+          };
+        }
+      });
 
       modules[path] = {
         src: src,

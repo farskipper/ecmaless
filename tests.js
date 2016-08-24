@@ -22,6 +22,12 @@ test("it", function(t){
         "/test/b": "100"
       },
       out: 100
+    },
+    {
+      files: {
+        "/test/a": "def a=1\nisNumber(a)",
+      },
+      out: true
     }
   ], function(info, next){
     main({
