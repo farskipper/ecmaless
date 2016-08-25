@@ -84,4 +84,25 @@ stdlib.get = function(o, key, deflt){
   return deflt;
 };
 
+stdlib.iterate = function(o, fn){
+  if(stdlib.isArray(o)){
+    var i;
+    for(i=0; i < o.length; i++){
+      if(!stdlib.truthy(fn(o[i], i, o))){
+        return;
+      }
+    }
+  }
+  if(stdlib.isStruct(o)){
+    var key;
+    for(key in o){
+      if(stdlib.has(o, key)){
+        if(!stdlib.truthy(fn(o[key], key, o))){
+          return;
+        }
+      }
+    }
+  }
+};
+
 module.exports = stdlib;

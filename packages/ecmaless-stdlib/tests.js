@@ -90,3 +90,36 @@ test("data access", function(t){
 
   t.end();
 });
+
+test("iterate", function(t){
+  t.plan(8);
+
+  lib.iterate(void 0, function(){
+    t.fail();
+  });
+
+  lib.iterate([], function(){
+    t.fail();
+  });
+
+  lib.iterate({}, function(){
+    t.fail();
+  });
+
+  lib.iterate([1], function(v, k, o){
+    t.equals(v, 1);
+    t.equals(k, 0);
+    t.deepEquals(o, [1]);
+  });
+
+  lib.iterate({"0": 1}, function(v, k, o){
+    t.equals(v, 1);
+    t.equals(k, "0");
+    t.deepEquals(o, {"0": 1});
+  });
+
+  lib.iterate({a: "b", c: "d"}, function(v, k, o){
+    t.equals(v, k === "a" ? "b" : "d");
+    return true;
+  });
+});
