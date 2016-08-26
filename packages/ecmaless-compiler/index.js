@@ -226,10 +226,7 @@ var comp_by_type = {
   },
   "Case": function(ast, comp){
     var mkTest = function(val){
-      return e("call", e("id", toId("=="), val.loc), [
-        comp(ast.to_test),
-        comp(val)
-      ], val.loc);
+      return e("===", comp(ast.to_test), comp(val), val.loc);
     };
     var prev = ast["else"]
       ? comp(ast["else"])

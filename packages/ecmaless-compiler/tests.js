@@ -61,7 +61,7 @@ test("compile", function(t){
   tc("cond:\n    a:\n        b\n    c:\n        d\n    else:\n        e", "if(a){b;}else if(c){d;}else{e;}");
   tc(
     "case a:\n    1:\n        b\n    2:\n        c\n    else:\n        d",
-    "if($61$$61$(a,1)){b;}else if($61$$61$(a,2)){c;}else{d;}"
+    "if(a===1){b;}else if(a===2){c;}else{d;}"
   );
   tc("while a:\n    b", "while(a){b;}");
   tc("break", "break;");
