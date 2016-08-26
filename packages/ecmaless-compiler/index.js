@@ -141,13 +141,7 @@ var comp_by_type = {
     return e("function", params, body, id, ast.loc);
   },
   "Application": function(ast, comp){
-    return e("call",
-      e(".", comp(ast.callee), e("id", "call", ast.loc), ast.loc),
-      [
-        e("void", e("number", 0, ast.loc), ast.loc)
-      ].concat(comp(ast.args)),
-      ast.loc
-    );
+    return e("call", comp(ast.callee), comp(ast.args), ast.loc);
   },
   "UnaryOperator": function(ast, comp){
     if(ast.op === "-" || ast.op === "+"){

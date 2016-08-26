@@ -47,8 +47,8 @@ test("compile", function(t){
     "(function(){var a=arguments.slice(0);return void 0;});"
   );
   tc("return false", "return false;");
-  tc("add()", "add.call(void 0);");
-  tc("add(1, 2)", "add.call(void 0,1,2);");
+  tc("add()", "add();");
+  tc("add(1, 2)", "add(1,2);");
 
   tc("+a", "+a;");
   tc("-1", "-1;");
