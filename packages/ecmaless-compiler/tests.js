@@ -59,6 +59,7 @@ test("compile", function(t){
   tc("if a:\n    b", "if($$$ecmaless$$$truthy(a)){b;}");
   tc("if a == b:\n    c", "if(a===b){c;}");
   tc("if a:\n    b\nelse if c:\n    d\nelse:\n    e", "if($$$ecmaless$$$truthy(a)){b;}else if($$$ecmaless$$$truthy(c)){d;}else{e;}");
+  tc("a ? b : c", "$$$ecmaless$$$truthy(a)?b:c;");
   tc("cond:\n    a:\n        b\n    c:\n        d\n    else:\n        e", "if($$$ecmaless$$$truthy(a)){b;}else if($$$ecmaless$$$truthy(c)){d;}else{e;}");
   tc(
     "case a:\n    1:\n        b\n    2:\n        c\n    else:\n        d",

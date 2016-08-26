@@ -197,6 +197,14 @@ var comp_by_type = {
       path
     ], ast.loc);
   },
+  "ConditionalExpression": function(ast, comp){
+    return e("?",
+      wrapTruthyTest(comp(ast.test)),
+      comp(ast.consequent),
+      comp(ast.alternate),
+      ast.loc
+    );
+  },
   "Block": function(ast, comp, ctx){
     ctx.pushScope();
     var body = comp(ast.body);
