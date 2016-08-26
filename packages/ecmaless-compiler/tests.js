@@ -75,12 +75,12 @@ test("compile", function(t){
   tc("def a = 1", "var a=1;");
   tc("a = 1", "a=1;");
 
-  tc("a.b", "get(a,'b');");
-  tc("a[b]", "get(a,b);");
-  tc("a.b[c][1][\"e\"]", "get(get(get(get(a,'b'),c),1),'e');");
+  tc("a.b", "$$$ecmaless$$$get(a,'b');");
+  tc("a[b]", "$$$ecmaless$$$get(a,b);");
+  tc("a.b[c][1][\"e\"]", "$$$ecmaless$$$get($$$ecmaless$$$get($$$ecmaless$$$get($$$ecmaless$$$get(a,'b'),c),1),'e');");
 
-  tc("a.b = 1", "set(a,'b',1);");
-  tc("a.b.c = 1", "set(get(a,'b'),'c',1);");
+  tc("a.b = 1", "$$$ecmaless$$$set(a,'b',1);");
+  tc("a.b.c = 1", "$$$ecmaless$$$set($$$ecmaless$$$get(a,'b'),'c',1);");
 
   //named functions
   tc("def add = fn [a, b]:\n    nil", "var add=function add(a,b){return void 0;};");

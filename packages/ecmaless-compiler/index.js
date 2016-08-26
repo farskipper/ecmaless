@@ -175,7 +175,7 @@ var comp_by_type = {
       return e("=", comp(ast.left), comp(ast.right), ast.loc);
     }else if(ast.left.type === "MemberExpression"){
       var left = comp(ast.left);
-      left.callee.name = "set";
+      left.callee.name = "$$$ecmaless$$$set";
       left["arguments"].push(comp(ast.right));
       return left;
     }
@@ -192,7 +192,7 @@ var comp_by_type = {
     }else{
       throw new Error("Unsupported MemberExpression method: " + ast.method);
     }
-    return e("call", e("id", "get", ast.loc), [
+    return e("call", e("id", "$$$ecmaless$$$get", ast.loc), [
       comp(ast.object),
       path
     ], ast.loc);
