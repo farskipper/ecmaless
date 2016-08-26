@@ -123,3 +123,14 @@ test("iterate", function(t){
     return true;
   });
 });
+
+test("boolean ops", function(t){
+  t.equals(lib["||"](0, 1), 0);
+  t.equals(lib["||"](void 0, 1), 1);
+  t.equals(lib["||"](NaN, 1), 1);
+  t.equals(lib["&&"](false, 1), false);
+  t.equals(lib["&&"](0, 1), 1);
+  t.equals(lib["!"](0), false);
+  t.equals(lib["!"](NaN), true);
+  t.end();
+});

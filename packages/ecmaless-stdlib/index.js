@@ -105,4 +105,18 @@ stdlib.iterate = function(o, fn){
   }
 };
 
+stdlib["||"] = function(a, b){
+  return stdlib.truthy(a)
+    ? a
+    : b;
+};
+stdlib["&&"] = function(a, b){
+  return stdlib.truthy(a) && stdlib.truthy(b)
+    ? b
+    : a;
+};
+stdlib["!"] = function(a){
+  return !stdlib.truthy(a);
+};
+
 module.exports = stdlib;
