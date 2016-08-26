@@ -1,6 +1,6 @@
 {
   "name": "ecmaless-compiler",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "ecmaless AST -> ESTree",
   "main": "index.js",
   "scripts": {
