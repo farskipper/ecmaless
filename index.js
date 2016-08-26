@@ -216,6 +216,8 @@ module.exports = function(conf, callback){
       })), m.est.loc));
     });
     var est = e("call", e("fn", [], [
+      e("var", "$$$ecmaless$$$get", e(".", e("call", e("id", "require"), [e("str", "ecmaless-stdlib")]), e("id", "get"))),
+      e("var", "$$$ecmaless$$$set", e(".", e("call", e("id", "require"), [e("str", "ecmaless-stdlib")]), e("id", "set"))),
       e("var", "$$$ecmaless$$$truthy", e(".", e("call", e("id", "require"), [e("str", "ecmaless-stdlib")]), e("id", "truthy"))),
       e("return", e("call", req_est, [
         e("array", mods),
