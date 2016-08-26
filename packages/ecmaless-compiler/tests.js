@@ -50,8 +50,11 @@ test("compile", function(t){
   tc("add()", "add.call(void 0);");
   tc("add(1, 2)", "add.call(void 0,1,2);");
 
-  tc("-1", "$45$(1);");
-  tc("1 + 2", "$43$(1,2);");
+  tc("+a", "+a;");
+  tc("-1", "-1;");
+  tc("1 + 2", "1+2;");
+  tc("1 - 2 + 3 / 4 * 5 % 3", "1-2+3/4*5%3;");
+  tc("a == b != c", "a===b!==c;");
 
   tc("if a:\n    b", "if(a){b;}");
   tc("if a:\n    b\nelse if c:\n    d\nelse:\n    e", "if(a){b;}else if(c){d;}else{e;}");

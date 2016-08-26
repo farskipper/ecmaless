@@ -23,6 +23,18 @@ var sliceArgs = function(loc, start, end){
   );
 };
 
+var nativejs_infix_ops = {
+  "<": true,
+  "<=": true,
+  ">": true,
+  ">=": true,
+  "+": true,
+  "-": true,
+  "*": true,
+  "/": true,
+  "%": true,
+};
+
 var comp_by_type = {
   "Number": function(ast, comp){
     return e("number", ast.value, ast.loc);
@@ -130,9 +142,21 @@ var comp_by_type = {
     );
   },
   "UnaryOperator": function(ast, comp){
+    if(ast.op === "-" || ast.op === "+"){
+      return e(ast.op, comp(ast.arg), ast.loc);
+    }
     return e("call", e("id", toId(ast.op), ast.loc), [comp(ast.arg)], ast.loc);
   },
   "InfixOperator": function(ast, comp){
+    if(nativejs_infix_ops.hasOwnProperty(ast.op)){
+      return e(ast.op, comp(ast.left), comp(ast.right), ast.log);
+    }
+    if(ast.op === "=="){
+      return e("===", comp(ast.left), comp(ast.right), ast.log);
+    }
+    if(ast.op === "!="){
+      return e("!==", comp(ast.left), comp(ast.right), ast.log);
+    }
     return e("call", e("id", toId(ast.op), ast.loc), [
       comp(ast.left),
       comp(ast.right)
