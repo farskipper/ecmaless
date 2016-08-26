@@ -41,7 +41,7 @@ var getMainLoc = function(tree){
   };
 };
 
-var toJSFile = function(estree, opts){
+var toJSProgram = function(estree, opts){
   opts = opts || {};
 
   if(!_.isArray(estree)){
@@ -215,10 +215,13 @@ module.exports = function(conf, callback){
         return toReqPath(dep.path, dep.loc);
       })), m.est.loc));
     });
-    var est = e("call", req_est, [
-      e("array", mods),
-      toReqPath(start_path)
-    ]);
-    callback(void 0, toJSFile(est, conf));
+    var est = e("call", e("fn", [], [
+      e("var", "$$$ecmaless$$$truthy", e(".", e("call", e("id", "require"), [e("str", "ecmaless-stdlib")]), e("id", "truthy"))),
+      e("return", e("call", req_est, [
+        e("array", mods),
+        toReqPath(start_path)
+      ]))
+    ]), []);
+    callback(void 0, toJSProgram(est, conf));
   });
 };

@@ -28,6 +28,12 @@ test("it", function(t){
         "/test/a": "def a=1\nisNumber(a)",
       },
       out: true
+    },
+    {
+      files: {
+        "/test/a": "if(0):\n    return 1\n2",
+      },
+      out: 1
     }
   ], function(info, next){
     main({
