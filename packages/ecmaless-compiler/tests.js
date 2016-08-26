@@ -56,14 +56,15 @@ test("compile", function(t){
   tc("1 - 2 + 3 / 4 * 5 % 3", "1-2+3/4*5%3;");
   tc("a == b != c", "a===b!==c;");
 
-  tc("if a:\n    b", "if(a){b;}");
-  tc("if a:\n    b\nelse if c:\n    d\nelse:\n    e", "if(a){b;}else if(c){d;}else{e;}");
-  tc("cond:\n    a:\n        b\n    c:\n        d\n    else:\n        e", "if(a){b;}else if(c){d;}else{e;}");
+  tc("if a:\n    b", "if($$$ecmaless$$$truthy(a)){b;}");
+  tc("if a == b:\n    c", "if(a===b){c;}");
+  tc("if a:\n    b\nelse if c:\n    d\nelse:\n    e", "if($$$ecmaless$$$truthy(a)){b;}else if($$$ecmaless$$$truthy(c)){d;}else{e;}");
+  tc("cond:\n    a:\n        b\n    c:\n        d\n    else:\n        e", "if($$$ecmaless$$$truthy(a)){b;}else if($$$ecmaless$$$truthy(c)){d;}else{e;}");
   tc(
     "case a:\n    1:\n        b\n    2:\n        c\n    else:\n        d",
     "if(a===1){b;}else if(a===2){c;}else{d;}"
   );
-  tc("while a:\n    b", "while(a){b;}");
+  tc("while a:\n    b", "while($$$ecmaless$$$truthy(a)){b;}");
   tc("break", "break;");
   tc("continue", "continue;");
 

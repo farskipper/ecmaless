@@ -35,6 +35,14 @@ var nativejs_infix_ops = {
   "%": true,
 };
 
+var wrapTruthyTest = function(test){
+  var loc = test.loc;
+  if(test && test.type === "BinaryExpression" && test.operator === "==="){
+    return test;
+  }
+  return e("call", e("id", "$$$ecmaless$$$truthy", loc), [test], loc);
+};
+
 var comp_by_type = {
   "Number": function(ast, comp){
     return e("number", ast.value, ast.loc);
@@ -205,7 +213,7 @@ var comp_by_type = {
     var test = comp(ast.test);
     var then = comp(ast.then);
     var els_ = ast["else"] ? comp(ast["else"]) : void 0;
-    return e("if", test, then, els_, ast.loc)
+    return e("if", wrapTruthyTest(test), then, els_, ast.loc)
   },
   "Cond": function(ast, comp){
     var prev = ast["else"]
@@ -215,7 +223,7 @@ var comp_by_type = {
     while(i >= 0){
       var block = ast.blocks[i];
       prev = e("if",
-        comp(block.test),
+        wrapTruthyTest(comp(block.test)),
         comp(block.block),
         prev,
         block.loc
@@ -245,7 +253,7 @@ var comp_by_type = {
     return prev;
   },
   "While": function(ast, comp){
-    return e("while", comp(ast.test), comp(ast.block), ast.loc);
+    return e("while", wrapTruthyTest(comp(ast.test)), comp(ast.block), ast.loc);
   },
   "Break": function(ast, comp){
     return e("break", ast.loc);
