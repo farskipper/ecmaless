@@ -9,6 +9,7 @@ main({
     fs.readFile(path, "utf-8", callback);
   },
   global_symbols: {
+    "require": true,
     "console": true
   }
 }, function(err, js){
