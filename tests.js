@@ -42,6 +42,13 @@ test("it", function(t){
         "/test/sub/c": "4",
       },
       out: 7
+    },
+    {
+      files: {
+        "/test/a": "deps:\n    b \"./b.js\"\nb",
+        "/test/b.js": "var a = 1, b = 2;module.exports = a + b;"
+      },
+      out: 3
     }
   ], function(info, next){
     main({

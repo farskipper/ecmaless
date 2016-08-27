@@ -2,6 +2,7 @@ var _ = require("lodash");
 var e = require("estree-builder");
 var parser = require("ecmaless-parser");
 var stdlib = require("ecmaless-stdlib");
+var esprima = require("esprima");
 var compiler = require("ecmaless-compiler");
 var path_fns = require("path");
 var escodegen = require("escodegen");
@@ -114,6 +115,18 @@ module.exports = function(conf, callback){
     }
     conf.loadPath(path, function(err, src){
       if(err)return callback(err);
+
+      if(/\.js$/.test(path)){
+        modules[path] = {
+          est: e("fn", [], [
+            e("var", "module", e("object", {exports: e("object", {})}))
+          ].concat(esprima.parse(src).body).concat([
+            e("return", e("id", "module.exports"))
+          ])),
+          deps: {},
+        };
+        return callback();
+      }
 
       var ast = parser(src, {filename: path});
       var mloc = getMainLoc(ast);
