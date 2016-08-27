@@ -34,6 +34,14 @@ test("it", function(t){
         "/test/a": "if(0):\n    return 1\n2",
       },
       out: 1
+    },
+    {
+      files: {
+        "/test/a": "deps:\n    b \"./sub/b\"\nb + 1",
+        "/test/sub/b": "deps:\n    c \"./c\"\nc + 2",
+        "/test/sub/c": "4",
+      },
+      out: 7
     }
   ], function(info, next){
     main({
