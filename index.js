@@ -76,39 +76,11 @@ module.exports = function(conf, callback){
     if(/^stdlib\:\/\//.test(path)){
       //TODO actually embed the code, rather than falling back on require?
       modules[path] = {
-        est: {
-          type: "FunctionExpression",
-          params: [],
-          body: {
-            type: "BlockStatement",
-            body: [
-              {
-                type: "ReturnStatement",
-                argument: {
-                  type: "MemberExpression",
-                  object: {
-                    type: "CallExpression",
-                    callee: {
-                      type: "Identifier",
-                      name: "require"
-                    },
-                    "arguments": [
-                      {
-                        type: "Literal",
-                        value: "ecmaless-stdlib"
-                      }
-                    ]
-                  },
-                  property: {
-                    type: "Literal",
-                    value: path.replace(/^stdlib\:\/\//, "")
-                  },
-                  computed: true
-                }
-              }
-            ]
-          }
-        },
+        est: e("fn", [], [
+          e("return", e("get", e("call", e("id", "require"), [
+            e("str", "ecmaless-stdlib")
+          ]), e("str", path.replace(/^stdlib\:\/\//, ""))))
+        ]),
         deps: {},
       };
       return callback();
