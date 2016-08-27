@@ -75,11 +75,6 @@ module.exports = function(conf, callback){
     if(/^stdlib\:\/\//.test(path)){
       //TODO actually embed the code, rather than falling back on require?
       modules[path] = {
-        src: "require(\"ecmaless-stdlib\")[\""
-          + path.replace(/^stdlib\:\/\//, "")
-          + "\"]",
-        //ast: ast,
-        //mast: mast,
         est: {
           type: "FunctionExpression",
           params: [],
@@ -178,10 +173,7 @@ module.exports = function(conf, callback){
       }
 
       modules[path] = {
-        src: src,
-        ast: ast,
         est: c.estree[0],
-        mast: mast,
         deps: deps,
       };
 
