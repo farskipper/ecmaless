@@ -49,3 +49,18 @@ test("it", function(t){
     });
   }, t.end);
 });
+
+test("global_symbols", function(t){
+  var run = function(src, callback){
+    main({
+      base: "/test/",
+      start_path: "./a",
+      loadPath: StructLoader({"/test/a": src}),
+      global_symbols: {global1: true}
+    }, callback);
+  };
+  run("wat", function(err){
+    t.equals("Error: Undefined symbol: wat", err + "");
+    run("global1", t.end);
+  });
+});

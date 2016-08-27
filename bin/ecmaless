@@ -7,6 +7,9 @@ main({
   start_path: process.argv[2],
   loadPath: function(path, callback){
     fs.readFile(path, "utf-8", callback);
+  },
+  global_symbols: {
+    "console": true
   }
 }, function(err, js){
   if(err) throw err;

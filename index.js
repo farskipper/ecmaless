@@ -64,6 +64,7 @@ var normalizePath = function(base, path){
 module.exports = function(conf, callback){
   var base = conf.base || process.cwd();
   var start_path = normalizePath(base, conf.start_path);
+  var global_symbols = conf.global_symbols || {};
 
   var modules = {};
 
@@ -150,21 +151,31 @@ module.exports = function(conf, callback){
 
       var c = compiler(mast);
 
-      _.each(c.undefined_symbols, function(info, sym){
-        if(_.has(stdlib, sym)){
-          c.estree[0].params.push(compiler([
-            {
+      try{
+        _.each(c.undefined_symbols, function(info, sym){
+          if(_.has(stdlib, sym)){
+            c.estree[0].params.push(compiler([
+              {
+                loc: info.loc,
+                type: "Identifier",
+                value: sym
+              }
+            ]).estree[0]);
+            deps[sym] = {
               loc: info.loc,
-              type: "Identifier",
-              value: sym
+              path: "stdlib://" + sym
+            };
+          }else{
+            if(_.has(global_symbols, sym)){
+              return;
             }
-          ]).estree[0]);
-          deps[sym] = {
-            loc: info.loc,
-            path: "stdlib://" + sym
-          };
-        }
-      });
+            throw new Error("Undefined symbol: " + sym);
+          }
+        });
+      }catch(err){
+        callback(err);
+        return;
+      }
 
       modules[path] = {
         src: src,
