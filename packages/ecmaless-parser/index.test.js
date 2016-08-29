@@ -414,12 +414,12 @@ test("deps", function(t){
 
 test("errors", function(t){
   try{
-    parser("one two@three", {filename: "some-file"});
+    parser("one two@three", {filepath: "some-file"});
     t.ok(false, "should fail");
   }catch(e){
     t.equals(e.message, "unable to tokenize\nsome-file:1:7\n \none two@three\n       ^")
     t.deepEquals(e.where, {
-      filename: "some-file",
+      filepath: "some-file",
       line: 1,
       col: 7,
       excerpt: "one two@three\n       ^"
@@ -427,12 +427,12 @@ test("errors", function(t){
   }
 
   try{
-    parser("if 1:blah", {filename: "some-file"});
+    parser("if 1:blah", {filepath: "some-file"});
     t.ok(false, "should fail");
   }catch(e){
     t.equals(e.message, "No possible parsings\nsome-file:1:5\n \nif 1:blah\n     ^")
     t.deepEquals(e.where, {
-      filename: "some-file",
+      filepath: "some-file",
       line: 1,
       col: 5,
       excerpt: "if 1:blah\n     ^"
@@ -445,7 +445,7 @@ test("errors", function(t){
 test("loc", function(t){
   var src = "1";
 
-  var ast = parser(src, {filename: "/some/file/path-ok?"});
+  var ast = parser(src, {filepath: "/some/file/path-ok?"});
   t.deepEquals(ast[0].loc, {
     source: "/some/file/path-ok?",
     start: {line: 1, column: 0},

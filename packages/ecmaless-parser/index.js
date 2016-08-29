@@ -11,13 +11,13 @@ var fmtErrorWithExcerpt = function(err, info){
   msg = msg.replace(/\./g, '');
   msg = msg.trim();
 
-  msg += "\n" + (info.filename  || '') + ':' + (info.line + 1) + ":" + info.col;
+  msg += "\n" + (info.filepath  || '') + ':' + (info.line + 1) + ":" + info.col;
 
   msg += "\n \n" + excerptAtLineCol(info.src, info.line, info.col, 0);
 
   err.message = msg;
   err.where = {
-    filename: info.filename,
+    filepath: info.filepath,
     line: info.line + 1,
     col: info.col,
     excerpt: excerptAtLineCol(info.src, info.line, info.col, 3)
@@ -30,12 +30,12 @@ module.exports = function(src, opts){
 
   var tokens;
   try{
-    tokens = tokenizer(src, {filepath: opts.filename});
+    tokens = tokenizer(src, {filepath: opts.filepath});
   }catch(e){
     if(e.tokenizer2){
       throw fmtErrorWithExcerpt(e, {
         src: src,
-        filename: opts.filename,
+        filepath: opts.filepath,
         line: e.tokenizer2.line - 1,
         col: e.tokenizer2.col - 1
       });
@@ -52,7 +52,7 @@ module.exports = function(src, opts){
       if(tok && tok.loc){
         throw fmtErrorWithExcerpt(e, {
           src: src,
-          filename: opts.filename,
+          filepath: opts.filepath,
           line: tok.loc.start.line - 1,
           col: tok.loc.start.column
         });
