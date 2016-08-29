@@ -106,15 +106,12 @@ var loadEcmaLessModule = function(src, path, global_symbols){
   var c = compiler(mast);
 
   _.each(c.undefined_symbols, function(info, sym){
+    if(sym.indexOf("$$$ecmaless$$$") === 0){
+      sym = sym.substring(14);
+    }
     var ld = stdlibLoader(sym);
     if(ld){
-      c.estree[0].params.push(compiler([
-        {
-          loc: info.loc,
-          type: "Identifier",
-          value: sym
-        }
-      ]).estree[0]);
+      c.estree[0].params.push(e("id", info.js_id, info.loc));
       deps[sym] = {
         loc: info.loc,
         path: "stdlib://" + sym
@@ -125,16 +122,6 @@ var loadEcmaLessModule = function(src, path, global_symbols){
       }
       throw new Error("Undefined symbol: " + sym);
     }
-  });
-
-  //Load language defaults
-  _.each(["get", "set", "truthy"], function(sym){
-    var loc;//TODO
-    c.estree[0].params.push(e("id", "$$$ecmaless$$$" + sym, loc));
-    deps[sym] = {
-      loc: loc,
-      path: "stdlib://" + sym
-    };
   });
 
   return {
