@@ -52,6 +52,12 @@ test("it", function(t){
         "/test/b.js": "var a = 1, b = 2;module.exports = a + b;"
       },
       out: 3
+    },
+    {
+      files: {
+        "/test/a": "truthy(1) ? 2 && 3 : 4"
+      },
+      out: 3
     }
   ], function(info, next){
     main({

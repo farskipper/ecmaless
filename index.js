@@ -106,15 +106,16 @@ var loadEcmaLessModule = function(src, path, global_symbols){
   var c = compiler(mast);
 
   _.each(c.undefined_symbols, function(info, sym){
+    var stdlib_sym = sym;
     if(sym.indexOf("$$$ecmaless$$$") === 0){
-      sym = sym.substring(14);
+      stdlib_sym = sym.substring(14);
     }
-    var ld = stdlibLoader(sym);
+    var ld = stdlibLoader(stdlib_sym);
     if(ld){
       c.estree[0].params.push(e("id", info.js_id, info.loc));
       deps[sym] = {
         loc: info.loc,
-        path: "stdlib://" + sym
+        path: "stdlib://" +stdlib_sym
       };
     }else{
       if(_.has(global_symbols, sym)){
