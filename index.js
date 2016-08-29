@@ -127,6 +127,16 @@ var loadEcmaLessModule = function(src, path, global_symbols){
     }
   });
 
+  //Load language defaults
+  _.each(["get", "set", "truthy"], function(sym){
+    var loc;//TODO
+    c.estree[0].params.push(e("id", "$$$ecmaless$$$" + sym, loc));
+    deps[sym] = {
+      loc: loc,
+      path: "stdlib://" + sym
+    };
+  });
+
   return {
     est: c.estree[0],
     deps: deps,
@@ -225,16 +235,7 @@ module.exports = function(conf, callback){
         return toReqPath(dep.path, dep.loc);
       })), m.est.loc));
     });
-    var est = e("call", e("fn", [], [
-      e("var", "$$$ecmaless$$$", e("call", e("id", "require"), [e("str", "ecmaless-stdlib")])),
-      e("var", "$$$ecmaless$$$get", e(".", e("id", "$$$ecmaless$$$"), e("id", "get"))),
-      e("var", "$$$ecmaless$$$set", e(".", e("id", "$$$ecmaless$$$"), e("id", "set"))),
-      e("var", "$$$ecmaless$$$truthy", e(".", e("id", "$$$ecmaless$$$"), e("id", "truthy"))),
-      e("return", e("call", req_est, [
-        e("array", mods),
-        toReqPath(start_path)
-      ]))
-    ]), []);
+    var est = e("call", req_est, [e("array", mods), toReqPath(start_path)]);
     callback(void 0, toJSProgram(est, conf));
   });
 };
