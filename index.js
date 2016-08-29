@@ -131,6 +131,20 @@ var loadEcmaLessModule = function(src, path, global_symbols){
   };
 };
 
+var loadKeyFromModule = function(opts){
+  return {
+    est: e("fn", ["o"], [
+      e("return", e("get", e("id", "o"), e("str", opts.key)))
+    ]),
+    deps: {
+      o: {
+        loc: opts.loc,
+        path: opts.main_path
+      }
+    },
+  };
+};
+
 var asyncEach = function(obj, iter, callback){
   if(_.isEmpty(obj)){
     return callback();
@@ -160,7 +174,12 @@ module.exports = function(conf, callback){
 
   var loadPath = function(path, callback){
     if(/^stdlib\:\/\//.test(path)){
-      callback(undefined, path.replace(/^stdlib\:\/\//, ""));
+      var sym = path.replace(/^stdlib\:\/\//, "");
+      callback(undefined, {
+        //TODO loc:
+        key: sym,
+        main_path: stdlibLoader(sym)
+      });
       return;
     }
     conf.loadPath(path, callback);
@@ -176,18 +195,8 @@ module.exports = function(conf, callback){
       if(err)return callback(err);
 
       try{
-        if(/^stdlib\:\/\//.test(path)){
-          modules[path] = {
-            est: e("fn", ["o"], [
-              e("return", e("get", e("id", "o"), e("str", src)))
-            ]),
-            deps: {
-              o: {
-                //TODO loc: {},
-                path: stdlibLoader(src)
-              }
-            },
-          };
+        if(_.has(src, "key")){
+          modules[path] = loadKeyFromModule(src);
         }else if(/\.js$/.test(path)){
           modules[path] = loadJSModule(src);
         }else{
