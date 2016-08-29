@@ -62,13 +62,13 @@ var normalizePath = function(base, path){
   return path;
 };
 
-var loadJSModule = function(src){
+var loadJSModule = function(src, loc){
   return {
     est: e("fn", [], [
-      e("var", "module", e("object", {exports: e("object", {})}))
+      e("var", "module", e("object", {exports: e("object", {}, loc)}, loc), loc)
     ].concat(esprima.parse(src).body).concat([
-      e("return", e("id", "module.exports"))
-    ])),
+      e("return", e("id", "module.exports", loc), loc)
+    ]), loc),
     deps: {},
   };
 };
@@ -131,14 +131,19 @@ var loadEcmaLessModule = function(src, path, global_symbols){
   };
 };
 
-var loadKeyFromModule = function(opts){
+var loadKeyFromModule = function(opts, loc){
   return {
     est: e("fn", ["o"], [
-      e("return", e("get", e("id", "o"), e("str", opts.key)))
-    ]),
+      e("return",
+        e("get",
+          e("id", "o", loc),
+          e("str", opts.key, loc),
+          loc
+        ),
+        loc)], loc),
     deps: {
       o: {
-        loc: opts.loc,
+        loc: loc,
         path: opts.main_path
       }
     },
@@ -196,9 +201,9 @@ module.exports = function(conf, callback){
 
       try{
         if(_.has(src, "key")){
-          modules[path] = loadKeyFromModule(_.assign({loc: to_load.loc}, src));
+          modules[path] = loadKeyFromModule(src, to_load.loc);
         }else if(/\.js$/.test(path)){
-          modules[path] = loadJSModule(src);
+          modules[path] = loadJSModule(src, to_load.loc);
         }else{
           modules[path] = loadEcmaLessModule(src, path, global_symbols);
         }
@@ -232,7 +237,7 @@ module.exports = function(conf, callback){
         return toReqPath(dep.path, dep.loc);
       })), m.est.loc));
     });
-    var est = e("call", req_est, [e("array", mods), toReqPath(start_path)]);
+    var est = e("call", req_est, [e("array", mods, req_est.loc), toReqPath(start_path, req_est.loc)], req_est.loc);
     callback(void 0, toJSProgram(est, conf));
   });
 };
