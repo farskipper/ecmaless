@@ -109,7 +109,7 @@ test("scope", function(t){
 
   t.deepEquals({
     a: {
-      loc: {end: {column: 1, line: 1}, source: 'a', start: {column: 0, line: 1}}
+      loc: {end: {column: 1, line: 1}, source: undefined, start: {column: 0, line: 1}}
     }
   }, compiler(parser("a\na\na")).undefined_symbols);
 

@@ -23,13 +23,13 @@
   },
   "homepage": "https://github.com/farskipper/ecmaless-compiler#readme",
   "devDependencies": {
-    "ecmaless-parser": "^0.5.0",
+    "ecmaless-parser": "^0.6.0",
     "escodegen": "^1.8.0",
     "onchange": "^2.5.0",
     "tape": "^4.6.0"
   },
   "dependencies": {
-    "estree-builder": "^1.4.1",
+    "estree-builder": "^1.5.0",
     "lodash": "^4.13.1",
     "symbol-table": "^1.1.0",
     "to-js-identifier": "^1.0.0"
