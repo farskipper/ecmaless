@@ -1,5 +1,6 @@
 var λ = require("contra");
 var _ = require("lodash");
+var fs = require("fs");
 var test = require("tape");
 var main = require("./");
 
@@ -7,6 +8,8 @@ var StructLoader = function(files){
   return function(path, callback){
     if(_.has(files, path)){
       callback(undefined, files[path]);
+    }else if(/\/ecmaless-stdlib\/src\/core.js$/.test(path)){
+      fs.readFile(path, "utf-8", callback);
     }else{
       callback(new Error("Unknown path: " + path));
     }

@@ -1,7 +1,7 @@
 var _ = require("lodash");
 var e = require("estree-builder");
 var parser = require("ecmaless-parser");
-var stdlib = require("ecmaless-stdlib");
+var stdlibLoader = require("ecmaless-stdlib/loader");
 var esprima = require("esprima");
 var compiler = require("ecmaless-compiler");
 var path_fns = require("path");
@@ -106,7 +106,8 @@ var loadEcmaLessModule = function(src, path, global_symbols){
   var c = compiler(mast);
 
   _.each(c.undefined_symbols, function(info, sym){
-    if(_.has(stdlib, sym)){
+    var ld = stdlibLoader(sym);
+    if(ld){
       c.estree[0].params.push(compiler([
         {
           loc: info.loc,
@@ -159,27 +160,37 @@ module.exports = function(conf, callback){
   var start_path = normalizePath(base, conf.start_path);
   var global_symbols = conf.global_symbols || {};
 
+  var loadPath = function(path, callback){
+    if(/^stdlib\:\/\//.test(path)){
+      callback(undefined, path.replace(/^stdlib\:\/\//, ""));
+      return;
+    }
+    conf.loadPath(path, callback);
+  };
+
   var modules = {};
 
   var load = function load(path, callback){
     if(_.has(modules, path)){
       return callback();
     }
-    if(/^stdlib\:\/\//.test(path)){
-      //TODO actually embed the code, rather than falling back on require?
-      modules[path] = {
-        est: e("fn", [], [
-          e("return", e("get", e("id", "$$$ecmaless$$$"), e("str", path.replace(/^stdlib\:\/\//, ""))))
-        ]),
-        deps: {},
-      };
-      return callback();
-    }
-    conf.loadPath(path, function(err, src){
+    loadPath(path, function(err, src){
       if(err)return callback(err);
 
       try{
-        if(/\.js$/.test(path)){
+        if(/^stdlib\:\/\//.test(path)){
+          modules[path] = {
+            est: e("fn", ["o"], [
+              e("return", e("get", e("id", "o"), e("str", src)))
+            ]),
+            deps: {
+              o: {
+                //TODO loc: {},
+                path: stdlibLoader(src)
+              }
+            },
+          };
+        }else if(/\.js$/.test(path)){
           modules[path] = loadJSModule(src);
         }else{
           modules[path] = loadEcmaLessModule(src, path, global_symbols);
