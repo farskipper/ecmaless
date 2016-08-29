@@ -132,6 +132,28 @@ var loadEcmaLessModule = function(src, path, global_symbols){
   };
 };
 
+var asyncEach = function(obj, iter, callback){
+  if(_.isEmpty(obj)){
+    return callback();
+  }
+  var done = (function(){
+    var has_errored = false;
+    var after = _.after(_.size(obj), callback);
+    return function(err){
+      if(has_errored) return;
+      if(err){
+        has_errored = true;
+        callback(err);
+        return;
+      }
+      after();
+    };
+  }());
+  _.each(obj, function(v){
+    iter(v, done);
+  });
+};
+
 module.exports = function(conf, callback){
   var base = conf.base || process.cwd();
   var start_path = normalizePath(base, conf.start_path);
@@ -166,27 +188,9 @@ module.exports = function(conf, callback){
         callback(err);
         return;
       }
-
-      var deps = modules[path].deps;
-
-      if(_.isEmpty(deps)){
-        return callback();
-      }
-      var done = (function(){
-        var error;
-        var after = _.after(_.size(deps), function(){
-          callback(error);
-        });
-        return function(err){
-          if(!error && err){
-            error = err;
-          }
-          after();
-        };
-      }());
-      _.each(deps, function(dep){
+      asyncEach(modules[path].deps, function(dep, done){
         load(dep.path, done);
-      });
+      }, callback);
     });
   };
 
