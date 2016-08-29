@@ -176,7 +176,6 @@ module.exports = function(conf, callback){
     if(/^stdlib\:\/\//.test(path)){
       var sym = path.replace(/^stdlib\:\/\//, "");
       callback(undefined, {
-        //TODO loc:
         key: sym,
         main_path: stdlibLoader(sym)
       });
@@ -187,7 +186,8 @@ module.exports = function(conf, callback){
 
   var modules = {};
 
-  var load = function load(path, callback){
+  var load = function load(to_load, callback){
+    var path = to_load.path;
     if(_.has(modules, path)){
       return callback();
     }
@@ -196,7 +196,7 @@ module.exports = function(conf, callback){
 
       try{
         if(_.has(src, "key")){
-          modules[path] = loadKeyFromModule(src);
+          modules[path] = loadKeyFromModule(_.assign({loc: to_load.loc}, src));
         }else if(/\.js$/.test(path)){
           modules[path] = loadJSModule(src);
         }else{
@@ -207,12 +207,12 @@ module.exports = function(conf, callback){
         return;
       }
       asyncEach(modules[path].deps, function(dep, done){
-        load(dep.path, done);
+        load(dep, done);
       }, callback);
     });
   };
 
-  load(start_path, function(err){
+  load({path: start_path}, function(err){
     if(err)return callback(err);
 
     var path_to_i = {};
