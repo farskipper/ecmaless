@@ -40,7 +40,7 @@ var wrapTruthyTest = function(test, ctx){
   if(test && test.type === "BinaryExpression" && test.operator === "==="){
     return test;
   }
-  return e("call", e("id", ctx.useSystemIdentifier("truthy", loc), loc), [test], loc);
+  return e("call", ctx.useSystemIdentifier("truthy", loc, true), [test], loc);
 };
 
 var comp_by_type = {
@@ -143,13 +143,13 @@ var comp_by_type = {
   "Application": function(ast, comp){
     return e("call", comp(ast.callee), comp(ast.args), ast.loc);
   },
-  "UnaryOperator": function(ast, comp){
+  "UnaryOperator": function(ast, comp, ctx){
     if(ast.op === "-" || ast.op === "+"){
       return e(ast.op, comp(ast.arg), ast.loc);
     }
-    return e("call", e("id", toId(ast.op), ast.loc), [comp(ast.arg)], ast.loc);
+    return e("call", ctx.useSystemIdentifier(ast.op, ast.loc, true), [comp(ast.arg)], ast.loc);
   },
-  "InfixOperator": function(ast, comp){
+  "InfixOperator": function(ast, comp, ctx){
     if(nativejs_infix_ops.hasOwnProperty(ast.op)){
       return e(ast.op, comp(ast.left), comp(ast.right), ast.log);
     }
@@ -159,7 +159,7 @@ var comp_by_type = {
     if(ast.op === "!="){
       return e("!==", comp(ast.left), comp(ast.right), ast.log);
     }
-    return e("call", e("id", toId(ast.op), ast.loc), [
+    return e("call", ctx.useSystemIdentifier(ast.op, ast.loc, true), [
       comp(ast.left),
       comp(ast.right)
     ], ast.loc);
@@ -186,7 +186,7 @@ var comp_by_type = {
     }else{
       throw new Error("Unsupported MemberExpression method: " + ast.method);
     }
-    return e("call", e("id", ctx.useSystemIdentifier("get", ast.loc), ast.loc), [
+    return e("call", ctx.useSystemIdentifier("get", ast.loc, true), [
       comp(ast.object),
       path
     ], ast.loc);
@@ -312,10 +312,12 @@ module.exports = function(ast){
         return symt_stack[0].get(id);
       }
     },
-    useSystemIdentifier: function(id, loc){
+    useSystemIdentifier: function(id, loc, ret_estree){
       var js_id = "$$$ecmaless$$$" + toId(id);
       ctx.useIdentifier("$$$ecmaless$$$" + id, loc, js_id);
-      return js_id;
+      return ret_estree
+        ? e("id", js_id, loc)
+        : js_id;
     }
   };
 

@@ -107,6 +107,12 @@ test("scope", function(t){
   ts("if 1:\n    def a\n    a\na", ["$$$ecmaless$$$truthy", "a"]);
   ts("cond:\n    1:\n        def a\n        a\n    2:\n        a", ["$$$ecmaless$$$truthy", "a"]);
 
+  ts("a[1] = 2", ["$$$ecmaless$$$get", "a", "$$$ecmaless$$$set"]);
+
+  ts("1 || 2", ["$$$ecmaless$$$||"]);
+  ts("!a", ["$$$ecmaless$$$!", "a"]);
+  ts("a + b", ["a", "b"]);
+
   t.deepEquals({
     a: {
       id: "a",
