@@ -2,17 +2,24 @@
 
 var fs = require("fs");
 var main = require("../");
+var path = require("path");
 
 main({
-  start_path: process.argv[2],
+  start_path: path.resolve(process.cwd(), process.argv[2]),
   loadPath: function(path, callback){
     fs.readFile(path, "utf-8", callback);
   },
   global_symbols: {
     "require": true,
     "console": true
+  },
+  escodegen: {
+    sourceMap: true,
+    sourceMapRoot: process.cwd(),
+    sourceMapWithCode: true
   }
-}, function(err, js){
+}, function(err, c){
   if(err) throw err;
-  console.log(js);
+  console.log(c.code);
+  console.log(JSON.parse(c.map.toString()));
 });
