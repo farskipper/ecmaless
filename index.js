@@ -77,9 +77,7 @@ module.exports = function(conf, callback){
       //TODO actually embed the code, rather than falling back on require?
       modules[path] = {
         est: e("fn", [], [
-          e("return", e("get", e("call", e("id", "require"), [
-            e("str", "ecmaless-stdlib")
-          ]), e("str", path.replace(/^stdlib\:\/\//, ""))))
+          e("return", e("get", e("id", "$$$ecmaless$$$"), e("str", path.replace(/^stdlib\:\/\//, ""))))
         ]),
         deps: {},
       };
