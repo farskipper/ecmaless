@@ -35,12 +35,12 @@ var nativejs_infix_ops = {
   "%": true,
 };
 
-var wrapTruthyTest = function(test){
+var wrapTruthyTest = function(test, ctx){
   var loc = test.loc;
   if(test && test.type === "BinaryExpression" && test.operator === "==="){
     return test;
   }
-  return e("call", e("id", "$$$ecmaless$$$truthy", loc), [test], loc);
+  return e("call", e("id", ctx.useSystemIdentifier("truthy", loc), loc), [test], loc);
 };
 
 var comp_by_type = {
@@ -164,18 +164,18 @@ var comp_by_type = {
       comp(ast.right)
     ], ast.loc);
   },
-  "AssignmentExpression": function(ast, comp){
+  "AssignmentExpression": function(ast, comp, ctx){
     if(ast.left.type === "Identifier"){
       return e("=", comp(ast.left), comp(ast.right), ast.loc);
     }else if(ast.left.type === "MemberExpression"){
       var left = comp(ast.left);
-      left.callee.name = "$$$ecmaless$$$set";
+      left.callee.name = ctx.useSystemIdentifier("set", ast.loc);
       left["arguments"].push(comp(ast.right));
       return left;
     }
     throw new Error("Only Identifier or MemberExpression can be assigned");
   },
-  "MemberExpression": function(ast, comp){
+  "MemberExpression": function(ast, comp, ctx){
     var path;
     if(ast.method === "dot"){
       if(ast.path && ast.path.type === "Identifier"){
@@ -186,14 +186,14 @@ var comp_by_type = {
     }else{
       throw new Error("Unsupported MemberExpression method: " + ast.method);
     }
-    return e("call", e("id", "$$$ecmaless$$$get", ast.loc), [
+    return e("call", e("id", ctx.useSystemIdentifier("get", ast.loc), ast.loc), [
       comp(ast.object),
       path
     ], ast.loc);
   },
-  "ConditionalExpression": function(ast, comp){
+  "ConditionalExpression": function(ast, comp, ctx){
     return e("?",
-      wrapTruthyTest(comp(ast.test)),
+      wrapTruthyTest(comp(ast.test), ctx),
       comp(ast.consequent),
       comp(ast.alternate),
       ast.loc
@@ -211,13 +211,13 @@ var comp_by_type = {
   "Return": function(ast, comp){
     return e("return", comp(ast.expression), ast.loc);
   },
-  "If": function(ast, comp){
+  "If": function(ast, comp, ctx){
     var test = comp(ast.test);
     var then = comp(ast.then);
     var els_ = ast["else"] ? comp(ast["else"]) : void 0;
-    return e("if", wrapTruthyTest(test), then, els_, ast.loc)
+    return e("if", wrapTruthyTest(test, ctx), then, els_, ast.loc)
   },
-  "Cond": function(ast, comp){
+  "Cond": function(ast, comp, ctx){
     var prev = ast["else"]
       ? comp(ast["else"])
       : undefined;
@@ -225,7 +225,7 @@ var comp_by_type = {
     while(i >= 0){
       var block = ast.blocks[i];
       prev = e("if",
-        wrapTruthyTest(comp(block.test)),
+        wrapTruthyTest(comp(block.test), ctx),
         comp(block.block),
         prev,
         block.loc
@@ -254,8 +254,8 @@ var comp_by_type = {
     }
     return prev;
   },
-  "While": function(ast, comp){
-    return e("while", wrapTruthyTest(comp(ast.test)), comp(ast.block), ast.loc);
+  "While": function(ast, comp, ctx){
+    return e("while", wrapTruthyTest(comp(ast.test), ctx), comp(ast.block), ast.loc);
   },
   "Break": function(ast, comp){
     return e("break", ast.loc);
@@ -299,14 +299,23 @@ module.exports = function(ast){
     defIdentifier: function(id){
       symt_stack[0].set(id, {id: id});
     },
-    useIdentifier: function(id, loc){
+    useIdentifier: function(id, loc, js_id){
       if(!symt_stack[0].has(id)){
         if(!_.has(undefined_symbols, id)){
-          undefined_symbols[id] = {loc: loc};
+          undefined_symbols[id] = {
+            loc: loc,
+            id: id,
+            js_id: js_id || toId(id),
+          };
         }
       }else{
         return symt_stack[0].get(id);
       }
+    },
+    useSystemIdentifier: function(id, loc){
+      var js_id = "$$$ecmaless$$$" + toId(id);
+      ctx.useIdentifier("$$$ecmaless$$$" + id, loc, js_id);
+      return js_id;
     }
   };
 

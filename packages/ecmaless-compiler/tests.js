@@ -104,11 +104,13 @@ test("scope", function(t){
   ts("fn args:\n    args", []);
   ts("fn a:\n    a\na", ["a"]);
 
-  ts("if 1:\n    def a\n    a\na", ["a"]);
-  ts("cond:\n    1:\n        def a\n        a\n    2:\n        a", ["a"]);
+  ts("if 1:\n    def a\n    a\na", ["$$$ecmaless$$$truthy", "a"]);
+  ts("cond:\n    1:\n        def a\n        a\n    2:\n        a", ["$$$ecmaless$$$truthy", "a"]);
 
   t.deepEquals({
     a: {
+      id: "a",
+      js_id: "a",
       loc: {end: {column: 1, line: 1}, source: undefined, start: {column: 0, line: 1}}
     }
   }, compiler(parser("a\na\na")).undefined_symbols);
