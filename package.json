@@ -32,7 +32,7 @@
   "dependencies": {
     "ecmaless-compiler": "^0.4.0",
     "ecmaless-parser": "^0.6.0",
-    "ecmaless-stdlib": "^0.2.0",
+    "ecmaless-stdlib": "^0.3.0",
     "escodegen": "^1.8.0",
     "esprima": "^2.7.3",
     "estree-builder": "^1.5.0",

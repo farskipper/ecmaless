@@ -62,6 +62,76 @@ var normalizePath = function(base, path){
   return path;
 };
 
+var loadJSModule = function(src){
+  return {
+    est: e("fn", [], [
+      e("var", "module", e("object", {exports: e("object", {})}))
+    ].concat(esprima.parse(src).body).concat([
+      e("return", e("id", "module.exports"))
+    ])),
+    deps: {},
+  };
+};
+
+var loadEcmaLessModule = function(src, path, global_symbols){
+  var ast = parser(src, {filepath: path});
+  var mloc = getMainLoc(ast);
+  var mast = [
+    {
+      loc: mloc,
+      type: "Function",
+      params: [],
+      block: {
+        loc: mloc,
+        type: "Block",
+        body: []
+      }
+    }
+  ];
+  var deps = {};
+  if(ast[0] && ast[0].type === "Dependencies"){
+    var dir = path_fns.dirname(path);
+    _.each(ast[0].dependencies, function(d){
+      deps[d.id.value] = {
+        loc: d.path.loc,
+        path: normalizePath(dir, d.path.value)
+      };
+      mast[0].params.push(d.id)
+    });
+    mast[0].block.body = ast.slice(1);
+  }else{
+    mast[0].block.body = ast;
+  }
+
+  var c = compiler(mast);
+
+  _.each(c.undefined_symbols, function(info, sym){
+    if(_.has(stdlib, sym)){
+      c.estree[0].params.push(compiler([
+        {
+          loc: info.loc,
+          type: "Identifier",
+          value: sym
+        }
+      ]).estree[0]);
+      deps[sym] = {
+        loc: info.loc,
+        path: "stdlib://" + sym
+      };
+    }else{
+      if(_.has(global_symbols, sym)){
+        return;
+      }
+      throw new Error("Undefined symbol: " + sym);
+    }
+  });
+
+  return {
+    est: c.estree[0],
+    deps: deps,
+  };
+};
+
 module.exports = function(conf, callback){
   var base = conf.base || process.cwd();
   var start_path = normalizePath(base, conf.start_path);
@@ -86,79 +156,18 @@ module.exports = function(conf, callback){
     conf.loadPath(path, function(err, src){
       if(err)return callback(err);
 
-      if(/\.js$/.test(path)){
-        modules[path] = {
-          est: e("fn", [], [
-            e("var", "module", e("object", {exports: e("object", {})}))
-          ].concat(esprima.parse(src).body).concat([
-            e("return", e("id", "module.exports"))
-          ])),
-          deps: {},
-        };
-        return callback();
-      }
-
-      var ast = parser(src, {filepath: path});
-      var mloc = getMainLoc(ast);
-      var mast = [
-        {
-          loc: mloc,
-          type: "Function",
-          params: [],
-          block: {
-            loc: mloc,
-            type: "Block",
-            body: []
-          }
-        }
-      ];
-      var deps = {};
-      if(ast[0] && ast[0].type === "Dependencies"){
-        var dir = path_fns.dirname(path);
-        _.each(ast[0].dependencies, function(d){
-          deps[d.id.value] = {
-            loc: d.path.loc,
-            path: normalizePath(dir, d.path.value)
-          };
-          mast[0].params.push(d.id)
-        });
-        mast[0].block.body = ast.slice(1);
-      }else{
-        mast[0].block.body = ast;
-      }
-
-      var c = compiler(mast);
-
       try{
-        _.each(c.undefined_symbols, function(info, sym){
-          if(_.has(stdlib, sym)){
-            c.estree[0].params.push(compiler([
-              {
-                loc: info.loc,
-                type: "Identifier",
-                value: sym
-              }
-            ]).estree[0]);
-            deps[sym] = {
-              loc: info.loc,
-              path: "stdlib://" + sym
-            };
-          }else{
-            if(_.has(global_symbols, sym)){
-              return;
-            }
-            throw new Error("Undefined symbol: " + sym);
-          }
-        });
+        if(/\.js$/.test(path)){
+          modules[path] = loadJSModule(src);
+        }else{
+          modules[path] = loadEcmaLessModule(src, path, global_symbols);
+        }
       }catch(err){
         callback(err);
         return;
       }
 
-      modules[path] = {
-        est: c.estree[0],
-        deps: deps,
-      };
+      var deps = modules[path].deps;
 
       if(_.isEmpty(deps)){
         return callback();
