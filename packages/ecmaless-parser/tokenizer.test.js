@@ -8,14 +8,14 @@ test("tokenizer", function(t){
     {
       type: "NUMBER",
       src: "123",
-      loc: {source: "123", start: {line: 1, column: 0}, end: {line: 1, column: 3}}
+      loc: {source: undefined, start: {line: 1, column: 0}, end: {line: 1, column: 3}}
     }
   ]);
-  t.deepEquals(tokenizer("123.45"), [
+  t.deepEquals(tokenizer("123.45", {filepath: "/some/file/path-ok?"}), [
     {
       type: "NUMBER",
       src: "123.45",
-      loc: {source: "123.45", start: {line: 1, column: 0}, end: {line: 1, column: 6}}
+      loc: {source: "/some/file/path-ok?", start: {line: 1, column: 0}, end: {line: 1, column: 6}}
     }
   ]);
 

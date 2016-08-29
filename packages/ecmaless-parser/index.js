@@ -30,7 +30,7 @@ module.exports = function(src, opts){
 
   var tokens;
   try{
-    tokens = tokenizer(src);
+    tokens = tokenizer(src, {filepath: opts.filename});
   }catch(e){
     if(e.tokenizer2){
       throw fmtErrorWithExcerpt(e, {

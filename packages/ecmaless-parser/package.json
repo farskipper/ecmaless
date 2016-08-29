@@ -30,7 +30,7 @@
     "tape": "^4.6.0"
   },
   "dependencies": {
-    "estree-loc": "^1.0.2",
+    "estree-loc": "^2.0.0",
     "excerpt-at-line-col": "^1.0.0",
     "nearley": "^2.6.0",
     "tokenizer2": "^2.0.0"

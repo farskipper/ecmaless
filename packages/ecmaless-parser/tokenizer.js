@@ -1,8 +1,9 @@
 var EStreeLoc = require("estree-loc");
 var tokenizer2 = require("tokenizer2/core");
 
-module.exports = function(src){
-  var toLoc = EStreeLoc(src);
+module.exports = function(src, opts){
+  opts = opts || {};
+  var toLoc = EStreeLoc(src, opts.filepath);
   var tokens = [];
   var indent_stack = [0];
   var index = 0;

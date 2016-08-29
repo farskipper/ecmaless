@@ -441,3 +441,16 @@ test("errors", function(t){
 
   t.end();
 });
+
+test("loc", function(t){
+  var src = "1";
+
+  var ast = parser(src, {filename: "/some/file/path-ok?"});
+  t.deepEquals(ast[0].loc, {
+    source: "/some/file/path-ok?",
+    start: {line: 1, column: 0},
+    end: {line: 1, column: 1}
+  });
+
+  t.end();
+});
