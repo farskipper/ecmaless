@@ -31,11 +31,11 @@
   "homepage": "https://github.com/farskipper/ecmaless#readme",
   "dependencies": {
     "ecmaless-compiler": "^0.3.0",
-    "ecmaless-parser": "^0.5.0",
+    "ecmaless-parser": "^0.6.0",
     "ecmaless-stdlib": "^0.2.0",
     "escodegen": "^1.8.0",
     "esprima": "^2.7.3",
-    "estree-builder": "^1.4.1",
+    "estree-builder": "^1.5.0",
     "lodash": "^4.13.1"
   },
   "devDependencies": {

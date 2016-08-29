@@ -100,7 +100,7 @@ module.exports = function(conf, callback){
         return callback();
       }
 
-      var ast = parser(src, {filename: path});
+      var ast = parser(src, {filepath: path});
       var mloc = getMainLoc(ast);
       var mast = [
         {
@@ -204,9 +204,10 @@ module.exports = function(conf, callback){
       })), m.est.loc));
     });
     var est = e("call", e("fn", [], [
-      e("var", "$$$ecmaless$$$get", e(".", e("call", e("id", "require"), [e("str", "ecmaless-stdlib")]), e("id", "get"))),
-      e("var", "$$$ecmaless$$$set", e(".", e("call", e("id", "require"), [e("str", "ecmaless-stdlib")]), e("id", "set"))),
-      e("var", "$$$ecmaless$$$truthy", e(".", e("call", e("id", "require"), [e("str", "ecmaless-stdlib")]), e("id", "truthy"))),
+      e("var", "$$$ecmaless$$$", e("call", e("id", "require"), [e("str", "ecmaless-stdlib")])),
+      e("var", "$$$ecmaless$$$get", e(".", e("id", "$$$ecmaless$$$"), e("id", "get"))),
+      e("var", "$$$ecmaless$$$set", e(".", e("id", "$$$ecmaless$$$"), e("id", "set"))),
+      e("var", "$$$ecmaless$$$truthy", e(".", e("id", "$$$ecmaless$$$"), e("id", "truthy"))),
       e("return", e("call", req_est, [
         e("array", mods),
         toReqPath(start_path)
