@@ -156,10 +156,22 @@ test("parser", function(t){
   tst("fn [a, b...]:\n    a", mk.fn([mk.id("a"), mk.ddd(mk.id("b"))], fn_body_a));
   tst("fn [a, b...]:\n    a", mk.fn([mk.id("a"), mk.ddd(mk.id("b"))], fn_body_a));
 
-  var map_fn_est = mk.app(mk.id("map"), [mk.id("as"), mk.fn([mk.id("a")], fn_body_a)]);
-  tst("map(as, fn[a]:a)", map_fn_est);
-  tst("map(\n    as,\n    fn[a]:a,\n)", map_fn_est);
-  tst("map(\n    as,\n    fn [ a ] : a ,\n)", map_fn_est);
+  tst("a(\n    fn[]:\n        b\n    ,\n)", mk.app(mk.id("a"), [
+    mk.fn([], [mk.stmt(mk.id("b"))])
+  ]));
+  tst("a(\n    1,\n    fn[]:\n        b\n    ,\n)", mk.app(mk.id("a"), [
+    mkv(1),
+    mk.fn([], [mk.stmt(mk.id("b"))])
+  ]));
+  tst("a(\n    fn[]:\n        b\n    ,\n    1,\n)", mk.app(mk.id("a"), [
+    mk.fn([], [mk.stmt(mk.id("b"))]),
+    mkv(1)
+  ]));
+  tst("a(\n    1,\n    fn[]:\n        b\n    ,\n    2,\n)", mk.app(mk.id("a"), [
+    mkv(1),
+    mk.fn([], [mk.stmt(mk.id("b"))]),
+    mkv(2)
+  ]));
 
   tst("add()", mk.app(mk.id("add"), []));
   tstFail("add(,)");

@@ -433,30 +433,17 @@ var grammar = {
         } },
     {"name": "Expression_list", "symbols": [], "postprocess": noopArr},
     {"name": "Expression_list", "symbols": ["Expression_list_body"], "postprocess": id},
-    {"name": "Expression_list", "symbols": ["NL", "INDENT", "Expression_list_body_nl", "COMMA", "NL", "DEDENT", "NL"], "postprocess": idN(2)},
+    {"name": "Expression_list", "symbols": ["NL", "INDENT", "Expression_list_body_nl", "_NL", "COMMA", "NL", "DEDENT", "NL"], "postprocess": idN(2)},
     {"name": "Expression_list_body", "symbols": ["Expression"], "postprocess": idArr},
     {"name": "Expression_list_body", "symbols": ["Expression_list_body", "COMMA", "Expression"], "postprocess": concatArr(2)},
     {"name": "Expression_list_body_nl", "symbols": ["Expression"], "postprocess": idArr},
-    {"name": "Expression_list_body_nl", "symbols": ["Expression_list_body_nl", "COMMA", "NL", "Expression"], "postprocess": concatArr(3)},
+    {"name": "Expression_list_body_nl", "symbols": ["Expression_list_body_nl", "_NL", "COMMA", "NL", "Expression"], "postprocess": concatArr(4)},
     {"name": "Function", "symbols": [tok_fn, "Params", "Block"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
             type: "Function",
             params: d[1],
             block: d[2]
-          };
-        } },
-    {"name": "Function", "symbols": [tok_fn, "Params", tok_COLON, "ExpressionStatement"], "postprocess":  function(d){
-          var loc = mkLoc(d);
-          return {
-            loc: loc,
-            type: "Function",
-            params: d[1],
-            block: {
-              loc: loc,
-              type: "Block",
-              body: [d[3]]
-            }
           };
         } },
     {"name": "Params", "symbols": ["Identifier"], "postprocess": id},

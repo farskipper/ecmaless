@@ -462,7 +462,7 @@ Array -> %tok_OPEN_SQ Expression_list %tok_CLOSE_SQ {% function(d){
 
 Expression_list -> null {% noopArr %}
     | Expression_list_body {% id %}
-    | NL INDENT Expression_list_body_nl COMMA NL DEDENT NL {% idN(2) %}
+    | NL INDENT Expression_list_body_nl _NL COMMA NL DEDENT NL {% idN(2) %}
 
 Expression_list_body ->
       Expression {% idArr %}
@@ -470,7 +470,7 @@ Expression_list_body ->
 
 Expression_list_body_nl ->
       Expression {% idArr %}
-    | Expression_list_body_nl COMMA NL Expression {% concatArr(3) %}
+    | Expression_list_body_nl _NL COMMA NL Expression {% concatArr(4) %}
 
 
 Function -> %tok_fn Params Block {% function(d){
@@ -479,19 +479,6 @@ Function -> %tok_fn Params Block {% function(d){
     type: "Function",
     params: d[1],
     block: d[2]
-  };
-} %}
-    | %tok_fn Params %tok_COLON ExpressionStatement {% function(d){
-  var loc = mkLoc(d);
-  return {
-    loc: loc,
-    type: "Function",
-    params: d[1],
-    block: {
-      loc: loc,
-      type: "Block",
-      body: [d[3]]
-    }
   };
 } %}
 
