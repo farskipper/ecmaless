@@ -30,6 +30,7 @@
   },
   "homepage": "https://github.com/farskipper/ecmaless#readme",
   "dependencies": {
+    "btoa": "^1.1.2",
     "ecmaless-compiler": "^0.4.0",
     "ecmaless-parser": "^0.6.0",
     "ecmaless-stdlib": "^0.3.0",
