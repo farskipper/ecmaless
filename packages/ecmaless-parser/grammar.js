@@ -446,6 +446,19 @@ var grammar = {
             block: d[2]
           };
         } },
+    {"name": "Function", "symbols": [tok_fn, "Params", tok_COLON, "ExpressionStatement"], "postprocess":  function(d){
+          var loc = mkLoc(d);
+          return {
+            loc: loc,
+            type: "Function",
+            params: d[1],
+            block: {
+              loc: loc,
+              type: "Block",
+              body: [d[3]]
+            }
+          };
+        } },
     {"name": "Params", "symbols": ["Identifier"], "postprocess": id},
     {"name": "Params", "symbols": [tok_OPEN_SQ, tok_CLOSE_SQ], "postprocess": noopArr},
     {"name": "Params$ebnf$1", "symbols": ["COMMA"], "postprocess": id},

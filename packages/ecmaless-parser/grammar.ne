@@ -481,6 +481,19 @@ Function -> %tok_fn Params Block {% function(d){
     block: d[2]
   };
 } %}
+    | %tok_fn Params %tok_COLON ExpressionStatement {% function(d){
+  var loc = mkLoc(d);
+  return {
+    loc: loc,
+    type: "Function",
+    params: d[1],
+    block: {
+      loc: loc,
+      type: "Block",
+      body: [d[3]]
+    }
+  };
+} %}
 
 Params -> Identifier {% id %}
     | %tok_OPEN_SQ %tok_CLOSE_SQ {% noopArr %}

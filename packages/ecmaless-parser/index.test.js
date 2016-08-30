@@ -156,6 +156,11 @@ test("parser", function(t){
   tst("fn [a, b...]:\n    a", mk.fn([mk.id("a"), mk.ddd(mk.id("b"))], fn_body_a));
   tst("fn [a, b...]:\n    a", mk.fn([mk.id("a"), mk.ddd(mk.id("b"))], fn_body_a));
 
+  var map_fn_est = mk.app(mk.id("map"), [mk.id("as"), mk.fn([mk.id("a")], fn_body_a)]);
+  tst("map(as, fn[a]:a)", map_fn_est);
+  tst("map(\n    as,\n    fn[a]:a,\n)", map_fn_est);
+  tst("map(\n    as,\n    fn [ a ] : a ,\n)", map_fn_est);
+
   tst("add()", mk.app(mk.id("add"), []));
   tstFail("add(,)");
   tst("add(1, 2)", mk.app(mk.id("add"), [mkv(1), mkv(2)]));
