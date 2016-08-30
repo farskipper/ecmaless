@@ -28,23 +28,25 @@ test("compile", function(t){
   tc("[1, 2]", "[1,2];");
   tc("{a: 1, b: 2}", "({'a':1,'b':2});");
 
-  tc("fn args:\n    nil", "(function(){var args=arguments.slice(0);return void 0;});");
+  var a_slice = "Array.prototype.slice.call(arguments,";
+
+  tc("fn args:\n    nil", "(function(){var args="+a_slice+"0);return void 0;});");
   tc("fn [a, b]:\n    nil", "(function(a,b){return void 0;});");
   tc(
     "fn [a, b...]:\n    nil",
-    "(function(a){var b=arguments.slice(1);return void 0;});"
+    "(function(a){var b="+a_slice+"1);return void 0;});"
   );
   tc(
     "fn [a, b..., c]:\n    nil",
-    "(function(a){var b=arguments.slice(1,-1);var c=arguments[arguments.length-1];return void 0;});"
+    "(function(a){var b="+a_slice+"1,-1);var c=arguments[arguments.length-1];return void 0;});"
   );
   tc(
     "fn [a..., b, c]:\n    nil",
-    "(function(){var a=arguments.slice(0,-2);var b=arguments[arguments.length-2];var c=arguments[arguments.length-1];return void 0;});"
+    "(function(){var a="+a_slice+"0,-2);var b=arguments[arguments.length-2];var c=arguments[arguments.length-1];return void 0;});"
   );
   tc(
     "fn [a...]:\n    nil",
-    "(function(){var a=arguments.slice(0);return void 0;});"
+    "(function(){var a="+a_slice+"0);return void 0;});"
   );
   tc("return false", "return false;");
   tc("add()", "add();");

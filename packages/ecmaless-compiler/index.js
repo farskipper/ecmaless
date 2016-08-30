@@ -4,7 +4,9 @@ var toId = require("to-js-identifier");
 var SymbolTable = require("symbol-table");
 
 var sliceArgs = function(loc, start, end){
-  var args = [e("number", start, loc)];
+  var args = [];
+  args.push(e("id", "arguments", loc));
+  args.push(e("number", start, loc));
   if(_.isNumber(end)){
     if(end < 0){
       args.push(e("-", e("number", -end, loc)));
@@ -12,15 +14,7 @@ var sliceArgs = function(loc, start, end){
       args.push(e("number", end, loc));
     }
   }
-  return e("call",
-    e(".",
-      e("id", "arguments", loc),
-      e("id", "slice", loc),
-      loc
-    ),
-    args,
-    loc
-  );
+  return e("call", e("id", "Array.prototype.slice.call", loc), args, loc);
 };
 
 var nativejs_infix_ops = {
