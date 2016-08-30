@@ -27,7 +27,15 @@ test("tokenizer", function(t){
   testOrder("10 0.1 1.0", ["NUMBER", "NUMBER", "NUMBER"]);
 
   testOrder("({[]})", ["(", "{", "[", "]", "}", ")"]);
-  testOrder("deps:\n    1", ["SYMBOL", ":", "NEWLINE", "INDENT", "NUMBER", "DEDENT", "NEWLINE"]);
+  testOrder("deps:\n    1", [
+    "SYMBOL",
+    ":",
+    "NEWLINE",
+    "INDENT",
+    "NUMBER",
+    "DEDENT",
+    "NEWLINE",
+  ]);
   testOrder("deps:\n        1", [
     "SYMBOL",
     ":",
@@ -109,6 +117,17 @@ test("tokenizer", function(t){
     "DEDENT",
     "NEWLINE",
     "]"
+  ]);
+
+  testOrder("1\n;some comment", [
+    "NUMBER",
+    "NEWLINE",
+  ]);
+
+  testOrder("1\n;some comment\n2", [
+    "NUMBER",
+    "NEWLINE",
+    "NUMBER",
   ]);
 
   t.end();

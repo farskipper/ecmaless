@@ -174,6 +174,8 @@ test("parser", function(t){
   ]));
 
   tst("add()", mk.app(mk.id("add"), []));
+  tst("add();test", mk.app(mk.id("add"), []));
+  tst("add()\n;test", mk.app(mk.id("add"), []));
   tstFail("add(,)");
   tst("add(1, 2)", mk.app(mk.id("add"), [mkv(1), mkv(2)]));
   tstFail("add(1, 2,)");

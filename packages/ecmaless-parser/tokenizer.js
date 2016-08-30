@@ -61,7 +61,9 @@ module.exports = function(src, opts){
     }else{
       pushTok(tok.type, tok.src);
     }
-    prev = tok;
+    if(tok.type !== "COMMENT"){
+      prev = tok;
+    }
     index += tok.src.length;
   });
 
