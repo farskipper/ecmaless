@@ -134,3 +134,20 @@ test("boolean ops", function(t){
   t.equals(lib["!"](NaN), true);
   t.end();
 });
+
+test("mutation", function(t){
+
+  var a = {};
+  t.deepEquals(lib.set(a, "one", 2), 2);
+  t.deepEquals(a, {one: 2});
+
+  lib.set(a, "two", {three: 4});
+  lib.set(a.two, "five", 6);
+  t.deepEquals(a, {one: 2, two: {three: 4, five: 6}});
+
+  var b = [1];
+  t.deepEquals(lib.push(b, 2), 2);
+  t.deepEquals(b, [1, 2]);
+
+  t.end();
+});

@@ -119,4 +119,17 @@ stdlib["!"] = function(a){
   return !stdlib.truthy(a);
 };
 
+stdlib.set = function(o, key, value){
+  o[key] = value;
+  return value;
+};
+
+stdlib.push = function(o, value){
+  if(!stdlib.isArray(o)){
+    throw new Error("push only works on Arrays");
+  }
+  o.push(value);
+  return value;
+};
+
 module.exports = stdlib;
