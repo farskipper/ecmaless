@@ -115,9 +115,11 @@ var loadEcmaLessModule = function(src, path, global_symbols){
       c.estree[0].params.push(e("id", info.js_id, info.loc));
       deps[sym] = {
         loc: info.loc,
-        path: ld.file,
-        key: ld.key
+        path: ld.file
       };
+      if(ld.key){
+        deps[sym].key = ld.key;
+      }
     }else{
       if(_.has(global_symbols, sym)){
         return;
