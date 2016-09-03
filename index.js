@@ -115,10 +115,8 @@ var loadEcmaLessModule = function(src, path, global_symbols){
       c.estree[0].params.push(e("id", info.js_id, info.loc));
       deps[sym] = {
         loc: info.loc,
-        path: "stdlib://" +stdlib_sym,
-        key: ld.key,
-        main_path: ld.file
-        //path: normalizePath(dir, d.path.value)
+        path: ld.file,
+        key: ld.key
       };
     }else{
       if(_.has(global_symbols, sym)){
@@ -134,7 +132,8 @@ var loadEcmaLessModule = function(src, path, global_symbols){
   };
 };
 
-var loadKeyFromModule = function(opts, loc){
+var loadKeyFromModule = function(opts){
+  var loc = opts.loc;
   return {
     est: e("fn", ["o"], [
       e("return",
@@ -147,7 +146,7 @@ var loadKeyFromModule = function(opts, loc){
     deps: {
       o: {
         loc: loc,
-        path: opts.main_path
+        path: opts.path
       }
     },
   };
@@ -182,10 +181,7 @@ module.exports = function(conf, callback){
 
   var loadPath = function(obj, callback){
     if(_.has(obj, "key")){
-      callback(undefined, {
-        key: obj.key,
-        main_path: obj.main_path
-      });
+      callback(void 0, void 0, true);
       return;
     }
     conf.loadPath(obj.path, callback);
@@ -201,12 +197,12 @@ module.exports = function(conf, callback){
     if(_.has(modules, mod_key)){
       return callback();
     }
-    loadPath(to_load, function(err, src){
+    loadPath(to_load, function(err, src, is_key_mod){
       if(err)return callback(err);
 
       try{
-        if(_.has(src, "key")){
-          modules[mod_key] = loadKeyFromModule(src, to_load.loc);
+        if(is_key_mod){
+          modules[mod_key] = loadKeyFromModule(to_load);
         }else if(/\.js$/.test(to_load.path)){
           modules[mod_key] = loadJSModule(src, to_load.loc);
         }else{
