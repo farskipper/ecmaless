@@ -115,7 +115,10 @@ var loadEcmaLessModule = function(src, path, global_symbols){
       c.estree[0].params.push(e("id", info.js_id, info.loc));
       deps[sym] = {
         loc: info.loc,
-        path: "stdlib://" +stdlib_sym
+        path: "stdlib://" +stdlib_sym,
+        key: ld.key,
+        main_path: ld.file
+        //path: normalizePath(dir, d.path.value)
       };
     }else{
       if(_.has(global_symbols, sym)){
@@ -177,16 +180,15 @@ module.exports = function(conf, callback){
   var start_path = normalizePath(base, conf.start_path);
   var global_symbols = conf.global_symbols || {};
 
-  var loadPath = function(path, callback){
-    if(/^stdlib\:\/\//.test(path)){
-      var sym = path.replace(/^stdlib\:\/\//, "");
+  var loadPath = function(obj, callback){
+    if(_.has(obj, "key")){
       callback(undefined, {
-        key: sym,
-        main_path: stdlibLoader(sym)
+        key: obj.key,
+        main_path: obj.main_path
       });
       return;
     }
-    conf.loadPath(path, callback);
+    conf.loadPath(obj.path, callback);
   };
 
   var modules = {};
@@ -196,7 +198,7 @@ module.exports = function(conf, callback){
     if(_.has(modules, path)){
       return callback();
     }
-    loadPath(path, function(err, src){
+    loadPath(to_load, function(err, src){
       if(err)return callback(err);
 
       try{
@@ -211,9 +213,7 @@ module.exports = function(conf, callback){
         callback(err);
         return;
       }
-      asyncEach(modules[path].deps, function(dep, done){
-        load(dep, done);
-      }, callback);
+      asyncEach(modules[path].deps, load, callback);
     });
   };
 
@@ -232,7 +232,7 @@ module.exports = function(conf, callback){
     };
 
     var mods = [];
-    _.each(modules, function(m, path){
+    _.each(modules, function(m){
       mods.push(e("array", [m.est].concat(_.map(m.deps, function(dep){
         return toReqPath(dep.path, dep.loc);
       })), m.est.loc));
