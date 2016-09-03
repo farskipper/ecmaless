@@ -194,8 +194,11 @@ module.exports = function(conf, callback){
   var modules = {};
 
   var load = function load(to_load, callback){
-    var path = to_load.path;
-    if(_.has(modules, path)){
+    var mod_key = to_load.path;
+    if(_.has(to_load, "key")){
+      mod_key = JSON.stringify([to_load.path, to_load.key]);
+    }
+    if(_.has(modules, mod_key)){
       return callback();
     }
     loadPath(to_load, function(err, src){
@@ -203,17 +206,17 @@ module.exports = function(conf, callback){
 
       try{
         if(_.has(src, "key")){
-          modules[path] = loadKeyFromModule(src, to_load.loc);
-        }else if(/\.js$/.test(path)){
-          modules[path] = loadJSModule(src, to_load.loc);
+          modules[mod_key] = loadKeyFromModule(src, to_load.loc);
+        }else if(/\.js$/.test(to_load.path)){
+          modules[mod_key] = loadJSModule(src, to_load.loc);
         }else{
-          modules[path] = loadEcmaLessModule(src, path, global_symbols);
+          modules[mod_key] = loadEcmaLessModule(src, to_load.path, global_symbols);
         }
       }catch(err){
         callback(err);
         return;
       }
-      asyncEach(modules[path].deps, load, callback);
+      asyncEach(modules[mod_key].deps, load, callback);
     });
   };
 
@@ -222,8 +225,8 @@ module.exports = function(conf, callback){
 
     var path_to_i = {};
     var i = 0;
-    _.each(modules, function(m, path){
-      path_to_i[path] = i;
+    _.each(modules, function(m, mod_key){
+      path_to_i[mod_key] = i;
       i++;
     });
 
@@ -234,7 +237,11 @@ module.exports = function(conf, callback){
     var mods = [];
     _.each(modules, function(m){
       mods.push(e("array", [m.est].concat(_.map(m.deps, function(dep){
-        return toReqPath(dep.path, dep.loc);
+        var mod_key = dep.path;
+        if(_.has(dep, "key")){
+          mod_key = JSON.stringify([dep.path, dep.key]);
+        }
+        return toReqPath(mod_key, dep.loc);
       })), m.est.loc));
     });
     var est = e("call", req_est, [e("array", mods, req_est.loc), toReqPath(start_path, req_est.loc)], req_est.loc);
