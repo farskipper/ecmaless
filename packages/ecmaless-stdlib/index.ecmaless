@@ -1,0 +1,7 @@
+deps:
+    core "./src/index.js"
+    map "./src/map.ecmaless"
+
+def stdlib = core
+stdlib.map = map
+stdlib

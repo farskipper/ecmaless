@@ -1,0 +1,69 @@
+{
+  "isNil": {
+    "file": "src/core.js",
+    "key": "isNil"
+  },
+  "isNumber": {
+    "file": "src/core.js",
+    "key": "isNumber"
+  },
+  "isString": {
+    "file": "src/core.js",
+    "key": "isString"
+  },
+  "isBoolean": {
+    "file": "src/core.js",
+    "key": "isBoolean"
+  },
+  "isArray": {
+    "file": "src/core.js",
+    "key": "isArray"
+  },
+  "isStruct": {
+    "file": "src/core.js",
+    "key": "isStruct"
+  },
+  "isFunction": {
+    "file": "src/core.js",
+    "key": "isFunction"
+  },
+  "truthy": {
+    "file": "src/core.js",
+    "key": "truthy"
+  },
+  "has": {
+    "file": "src/core.js",
+    "key": "has"
+  },
+  "get": {
+    "file": "src/core.js",
+    "key": "get"
+  },
+  "iterate": {
+    "file": "src/core.js",
+    "key": "iterate"
+  },
+  "||": {
+    "file": "src/core.js",
+    "key": "||"
+  },
+  "&&": {
+    "file": "src/core.js",
+    "key": "&&"
+  },
+  "!": {
+    "file": "src/core.js",
+    "key": "!"
+  },
+  "set": {
+    "file": "src/core.js",
+    "key": "set"
+  },
+  "push": {
+    "file": "src/core.js",
+    "key": "push"
+  },
+  "map": {
+    "file": "src/map.ecmaless"
+  }
+}
