@@ -1,5 +1,5 @@
 deps:
-    core "./src/index.js"
+    core "./src/core.js"
     map "./src/map.ecmaless"
 
 def stdlib = core

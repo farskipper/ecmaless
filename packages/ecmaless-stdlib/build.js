@@ -20,7 +20,7 @@ fs.readdirSync(path.resolve(__dirname, "src/")).forEach(function(filename){
 var index = "";
 var index_part2 = "";
 index += "deps:\n";
-index += "    core \"./src/index.js\"\n";
+index += "    core \"./src/core.js\"\n";
 core.iterate(lookup, function(o, sym){
   if(!/core\.js$/.test(o.file)){
     index += "    " + sym + " " + JSON.stringify("./" + o.file) + "\n";

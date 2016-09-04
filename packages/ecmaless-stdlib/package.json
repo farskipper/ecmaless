@@ -4,8 +4,9 @@
   "description": "Standard library for ecmaless",
   "main": "index.js",
   "scripts": {
+    "build": "node build.js && ecmaless index.ecmaless > index.js",
     "start": "onchange '**/*.js' -i -- npm test -s",
-    "test": "node tests.js"
+    "test": "npm run build && node tests.js"
   },
   "repository": {
     "type": "git",
@@ -24,6 +25,7 @@
   },
   "homepage": "https://github.com/farskipper/ecmaless-stdlib#readme",
   "devDependencies": {
+    "ecmaless": "^0.2.0",
     "onchange": "^2.5.0",
     "tape": "^4.6.0"
   }
