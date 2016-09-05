@@ -242,7 +242,11 @@ module.exports = function(conf, callback){
         return toReqPath(mod_key, dep.loc);
       })), m.est.loc));
     });
-    var est = e("call", req_est, [e("array", mods, req_est.loc), toReqPath(start_path, req_est.loc)], req_est.loc);
+    var ee = _.partialRight(e, req_est);
+    var est = ee("call", req_est, [ee("array", mods), toReqPath(start_path, req_est.loc)]);
+    if(conf.common_js){
+      est = ee(";", ee("=", ee("id", "module.exports"), est));
+    }
     callback(void 0, toJSProgram(est, conf));
   });
 };

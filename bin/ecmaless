@@ -10,6 +10,7 @@ main({
   loadPath: function(path, callback){
     fs.readFile(path, "utf-8", callback);
   },
+  common_js: true,
   global_symbols: {
     "require": true,
     "console": true
