@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "node build.js && ecmaless index.ecmaless > index.js",
+    "prepublish": "npm run test",
     "start": "onchange '**/*.js' -i -- npm test -s",
     "test": "npm run build && node tests.js"
   },
@@ -26,7 +27,7 @@
   "homepage": "https://github.com/farskipper/ecmaless-stdlib#readme",
   "devDependencies": {
     "ecmaless": "^0.2.0",
-    "onchange": "^2.5.0",
+    "onchange": "^3.0.0",
     "tape": "^4.6.0"
   }
 }
