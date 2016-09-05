@@ -27,7 +27,7 @@ main({
   map.sources = map.sources.map(function(source){
     return path.relative(map.sourceRoot, source);
   });
-  map.sourceRoot = "file:///" + map.sourceRoot;
+  delete map.sourceRoot;
   code += "\n//# sourceMappingURL=data:application/json;base64,"
     + btoa(JSON.stringify(map))
     + "\n";
