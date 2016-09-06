@@ -1,12 +1,12 @@
 var _ = require("lodash");
 var e = require("estree-builder");
 var parser = require("ecmaless-parser");
-var stdlibLoader = require("ecmaless-stdlib/loader");
 var esprima = require("esprima");
 var compiler = require("ecmaless-compiler");
 var path_fns = require("path");
 var escodegen = require("escodegen");
 var req_est_orig = require("./req_est");
+var stdlibLoader_req = require("ecmaless-stdlib/loader");
 
 var req_est = _.omit(req_est_orig.body[0], "id");
 
@@ -73,7 +73,7 @@ var loadJSModule = function(src, loc){
   };
 };
 
-var loadEcmaLessModule = function(src, path, global_symbols){
+var loadEcmaLessModule = function(src, path, global_symbols, stdlibLoader){
   var ast = parser(src, {filepath: path});
   var mloc = getMainLoc(ast);
   var mast = [
@@ -179,6 +179,7 @@ var asyncEach = function(obj, iter, callback){
 module.exports = function(conf, callback){
   var base = conf.base || process.cwd();
   var start_path = normalizePath(base, conf.start_path);
+  var stdlibLoader = conf.stdlibLoader || stdlibLoader_req;
   var global_symbols = conf.global_symbols || {};
 
   var loadPath = function(obj, callback){
@@ -208,7 +209,7 @@ module.exports = function(conf, callback){
         }else if(/\.js$/.test(to_load.path)){
           modules[mod_key] = loadJSModule(src, to_load.loc);
         }else{
-          modules[mod_key] = loadEcmaLessModule(src, to_load.path, global_symbols);
+          modules[mod_key] = loadEcmaLessModule(src, to_load.path, global_symbols, stdlibLoader);
         }
       }catch(err){
         callback(err);
