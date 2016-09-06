@@ -63,7 +63,16 @@
     "file": "src/core.js",
     "key": "push"
   },
+  "filter": {
+    "file": "src/filter.ecmaless"
+  },
   "map": {
     "file": "src/map.ecmaless"
+  },
+  "reduce": {
+    "file": "src/reduce.ecmaless"
+  },
+  "reject": {
+    "file": "src/reject.ecmaless"
   }
 }

@@ -19,15 +19,21 @@ module.exports = function (mdefs, main) {
     return require(main);
 }([
     [
-        function (core, map, $$$ecmaless$$$get, $$$ecmaless$$$set) {
+        function (core, filter, map, reduce, reject, $$$ecmaless$$$get, $$$ecmaless$$$set) {
             var stdlib = core;
+            $$$ecmaless$$$set(stdlib, 'filter', filter);
             $$$ecmaless$$$set(stdlib, 'map', map);
+            $$$ecmaless$$$set(stdlib, 'reduce', reduce);
+            $$$ecmaless$$$set(stdlib, 'reject', reject);
             return stdlib;
         },
         1,
         2,
         3,
-        7
+        4,
+        5,
+        7,
+        11
     ],
     [function () {
             var module = { 'exports': {} };
@@ -152,6 +158,36 @@ module.exports = function (mdefs, main) {
                 if ($$$ecmaless$$$truthy(isStruct(obj))) {
                     var r = {};
                     iterate(obj, function (v, k, o) {
+                        if ($$$ecmaless$$$truthy(ifn(v, k, o))) {
+                            $$$ecmaless$$$set(r, k, v);
+                        }
+                        return true;
+                    });
+                    return r;
+                }
+                var r = [];
+                iterate(obj, function (v, k, o) {
+                    if ($$$ecmaless$$$truthy(ifn(v, k, o))) {
+                        push(r, v);
+                    }
+                    return true;
+                });
+                return r;
+            };
+        },
+        8,
+        9,
+        7,
+        11,
+        12,
+        10
+    ],
+    [
+        function (isStruct, iterate, $$$ecmaless$$$get, $$$ecmaless$$$set, $$$ecmaless$$$truthy, push) {
+            return function (obj, ifn) {
+                if ($$$ecmaless$$$truthy(isStruct(obj))) {
+                    var r = {};
+                    iterate(obj, function (v, k, o) {
                         $$$ecmaless$$$set(r, k, ifn(v, k, o));
                         return true;
                     });
@@ -165,12 +201,41 @@ module.exports = function (mdefs, main) {
                 return r;
             };
         },
-        4,
-        5,
-        3,
-        7,
         8,
+        9,
+        7,
+        11,
+        12,
+        10
+    ],
+    [
+        function (iterate) {
+            return function (obj, ifn, accumulator) {
+                iterate(obj, function (v, k, o) {
+                    accumulator = ifn(accumulator, v, k, o);
+                    return true;
+                });
+                return accumulator;
+            };
+        },
+        9
+    ],
+    [
+        function (filter, $$$ecmaless$$$$33$) {
+            return function (obj, ifn) {
+                return filter(obj, function (v, k, o) {
+                    return $$$ecmaless$$$$33$(ifn(v, k, o));
+                });
+            };
+        },
+        2,
         6
+    ],
+    [
+        function (o) {
+            return o['!'];
+        },
+        1
     ],
     [
         function (o) {

@@ -1,0 +1,22 @@
+fn [obj, ifn]:
+    if(isStruct(obj)):
+        def r = {}
+        iterate(
+            obj,
+            fn [v, k, o]:
+                if ifn(v, k, o):
+                    r[k] = v
+                true
+            ,
+        )
+        return r
+    def r = []
+    iterate(
+        obj,
+        fn [v, k, o]:
+            if ifn(v, k, o):
+                push(r, v)
+            true
+        ,
+    )
+    r

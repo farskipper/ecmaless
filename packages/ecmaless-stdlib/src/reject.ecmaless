@@ -1,0 +1,10 @@
+deps:
+    filter "./filter.ecmaless"
+
+fn [obj, ifn]:
+    filter(
+        obj,
+        fn [v, k, o]:
+            !ifn(v, k, o)
+        ,
+    )

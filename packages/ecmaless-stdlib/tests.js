@@ -151,3 +151,44 @@ test("mutation", function(t){
 
   t.end();
 });
+
+test("map", function(t){
+
+  var inc = function(n){
+    return n + 1;
+  };
+
+  t.deepEquals(lib.map([1, 2], inc), [2, 3]);
+  t.deepEquals(lib.map({a: 1, b: 2}, inc), {a: 2, b: 3});
+
+  t.deepEquals(lib.map(void 0, inc), []);
+  t.deepEquals(lib.map("wat?", inc), []);
+
+  t.end();
+});
+
+test("filter, reject", function(t){
+
+  var isEven = function(n){
+    return n % 2 === 0;
+  };
+
+  t.deepEquals(lib.filter([1, 2, 3, 4], isEven), [2, 4]);
+  t.deepEquals(lib.reject([1, 2, 3, 4], isEven), [1, 3]);
+  t.deepEquals(lib.filter({a: 1, b: 2, c: 3, d: 4}, isEven), {b: 2, d: 4});
+  t.deepEquals(lib.reject({a: 1, b: 2, c: 3, d: 4}, isEven), {a: 1, c: 3});
+
+  t.end();
+});
+
+test("reduce", function(t){
+  var add = function(a, b){
+    return a + b;
+  };
+  t.deepEquals(lib.reduce([1, 2, 3], add, 0), 6);
+  t.deepEquals(lib.reduce({a: 4, b: 6}, add, 0), 10);
+  t.deepEquals(lib.reduce([], add, 0), 0);
+  t.deepEquals(lib.reduce(NaN, add, 0), 0);
+
+  t.end();
+});

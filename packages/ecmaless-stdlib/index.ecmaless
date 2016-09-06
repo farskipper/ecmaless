@@ -1,7 +1,13 @@
 deps:
     core "./src/core.js"
+    filter "./src/filter.ecmaless"
     map "./src/map.ecmaless"
+    reduce "./src/reduce.ecmaless"
+    reject "./src/reject.ecmaless"
 
 def stdlib = core
+stdlib.filter = filter
 stdlib.map = map
+stdlib.reduce = reduce
+stdlib.reject = reject
 stdlib
