@@ -1,6 +1,7 @@
 var fs = require("fs");
 var path = require("path");
 var core = require("./src/core");
+var ecmaless = require("ecmaless");
 
 var lookup = {};
 
@@ -34,3 +35,20 @@ index += "stdlib";
 
 fs.writeFileSync("./lookup.json", JSON.stringify(lookup, void 0, 2));
 fs.writeFileSync("./index.ecmaless", index);
+
+//Here is the self-hosting bit
+ecmaless({
+  stdlibLoader: require("./loader"),//If we don't do this, it will use the OLD stdlib core that ecmaless depends on
+
+  start_path: "./index.ecmaless",
+  loadPath: function(path, callback){
+    fs.readFile(path, "utf-8", callback);
+  },
+  common_js: true,
+  global_symbols: {
+    "console": true
+  }
+}, function(err, out){
+  if(err) throw err;
+  fs.writeFileSync("./index.js", out);
+});

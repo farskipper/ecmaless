@@ -4,9 +4,9 @@
   "description": "Standard library for ecmaless",
   "main": "index.js",
   "scripts": {
-    "build": "node build.js && ecmaless index.ecmaless > index.js",
+    "build": "node build.js",
     "prepublish": "npm run test",
-    "start": "onchange '**/*.js' -i -- npm test -s",
+    "start": "onchange '**/*.js' -e 'index.js' -i -- npm test -s",
     "test": "npm run build && node tests.js"
   },
   "repository": {
