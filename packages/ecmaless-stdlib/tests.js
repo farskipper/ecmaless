@@ -88,11 +88,24 @@ test("data access", function(t){
   t.equals(lib.get({}, "prototype", "not found"), "not found");
   t.equals(lib.get({a: 1}, "a"), 1);
 
+  t.equals(lib.size({a: "b", c: "d"}), 2);
+  t.equals(lib.size({}), 0);
+  t.equals(lib.size([1, 2, 3]), 3);
+  t.equals(lib.size("blah"), 4);
+  t.equals(lib.size(null), 0);
+  t.equals(lib.size(void 0), 0);
+  t.equals(lib.size(100), 0);
+
+  t.deepEquals(lib.keys({a: "b", c: "d"}), ["a", "c"]);
+  t.deepEquals(lib.keys(["a", "b", 3, 4]), [0, 1, 2, 3]);
+  t.deepEquals(lib.keys("abc"), [0, 1, 2]);
+  t.deepEquals(lib.keys(void 0), []);
+
   t.end();
 });
 
 test("iterate", function(t){
-  t.plan(8);
+  t.plan(10);
 
   lib.iterate(void 0, function(){
     t.fail();
@@ -120,6 +133,11 @@ test("iterate", function(t){
 
   lib.iterate({a: "b", c: "d"}, function(v, k, o){
     t.equals(v, k === "a" ? "b" : "d");
+    return true;
+  });
+
+  lib.iterate("hi", function(v, k, o){
+    t.equals(v, k === 0 ? "h" : "i");
     return true;
   });
 });
@@ -162,7 +180,9 @@ test("map", function(t){
   t.deepEquals(lib.map({a: 1, b: 2}, inc), {a: 2, b: 3});
 
   t.deepEquals(lib.map(void 0, inc), []);
-  t.deepEquals(lib.map("wat?", inc), []);
+  t.deepEquals(lib.map("wat?", function(c, i){
+    return i + "-" + c;
+  }), ["0-w", "1-a", "2-t", "3-?"]);
 
   t.end();
 });

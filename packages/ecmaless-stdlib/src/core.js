@@ -85,7 +85,7 @@ stdlib.get = function(o, key, deflt){
 };
 
 stdlib.iterate = function(o, fn){
-  if(stdlib.isArray(o)){
+  if(stdlib.isArray(o) || stdlib.isString(o)){
     var i;
     for(i=0; i < o.length; i++){
       if(!stdlib.truthy(fn(o[i], i, o))){
@@ -103,6 +103,26 @@ stdlib.iterate = function(o, fn){
       }
     }
   }
+};
+
+stdlib.keys = function(o){
+  var keys = [];
+  stdlib.iterate(o, function(v, k){
+    keys.push(k);
+    return true;
+  });
+  return keys;
+};
+
+stdlib.size = function(o){
+  if(stdlib.isString(o)){
+    return o.length;
+  }else if(stdlib.isArray(o)){
+    return o.length;
+  }else if(stdlib.isStruct(o)){
+    return Object.keys(o).length;
+  }
+  return 0;
 };
 
 stdlib["||"] = function(a, b){

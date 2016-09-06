@@ -43,6 +43,14 @@
     "file": "src/core.js",
     "key": "iterate"
   },
+  "keys": {
+    "file": "src/core.js",
+    "key": "keys"
+  },
+  "size": {
+    "file": "src/core.js",
+    "key": "size"
+  },
   "||": {
     "file": "src/core.js",
     "key": "||"
