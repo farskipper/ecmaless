@@ -1,5 +1,5 @@
-var λ = require("contra");
 var _ = require("lodash");
+var λ = require("contra");
 var fs = require("fs");
 var test = require("tape");
 var main = require("./");
@@ -7,7 +7,7 @@ var main = require("./");
 var StructLoader = function(files){
   return function(path, callback){
     if(_.has(files, path)){
-      callback(undefined, files[path]);
+      callback(void 0, files[path]);
     }else if(/\/ecmaless-stdlib\/src\/core.js$/.test(path)){
       fs.readFile(path, "utf-8", callback);
     }else{
@@ -86,5 +86,40 @@ test("global_symbols", function(t){
   run("wat", function(err){
     t.equals("Error: Undefined symbol: wat", err + "");
     run("global1", t.end);
+  });
+});
+
+test("consistent module layout", function(t){
+  var run = function(use_random, callback){
+    main({
+      base: "/test/",
+      start_path: "./a",
+      loadPath: function(path, callback){
+        if(path === "/test/a"){
+          callback(void 0, "deps:\n" + "bcdefghijkl".split("").map(function(l){
+            return "    " + l + " " + JSON.stringify(l);
+          }).join("\n") + "\n\nb()");
+          return;
+        }
+        if(use_random){
+          setTimeout(function(){
+            callback(void 0, JSON.stringify(path));
+          }, _.random(0, 10));
+          return;
+        }
+        callback(void 0, JSON.stringify(path));
+      },
+      global_symbols: {global1: true}
+    }, callback);
+  };
+  run(false, function(err, expected_js){
+    if(err)return t.end(err);
+    λ.each(_.range(0, 1), function(info, next){
+      run(true, function(err, actual_js){
+        if(err)return next(err);
+        t.equals(actual_js, expected_js);
+        next();
+      });
+    }, t.end);
   });
 });

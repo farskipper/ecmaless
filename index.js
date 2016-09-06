@@ -221,6 +221,8 @@ module.exports = function(conf, callback){
   load({path: start_path}, function(err){
     if(err)return callback(err);
 
+    modules = _.fromPairs(_.sortBy(_.toPairs(modules), 0));
+
     var path_to_i = {};
     var i = 0;
     _.each(modules, function(m, mod_key){
