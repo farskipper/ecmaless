@@ -92,6 +92,8 @@ var tok_OR = tok("||");
 var tok_AND = tok("&&");
 var tok_EQEQ = tok("==");
 var tok_NOTEQ = tok("!=");
+var tok_EQEQEQ = tok("===");
+var tok_NOTEQEQ = tok("!==");
 var tok_LT = tok("<");
 var tok_LTEQ = tok("<=");
 var tok_GT = tok(">");
@@ -378,6 +380,8 @@ exp_and -> exp_comp {% id %}
 exp_comp -> exp_sum {% id %}
     | exp_comp %tok_EQEQ exp_sum {% infixOp %}
     | exp_comp %tok_NOTEQ exp_sum {% infixOp %}
+    | exp_comp %tok_EQEQEQ exp_sum {% infixOp %}
+    | exp_comp %tok_NOTEQEQ exp_sum {% infixOp %}
     | exp_comp %tok_LT exp_sum {% infixOp %}
     | exp_comp %tok_LTEQ exp_sum {% infixOp %}
     | exp_comp %tok_GT exp_sum {% infixOp %}

@@ -77,8 +77,8 @@ module.exports = function(src, opts){
   t.addRule(/^\.\.?\.?$/, "RAW");
   t.addRule(/^\|\|?$/, "RAW");
   t.addRule(/^&&?$/, "RAW");
-  t.addRule(/^==?$/, "RAW");
-  t.addRule(/^!=?$/, "RAW");
+  t.addRule(/^==?=?$/, "RAW");
+  t.addRule(/^!=?=?$/, "RAW");
   t.addRule(/^<=?$/, "RAW");
   t.addRule(/^>=?$/, "RAW");
 

@@ -96,6 +96,8 @@ var tok_OR = tok("||");
 var tok_AND = tok("&&");
 var tok_EQEQ = tok("==");
 var tok_NOTEQ = tok("!=");
+var tok_EQEQEQ = tok("===");
+var tok_NOTEQEQ = tok("!==");
 var tok_LT = tok("<");
 var tok_LTEQ = tok("<=");
 var tok_GT = tok(">");
@@ -364,6 +366,8 @@ var grammar = {
     {"name": "exp_comp", "symbols": ["exp_sum"], "postprocess": id},
     {"name": "exp_comp", "symbols": ["exp_comp", tok_EQEQ, "exp_sum"], "postprocess": infixOp},
     {"name": "exp_comp", "symbols": ["exp_comp", tok_NOTEQ, "exp_sum"], "postprocess": infixOp},
+    {"name": "exp_comp", "symbols": ["exp_comp", tok_EQEQEQ, "exp_sum"], "postprocess": infixOp},
+    {"name": "exp_comp", "symbols": ["exp_comp", tok_NOTEQEQ, "exp_sum"], "postprocess": infixOp},
     {"name": "exp_comp", "symbols": ["exp_comp", tok_LT, "exp_sum"], "postprocess": infixOp},
     {"name": "exp_comp", "symbols": ["exp_comp", tok_LTEQ, "exp_sum"], "postprocess": infixOp},
     {"name": "exp_comp", "symbols": ["exp_comp", tok_GT, "exp_sum"], "postprocess": infixOp},
