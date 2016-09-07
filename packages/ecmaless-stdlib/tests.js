@@ -143,13 +143,38 @@ test("iterate", function(t){
 });
 
 test("boolean ops", function(t){
-  t.equals(lib["||"](0, 1), 0);
-  t.equals(lib["||"](void 0, 1), 1);
-  t.equals(lib["||"](NaN, 1), 1);
-  t.equals(lib["&&"](false, 1), false);
-  t.equals(lib["&&"](0, 1), 1);
+  t.equals(lib["||"](0, t.fail), 0, "ensure right hand is only evaluated when needed");
+  t.equals(lib["||"](void 0, function(){return 1}), 1);
+  t.equals(lib["||"](NaN, function(){return "a"}), "a");
+  t.equals(lib["&&"](false, t.fail), false, "ensure right hand is only evaluated when needed");
+  t.equals(lib["&&"](0, function(){return 1}), 1);
   t.equals(lib["!"](0), false);
   t.equals(lib["!"](NaN), true);
+  t.end();
+});
+
+test("equality", function(t){
+  var ident = function(a, b, expected){
+    t.equals(lib["==="](a, b), expected);
+  };
+  var eq = function(a, b, expected){
+    t.equals(lib["eq"](a, b), expected);
+  };
+
+  ident(NaN, null, true);
+  ident(void 0, NaN, true);
+  ident(0, 1, false);
+  ident("abc", "abc", true);
+  ident([1, 2], [1, 2], false);
+
+  eq([1, 2], [1, 2], true);
+  eq({a: 1, b: 2}, {a: 1, b: 2}, true);
+  eq([1, 2], {a: 1, b: 2}, false);
+  eq([], {}, false);
+  eq({}, [], false);
+  eq([], [], true);
+  eq({}, {}, true);
+
   t.end();
 });
 

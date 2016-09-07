@@ -147,14 +147,56 @@ module.exports = function (mdefs, main) {
                 }
                 return 0;
             };
-            stdlib['||'] = function (a, b) {
-                return stdlib.truthy(a) ? a : b;
+            stdlib['||'] = function (a, b_fn) {
+                return stdlib.truthy(a) ? a : b_fn();
             };
-            stdlib['&&'] = function (a, b) {
-                return stdlib.truthy(a) && stdlib.truthy(b) ? b : a;
+            stdlib['&&'] = function (a, b_fn) {
+                if (stdlib.truthy(a)) {
+                    var b = b_fn();
+                    if (stdlib.truthy(b)) {
+                        return b;
+                    }
+                }
+                return a;
             };
             stdlib['!'] = function (a) {
                 return !stdlib.truthy(a);
+            };
+            stdlib['==='] = stdlib.ident = function (a, b) {
+                if (a === b) {
+                    return true;
+                }
+                return !!(stdlib.isNil(a) && stdlib.isNil(b));
+            };
+            stdlib['!=='] = stdlib.nident = function (a, b) {
+                return !stdlib['==='](a, b);
+            };
+            stdlib['=='] = stdlib.eq = function (a, b) {
+                if (stdlib['==='](a, b)) {
+                    return true;
+                }
+                if (stdlib.size(a) !== stdlib.size(b)) {
+                    return false;
+                }
+                if (stdlib.isString(a) && stdlib.isString(b)) {
+                    return a === b;
+                } else if (stdlib.isArray(a) && stdlib.isArray(b) || stdlib.isStruct(a) && stdlib.isStruct(b)) {
+                    var all_match = true;
+                    stdlib.iterate(a, function (v, k) {
+                        if (stdlib.has(b, k)) {
+                            if (stdlib.eq(v, b[k])) {
+                                return true;
+                            }
+                        }
+                        all_match = false;
+                        return false;
+                    });
+                    return all_match;
+                }
+                return a === b;
+            };
+            stdlib['!='] = stdlib.neq = function (a, b) {
+                return !stdlib['=='](a, b);
             };
             stdlib.set = function (o, key, value) {
                 o[key] = value;

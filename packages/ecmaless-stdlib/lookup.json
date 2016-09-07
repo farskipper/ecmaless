@@ -63,6 +63,38 @@
     "file": "src/core.js",
     "key": "!"
   },
+  "ident": {
+    "file": "src/core.js",
+    "key": "ident"
+  },
+  "===": {
+    "file": "src/core.js",
+    "key": "==="
+  },
+  "nident": {
+    "file": "src/core.js",
+    "key": "nident"
+  },
+  "!==": {
+    "file": "src/core.js",
+    "key": "!=="
+  },
+  "eq": {
+    "file": "src/core.js",
+    "key": "eq"
+  },
+  "==": {
+    "file": "src/core.js",
+    "key": "=="
+  },
+  "neq": {
+    "file": "src/core.js",
+    "key": "neq"
+  },
+  "!=": {
+    "file": "src/core.js",
+    "key": "!="
+  },
   "set": {
     "file": "src/core.js",
     "key": "set"
