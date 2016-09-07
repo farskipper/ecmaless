@@ -3,6 +3,10 @@ var e = require("estree-builder");
 var toId = require("to-js-identifier");
 var SymbolTable = require("symbol-table");
 
+var sysIDtoJsID = function(id){
+  return "$$$ecmaless$$$" + toId(id);
+};
+
 var sliceArgs = function(loc, start, end){
   var args = [];
   args.push(e("id", "arguments", loc));
@@ -33,6 +37,19 @@ var wrapTruthyTest = function(test, ctx){
   var loc = test.loc;
   if(test && test.type === "BinaryExpression" && test.operator === "==="){
     return test;
+  }
+  if(test && test.type === "CallExpression" && test.callee){
+    if(test.callee.type === "Identifier"){
+      if(false
+          || test.callee.name === sysIDtoJsID("==")
+          || test.callee.name === sysIDtoJsID("!=")
+          || test.callee.name === sysIDtoJsID("===")
+          || test.callee.name === sysIDtoJsID("!==")
+          || test.callee.name === sysIDtoJsID("!")
+          ){
+        return test;
+      }
+    }
   }
   return e("call", ctx.useSystemIdentifier("truthy", loc, true), [test], loc);
 };
@@ -224,7 +241,13 @@ var comp_by_type = {
   },
   "Case": function(ast, comp){
     var mkTest = function(val){
-      return e("===", comp(ast.to_test), comp(val), val.loc);
+      return comp({
+        loc: val.loc,
+        type: "InfixOperator",
+        op: "==",
+        left: ast.to_test,
+        right: val
+      });
     };
     var prev = ast["else"]
       ? comp(ast["else"])
@@ -301,7 +324,7 @@ module.exports = function(ast){
       }
     },
     useSystemIdentifier: function(id, loc, ret_estree){
-      var js_id = "$$$ecmaless$$$" + toId(id);
+      var js_id = sysIDtoJsID(id);
       ctx.useIdentifier("$$$ecmaless$$$" + id, loc, js_id);
       return ret_estree
         ? e("id", js_id, loc)
