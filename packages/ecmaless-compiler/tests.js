@@ -87,6 +87,10 @@ test("compile", function(t){
   //named functions
   tc("def add = fn [a, b]:\n    nil", "var add=function add(a,b){return void 0;};");
 
+  //boolean ops, preserve expected evaluation
+  tc("a || b", "$$$ecmaless$$$$124$$124$(a,function(){return b;});");
+  tc("a && b", "$$$ecmaless$$$$38$$38$(a,function(){return b;});");
+
   t.end();
 });
 

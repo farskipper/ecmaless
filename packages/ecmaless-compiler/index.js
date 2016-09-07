@@ -164,9 +164,13 @@ var comp_by_type = {
     if(nativejs_infix_ops.hasOwnProperty(ast.op)){
       return e(ast.op, comp(ast.left), comp(ast.right), ast.loc);
     }
+    var right = comp(ast.right);
+    if(ast.op === "||" || ast.op === "&&"){
+      right = e("fn", [], [e("return", right, right.loc)], right.loc);
+    }
     return e("call", ctx.useSystemIdentifier(ast.op, ast.loc, true), [
       comp(ast.left),
-      comp(ast.right)
+      right
     ], ast.loc);
   },
   "AssignmentExpression": function(ast, comp, ctx){
