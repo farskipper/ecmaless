@@ -145,13 +145,7 @@ var comp_by_type = {
   },
   "InfixOperator": function(ast, comp, ctx){
     if(nativejs_infix_ops.hasOwnProperty(ast.op)){
-      return e(ast.op, comp(ast.left), comp(ast.right), ast.log);
-    }
-    if(ast.op === "=="){
-      return e("===", comp(ast.left), comp(ast.right), ast.log);
-    }
-    if(ast.op === "!="){
-      return e("!==", comp(ast.left), comp(ast.right), ast.log);
+      return e(ast.op, comp(ast.left), comp(ast.right), ast.loc);
     }
     return e("call", ctx.useSystemIdentifier(ast.op, ast.loc, true), [
       comp(ast.left),
