@@ -130,5 +130,19 @@ test("tokenizer", function(t){
     "NUMBER",
   ]);
 
+  testOrder("a\n    1\n\n        :", [
+    "SYMBOL",
+    "NEWLINE",
+    "INDENT",
+    "NUMBER",
+    "NEWLINE",
+    "INDENT",
+    ":",
+    "DEDENT",
+    "NEWLINE",
+    "DEDENT",
+    "NEWLINE",
+  ]);
+
   t.end();
 });

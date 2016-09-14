@@ -383,6 +383,16 @@ test("parser", function(t){
     },
     mk.stmt(mkv(2))
   ]);
+  tst("case a:\n    1:\n\n        b", {
+    type: "Case",
+    to_test: mk.id("a"),
+    blocks: [
+      {type: "CaseBlock", value: mkv(1), block: mk.block([
+        mk.stmt(mk.id("b"))
+      ])},
+    ],
+    "else": null
+  });
 
   t.end();
 });

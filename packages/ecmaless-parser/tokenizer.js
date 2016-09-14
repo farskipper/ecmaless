@@ -22,7 +22,7 @@ module.exports = function(src, opts){
   var prev;
   var t = tokenizer2(function(tok){
     var prev_type = prev && prev.type;
-    if(prev_type === "NEWLINE" && tok.type !== "SPACE"){
+    if(prev_type === "NEWLINE" && tok.type !== "SPACE" && tok.type !== "NEWLINE"){
       while(0 < indent_stack[0]){
         pushTok("DEDENT", tok.src);
         indent_stack.shift();
