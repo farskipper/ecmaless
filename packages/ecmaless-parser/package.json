@@ -9,7 +9,8 @@
   "scripts": {
     "start": "onchange 'src/' -e 'src/grammar.js' -i -- npm test",
     "build": "nearleyc src/grammar.ne > src/grammar.js && node src/genSpec.js > spec.md",
-    "test": "npm run build && node src/tests.js"
+    "lint": "eslint --ignore-pattern 'src/grammar.*' src/ && echo lint-ok",
+    "test": "npm run build && npm run lint -s && node src/tests.js"
   },
   "repository": {
     "type": "git",
@@ -27,6 +28,7 @@
   },
   "homepage": "https://github.com/farskipper/ecmaless-parser#readme",
   "devDependencies": {
+    "eslint": "^4.0.0",
     "json-stringify-pretty-compact": "^1.0.4",
     "lodash": "^4.17.4",
     "onchange": "^3.2.1",
