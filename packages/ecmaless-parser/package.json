@@ -2,11 +2,14 @@
   "name": "ecmaless-parser",
   "version": "0.6.4",
   "description": "Parser for the ecmaless language",
-  "main": "index.js",
+  "main": "src/index.js",
+  "files": [
+    "src/"
+  ],
   "scripts": {
-    "start": "onchange '*.js' '*.ne' -e 'grammar.js' -i -- npm test",
-    "build": "nearleyc grammar.ne > grammar.js && node genSpec.js > spec.md",
-    "test": "npm run build && node tests.js"
+    "start": "onchange 'src/' -e 'src/grammar.js' -i -- npm test",
+    "build": "nearleyc src/grammar.ne > src/grammar.js && node src/genSpec.js > spec.md",
+    "test": "npm run build && node src/tests.js"
   },
   "repository": {
     "type": "git",
