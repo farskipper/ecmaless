@@ -177,6 +177,7 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 };
 
 var grammar = {
+    Lexer: undefined,
     ParserRules: [
     {"name": "main$ebnf$1", "symbols": ["Dependencies"], "postprocess": id},
     {"name": "main$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},

@@ -24,15 +24,15 @@
   },
   "homepage": "https://github.com/farskipper/ecmaless-parser#readme",
   "devDependencies": {
-    "json-stringify-pretty-compact": "^1.0.1",
-    "lodash": "^4.13.1",
-    "onchange": "^2.5.0",
-    "tape": "^4.6.0"
+    "json-stringify-pretty-compact": "^1.0.4",
+    "lodash": "^4.17.4",
+    "onchange": "^3.2.1",
+    "tape": "^4.6.3"
   },
   "dependencies": {
     "estree-loc": "^2.0.0",
     "excerpt-at-line-col": "^1.0.0",
-    "nearley": "^2.6.0",
+    "nearley": "^2.10.1",
     "tokenizer2": "^2.0.0"
   }
 }
