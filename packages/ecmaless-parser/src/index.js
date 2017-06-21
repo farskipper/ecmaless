@@ -4,11 +4,14 @@ var tokenizer = require("./tokenizer");
 var excerptAtLineCol = require("excerpt-at-line-col");
 
 var fmtErrorWithExcerpt = function(err, info){
-    var msg = "" + err;
-    msg = msg.replace(/Error\s*:/g, "");
-    msg = msg.replace(/nearley\s*:/g, "");
-    msg = msg.replace(/\(@.*\)/g, "");
-    msg = msg.replace(/\./g, "");
+
+    var msg = err + "";
+
+    if(/Error: invalid syntax at/.test(msg)){
+        msg = "No possible parsings";
+    }
+
+    msg = msg.replace(/^Error:/i, "");
     msg = msg.trim();
 
     msg += "\n" + (info.filepath  || "") + ":" + (info.line + 1) + ":" + info.col;
