@@ -56,6 +56,23 @@ module.exports = function(src, opts){
         throw e;
     }
 
+    var toLoc = EStreeLoc(src, opts.filepath);
+
+    tokens = tokens
+        .filter(function(tok){
+            return true
+                && tok.type !== "SPACES"
+                && tok.type !== "COMMENT"
+            ;
+        })
+        .map(function(tok){
+            return {
+                type: tok.type,
+                src: tok.src,
+                loc: toLoc(tok.loc.start, tok.loc.end),
+            };
+        });
+
     var p = new nearley.Parser(grammar.ParserRules, grammar.ParserStart);
     try{
         p.feed(tokens);
@@ -72,6 +89,12 @@ module.exports = function(src, opts){
             }
         }
         throw e;
+    }
+
+    if(p.results.length === 0){
+        throw new Error(
+            "No parsings found"
+        );
     }
 
     if(p.results.length !== 1){
