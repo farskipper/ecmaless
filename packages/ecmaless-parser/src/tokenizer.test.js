@@ -182,7 +182,7 @@ test("tokenizer", function(t){
         t.fail("should throw on tabs");
     }catch(e){
         t.deepEquals(e, {
-            type: "TokenizerError",
+            type: "InvalidCharacter",
             message: "Tabs (\\t) are not allowed. Just use 4 spaces instead.",
             src: "\t",
             loc: {start: 3, end: 4},
@@ -194,7 +194,7 @@ test("tokenizer", function(t){
         t.fail("should throw on \\r");
     }catch(e){
         t.deepEquals(e, {
-            type: "TokenizerError",
+            type: "InvalidCharacter",
             message: "Carriage returns (\\r) are not allowed. Use newline (\\n) instead.",
             src: "\r",
             loc: {start: 2, end: 3},

@@ -1,6 +1,7 @@
 var nearley = require("nearley");
 var grammar = require("./grammar.js");
 var tokenizer = require("./tokenizer");
+var EStreeLoc = require("estree-loc");
 var excerptAtLineCol = require("excerpt-at-line-col");
 
 var fmtErrorWithExcerpt = function(err, info){
@@ -28,6 +29,20 @@ var fmtErrorWithExcerpt = function(err, info){
     return err;
 };
 
+var fmtTokenizerError = function(te, src, filepath){
+    var e = new Error(te.type + ": " + te.message);
+
+    var toLoc = EStreeLoc(src, filepath);
+    var loc = toLoc(te.loc.start, te.loc.end);
+
+    return fmtErrorWithExcerpt(e, {
+        src: src,
+        filepath: filepath,
+        line: loc.start.line - 1,
+        col: loc.start.column
+    });
+};
+
 module.exports = function(src, opts){
     opts = opts || {};
 
@@ -35,13 +50,8 @@ module.exports = function(src, opts){
     try{
         tokens = tokenizer(src, {filepath: opts.filepath});
     }catch(e){
-        if(e.tokenizer2){
-            throw fmtErrorWithExcerpt(e, {
-                src: src,
-                filepath: opts.filepath,
-                line: e.tokenizer2.line - 1,
-                col: e.tokenizer2.col - 1
-            });
+        if(e && (e.type === "InvalidCharacter" || e.type === "InvalidIndentation")){
+            throw fmtTokenizerError(e, src, opts.filepath);
         }
         throw e;
     }

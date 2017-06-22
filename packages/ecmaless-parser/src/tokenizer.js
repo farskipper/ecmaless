@@ -5,7 +5,7 @@ module.exports = function(src, opts){
         var i = src.indexOf(c);
         if(i >= 0){
             throw {
-                type: "InvalidTokenizer",
+                type: "InvalidCharacter",
                 message: message,
                 src: c,
                 loc: {start: i, end: i + 1},
