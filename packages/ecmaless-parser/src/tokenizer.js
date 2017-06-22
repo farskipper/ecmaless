@@ -178,6 +178,7 @@ module.exports = function(src, opts){
     }
     ctxChange();
 
+    buff = "";
     while(0 < indent_stack[0]){
         pushTok("DEDENT");
         indent_stack.shift();

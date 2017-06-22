@@ -37,78 +37,82 @@ test("tokenizer", function(t){
     tok1("RAW", "||");
 
 
-    var testOrder = function(src, tok_order){
+    var testTokens = function(src, tok_order){
         t.deepEquals(_.map(tokenizer(src), function(tok){
-            if(tok.type === "RAW"){
-                return tok.src;
-            }
-            return tok.type;
+            return _.padEnd(tok.type, 7) + "|" + tok.src;
         }), tok_order);
     };
 
-    testOrder("123 \"four\"\nblah", [
-        "NUMBER",
-        "SPACES",
-        "STRING",
-        "NEWLINE",
-        "SYMBOL",
+    testTokens("123 \"four\"\nblah", [
+        "NUMBER |123",
+        "SPACES | ",
+        "STRING |\"four\"",
+        "NEWLINE|\n",
+        "SYMBOL |blah",
     ]);
 
-    testOrder("10 0.1 1.0", [
-        "NUMBER",
-        "SPACES",
-        "NUMBER",
-        "SPACES",
-        "NUMBER",
+    testTokens("10 0.1 1.0", [
+        "NUMBER |10",
+        "SPACES | ",
+        "NUMBER |0.1",
+        "SPACES | ",
+        "NUMBER |1.0",
     ]);
 
-    testOrder("({[]})", ["(", "{", "[", "]", "}", ")"]);
-
-
-    testOrder("deps:\n    1", [
-        "SYMBOL",
-        ":",
-        "NEWLINE",
-        "INDENT",
-        "NUMBER",
-        "DEDENT",
+    testTokens("({[]})", [
+        "RAW    |(",
+        "RAW    |{",
+        "RAW    |[",
+        "RAW    |]",
+        "RAW    |}",
+        "RAW    |)",
     ]);
 
-    testOrder("deps:\n        1", [
-        "SYMBOL",
-        ":",
-        "NEWLINE",
-        "INDENT",
-        "INDENT",
-        "NUMBER",
-        "DEDENT",
-        "DEDENT",
+
+    testTokens("deps:\n    1", [
+        "SYMBOL |deps",
+        "RAW    |:",
+        "NEWLINE|\n",
+        "INDENT |",
+        "NUMBER |1",
+        "DEDENT |",
     ]);
-    testOrder("deps:\n        1\n    2", [
-        "SYMBOL",
-        ":",
-        "NEWLINE",
-        "INDENT",
-        "INDENT",
-        "NUMBER",
-        "NEWLINE",
-        "DEDENT",
-        "NUMBER",
-        "DEDENT",
+
+    testTokens("deps:\n        1", [
+        "SYMBOL |deps",
+        "RAW    |:",
+        "NEWLINE|\n",
+        "INDENT |",
+        "INDENT |",
+        "NUMBER |1",
+        "DEDENT |",
+        "DEDENT |",
     ]);
-    testOrder("deps:\n        1    3\n    2", [
-        "SYMBOL",
-        ":",
-        "NEWLINE",
-        "INDENT",
-        "INDENT",
-        "NUMBER",
-        "SPACES",
-        "NUMBER",
-        "NEWLINE",
-        "DEDENT",
-        "NUMBER",
-        "DEDENT",
+    testTokens("deps:\n        1\n    2", [
+        "SYMBOL |deps",
+        "RAW    |:",
+        "NEWLINE|\n",
+        "INDENT |",
+        "INDENT |",
+        "NUMBER |1",
+        "NEWLINE|\n",
+        "DEDENT |",
+        "NUMBER |2",
+        "DEDENT |",
+    ]);
+    testTokens("deps:\n        1    3\n    2", [
+        "SYMBOL |deps",
+        "RAW    |:",
+        "NEWLINE|\n",
+        "INDENT |",
+        "INDENT |",
+        "NUMBER |1",
+        "SPACES |    ",
+        "NUMBER |3",
+        "NEWLINE|\n",
+        "DEDENT |",
+        "NUMBER |2",
+        "DEDENT |",
     ]);
 
     var src = "";
@@ -116,53 +120,57 @@ test("tokenizer", function(t){
     src += "    a [\n";
     src += "        1\n";
     src += "    ]\n";
-    testOrder(src, [
-        "SYMBOL",
-        ":",
-        "NEWLINE",
-        "INDENT",
-        "SYMBOL",
-        "SPACES",
-        "[",
-        "NEWLINE",
-        "INDENT",
-        "NUMBER",
-        "NEWLINE",
-        "DEDENT",
-        "]",
-        "NEWLINE",
-        "DEDENT",
+    testTokens(src, [
+        "SYMBOL |deps",
+        "RAW    |:",
+        "NEWLINE|\n",
+        "INDENT |",
+        "SYMBOL |a",
+        "SPACES | ",
+        "RAW    |[",
+        "NEWLINE|\n",
+        "INDENT |",
+        "NUMBER |1",
+        "NEWLINE|\n",
+        "DEDENT |",
+        "RAW    |]",
+        "NEWLINE|\n",
+        "DEDENT |",
     ]);
 
-    testOrder("1;some comment\n2", [
-        "NUMBER",
-        "COMMENT",
-        "NEWLINE",
-        "NUMBER",
+    testTokens("1;some comment\n2", [
+        "NUMBER |1",
+        "COMMENT|;some comment",
+        "NEWLINE|\n",
+        "NUMBER |2",
     ]);
 
-    testOrder("[\n    1,\n    2,\n]", [
-        "[",
-        "NEWLINE",
-        "INDENT",
-        "NUMBER", ",", "NEWLINE",
-        "NUMBER", ",", "NEWLINE",
-        "DEDENT",
-        "]"
+    testTokens("[\n    1,\n    2,\n]", [
+        "RAW    |[",
+        "NEWLINE|\n",
+        "INDENT |",
+        "NUMBER |1",
+        "RAW    |,",
+        "NEWLINE|\n",
+        "NUMBER |2",
+        "RAW    |,",
+        "NEWLINE|\n",
+        "DEDENT |",
+        "RAW    |]"
     ]);
 
-    testOrder("1\n;some comment", [
-        "NUMBER",
-        "NEWLINE",
-        "COMMENT",
+    testTokens("1\n;some comment", [
+        "NUMBER |1",
+        "NEWLINE|\n",
+        "COMMENT|;some comment",
     ]);
 
-    testOrder("1\n;some comment\n2", [
-        "NUMBER",
-        "NEWLINE",
-        "COMMENT",
-        "NEWLINE",
-        "NUMBER",
+    testTokens("1\n;some comment\n2", [
+        "NUMBER |1",
+        "NEWLINE|\n",
+        "COMMENT|;some comment",
+        "NEWLINE|\n",
+        "NUMBER |2",
     ]);
 
     t.end();
