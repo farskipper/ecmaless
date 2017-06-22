@@ -37,7 +37,6 @@
   "dependencies": {
     "estree-loc": "^2.0.0",
     "excerpt-at-line-col": "^1.0.0",
-    "nearley": "^2.10.1",
-    "tokenizer2": "^2.0.0"
+    "nearley": "^2.10.1"
   }
 }

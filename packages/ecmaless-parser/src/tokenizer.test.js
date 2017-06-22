@@ -4,29 +4,67 @@ var tokenizer = require("./tokenizer");
 
 test("tokenizer", function(t){
 
-    t.deepEquals(tokenizer("123"), [
-        {
-            type: "NUMBER",
-            src: "123",
-            loc: {source: undefined, start: {line: 1, column: 0}, end: {line: 1, column: 3}}
-        }
-    ]);
-    t.deepEquals(tokenizer("123.45", {filepath: "/some/file/path-ok?"}), [
-        {
-            type: "NUMBER",
-            src: "123.45",
-            loc: {source: "/some/file/path-ok?", start: {line: 1, column: 0}, end: {line: 1, column: 6}}
-        }
-    ]);
-
-    var testOrder = function(src, tok_order){
-        t.deepEquals(_.map(tokenizer(src), "type"), tok_order);
+    var tok1 = function(type, src){
+        t.deepEquals(tokenizer(src), [
+            {
+                type: type,
+                src: src,
+                loc: {start: 0, end: src.length},
+            },
+        ]);
     };
 
-    testOrder("123 \"four\"\nblah", ["NUMBER", "STRING", "NEWLINE", "SYMBOL"]);
-    testOrder("10 0.1 1.0", ["NUMBER", "NUMBER", "NUMBER"]);
+    tok1("NUMBER", "0");
+    tok1("NUMBER", "123");
+    tok1("NUMBER", "123.45");
+    tok1("NUMBER", ".45");
+
+    tok1("STRING", "\"\"");
+    tok1("STRING", "\"foo\"");
+    tok1("STRING", "\"one \\\" two\"");
+
+    tok1("SYMBOL", "foo");
+    tok1("SYMBOL", "fooBar");
+    tok1("SYMBOL", "Baz_qux");
+
+    tok1("COMMENT", "; some comment");
+
+    tok1("RAW", "{");
+    tok1("RAW", "==");
+    tok1("RAW", "!");
+    tok1("RAW", "!=");
+    tok1("RAW", "|");
+    tok1("RAW", "||");
+
+
+    var testOrder = function(src, tok_order){
+        t.deepEquals(_.map(tokenizer(src), function(tok){
+            if(tok.type === "RAW"){
+                return tok.src;
+            }
+            return tok.type;
+        }), tok_order);
+    };
+
+    testOrder("123 \"four\"\nblah", [
+        "NUMBER",
+        "SPACES",
+        "STRING",
+        "NEWLINE",
+        "SYMBOL",
+    ]);
+
+    testOrder("10 0.1 1.0", [
+        "NUMBER",
+        "SPACES",
+        "NUMBER",
+        "SPACES",
+        "NUMBER",
+    ]);
 
     testOrder("({[]})", ["(", "{", "[", "]", "}", ")"]);
+
+
     testOrder("deps:\n    1", [
         "SYMBOL",
         ":",
@@ -34,8 +72,8 @@ test("tokenizer", function(t){
         "INDENT",
         "NUMBER",
         "DEDENT",
-        "NEWLINE",
     ]);
+
     testOrder("deps:\n        1", [
         "SYMBOL",
         ":",
@@ -44,9 +82,7 @@ test("tokenizer", function(t){
         "INDENT",
         "NUMBER",
         "DEDENT",
-        "NEWLINE",
         "DEDENT",
-        "NEWLINE",
     ]);
     testOrder("deps:\n        1\n    2", [
         "SYMBOL",
@@ -57,10 +93,8 @@ test("tokenizer", function(t){
         "NUMBER",
         "NEWLINE",
         "DEDENT",
-        "NEWLINE",
         "NUMBER",
         "DEDENT",
-        "NEWLINE",
     ]);
     testOrder("deps:\n        1    3\n    2", [
         "SYMBOL",
@@ -69,13 +103,12 @@ test("tokenizer", function(t){
         "INDENT",
         "INDENT",
         "NUMBER",
+        "SPACES",
         "NUMBER",
         "NEWLINE",
         "DEDENT",
-        "NEWLINE",
         "NUMBER",
         "DEDENT",
-        "NEWLINE",
     ]);
 
     var src = "";
@@ -89,23 +122,23 @@ test("tokenizer", function(t){
         "NEWLINE",
         "INDENT",
         "SYMBOL",
+        "SPACES",
         "[",
         "NEWLINE",
         "INDENT",
         "NUMBER",
         "NEWLINE",
         "DEDENT",
-        "NEWLINE",
         "]",
         "NEWLINE",
         "DEDENT",
-        "NEWLINE",
     ]);
 
     testOrder("1;some comment\n2", [
         "NUMBER",
+        "COMMENT",
         "NEWLINE",
-        "NUMBER"
+        "NUMBER",
     ]);
 
     testOrder("[\n    1,\n    2,\n]", [
@@ -115,33 +148,21 @@ test("tokenizer", function(t){
         "NUMBER", ",", "NEWLINE",
         "NUMBER", ",", "NEWLINE",
         "DEDENT",
-        "NEWLINE",
         "]"
     ]);
 
     testOrder("1\n;some comment", [
         "NUMBER",
         "NEWLINE",
+        "COMMENT",
     ]);
 
     testOrder("1\n;some comment\n2", [
         "NUMBER",
         "NEWLINE",
+        "COMMENT",
+        "NEWLINE",
         "NUMBER",
-    ]);
-
-    testOrder("a\n    1\n\n        :", [
-        "SYMBOL",
-        "NEWLINE",
-        "INDENT",
-        "NUMBER",
-        "NEWLINE",
-        "INDENT",
-        ":",
-        "DEDENT",
-        "NEWLINE",
-        "DEDENT",
-        "NEWLINE",
     ]);
 
     t.end();
