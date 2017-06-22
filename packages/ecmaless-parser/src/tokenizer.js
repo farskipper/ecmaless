@@ -1,6 +1,22 @@
 module.exports = function(src, opts){
     opts = opts || {};
 
+    var throwOnInvalidChar = function(c, message){
+        var i = src.indexOf(c);
+        if(i >= 0){
+            var err = new Error(message);
+            err.ecmaless_tokenizer = {
+                src: c,
+                loc: {start: i, end: i + 1},
+            };
+            throw err;
+        }
+    };
+
+    throwOnInvalidChar("\t", "Tabs (\\t) are not allowed. Just use 4 spaces instead.");
+    throwOnInvalidChar("\r", "Carriage returns (\\r) are not allowed. Use newline (\\n) instead.");
+
+
     var tokens = [];
 
     var ind;

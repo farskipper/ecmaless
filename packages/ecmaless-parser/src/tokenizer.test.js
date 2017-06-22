@@ -177,5 +177,27 @@ test("tokenizer", function(t){
         "NUMBER |2",
     ]);
 
+    try{
+        tokenizer("a:\n\tb");
+        t.fail("should throw on tabs");
+    }catch(e){
+        t.equals(e.message, "Tabs (\\t) are not allowed. Just use 4 spaces instead.", "no tabs");
+        t.deepEquals(e.ecmaless_tokenizer, {
+            src: "\t",
+            loc: {start: 3, end: 4},
+        }, "no tabs");
+    }
+
+    try{
+        tokenizer("a:\r\n    b");
+        t.fail("should throw on \\r");
+    }catch(e){
+        t.equals(e.message, "Carriage returns (\\r) are not allowed. Use newline (\\n) instead.", "no \\r");
+        t.deepEquals(e.ecmaless_tokenizer, {
+            src: "\r",
+            loc: {start: 2, end: 3},
+        }, "no \\r");
+    }
+
     t.end();
 });
