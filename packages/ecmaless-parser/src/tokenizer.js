@@ -63,6 +63,7 @@ module.exports = function(src, opts){
                     buff += c;
                     if(buff === "    "){
                         ind++;
+                        next_start += 4;
                         buff = "";
                     }
                     if(src[i + 1] !== " "){

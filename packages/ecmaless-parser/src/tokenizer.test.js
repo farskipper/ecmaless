@@ -37,10 +37,14 @@ test("tokenizer", function(t){
     tok1("RAW", "||");
 
 
-    var testTokens = function(src, tok_order){
-        t.deepEquals(_.map(tokenizer(src), function(tok){
+    var testTokens = function(src, expected){
+        var tokens = tokenizer(src);
+
+        t.deepEquals(_.map(tokens, function(tok){
+            var loc_src = src.substring(tok.loc.start, tok.loc.end);
+            t.equals(tok.src, loc_src, "loc should point to the same src string");
             return _.padEnd(tok.type, 7) + "|" + tok.src;
-        }), tok_order);
+        }), expected);
     };
 
     testTokens("123 \"four\"\nblah", [
