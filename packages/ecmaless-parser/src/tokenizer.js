@@ -4,12 +4,12 @@ module.exports = function(src, opts){
     var throwOnInvalidChar = function(c, message){
         var i = src.indexOf(c);
         if(i >= 0){
-            var err = new Error(message);
-            err.ecmaless_tokenizer = {
+            throw {
+                type: "InvalidTokenizer",
+                message: message,
                 src: c,
                 loc: {start: i, end: i + 1},
             };
-            throw err;
         }
     };
 
@@ -88,6 +88,14 @@ module.exports = function(src, opts){
                     i++;
                 }
             }
+            if(buff.length > 0){
+                throw {
+                    type: "InvalidIndentation",
+                    message: "use 4 spaces indentation",
+                    src: buff,
+                    loc: {start: next_start, end: next_start + buff.length},
+                };
+            }
             while(ind > indent_stack[0]){
                 indent_stack.unshift(indent_stack[0] + 1);
                 pushTok("INDENT");
@@ -95,9 +103,6 @@ module.exports = function(src, opts){
             while(ind < indent_stack[0]){
                 pushTok("DEDENT");
                 indent_stack.shift();
-            }
-            if(buff.length > 0){
-                pushTok("SPACES");
             }
 
         ////////////////////////////////////////////////////////////////////////

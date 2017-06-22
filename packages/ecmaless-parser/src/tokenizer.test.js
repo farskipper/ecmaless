@@ -181,8 +181,9 @@ test("tokenizer", function(t){
         tokenizer("a:\n\tb");
         t.fail("should throw on tabs");
     }catch(e){
-        t.equals(e.message, "Tabs (\\t) are not allowed. Just use 4 spaces instead.", "no tabs");
-        t.deepEquals(e.ecmaless_tokenizer, {
+        t.deepEquals(e, {
+            type: "TokenizerError",
+            message: "Tabs (\\t) are not allowed. Just use 4 spaces instead.",
             src: "\t",
             loc: {start: 3, end: 4},
         }, "no tabs");
@@ -192,11 +193,48 @@ test("tokenizer", function(t){
         tokenizer("a:\r\n    b");
         t.fail("should throw on \\r");
     }catch(e){
-        t.equals(e.message, "Carriage returns (\\r) are not allowed. Use newline (\\n) instead.", "no \\r");
-        t.deepEquals(e.ecmaless_tokenizer, {
+        t.deepEquals(e, {
+            type: "TokenizerError",
+            message: "Carriage returns (\\r) are not allowed. Use newline (\\n) instead.",
             src: "\r",
             loc: {start: 2, end: 3},
         }, "no \\r");
+    }
+
+    try{
+        tokenizer("a:\n  b");
+        t.fail("should throw on invalid indent");
+    }catch(e){
+        t.deepEquals(e, {
+            type: "InvalidIndentation",
+            message: "use 4 spaces indentation",
+            src: "  ",
+            loc: {start: 3, end: 5},
+        }, "throw on invalid indent");
+    }
+
+    try{
+        tokenizer("a:\n     b");
+        t.fail("should throw on invalid indent");
+    }catch(e){
+        t.deepEquals(e, {
+            type: "InvalidIndentation",
+            message: "use 4 spaces indentation",
+            src: " ",
+            loc: {start: 7, end: 8},
+        }, "throw on invalid indent");
+    }
+
+    try{
+        tokenizer("a:\n    b\n   c");
+        t.fail("should throw on invalid indent");
+    }catch(e){
+        t.deepEquals(e, {
+            type: "InvalidIndentation",
+            message: "use 4 spaces indentation",
+            src: "   ",
+            loc: {start: 9, end: 12},
+        }, "throw on invalid indent");
     }
 
     t.end();
