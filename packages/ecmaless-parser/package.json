@@ -10,7 +10,7 @@
     "start": "onchange 'src/' -e 'src/grammar.js' -i -- npm test",
     "build": "nearleyc src/grammar.ne > src/grammar.js && node src/genSpec.js > spec.md",
     "lint": "eslint --ignore-pattern 'src/grammar.*' src/ && echo lint-ok",
-    "test": "npm run build && npm run lint -s && node src/tests.js"
+    "test": "npm run build && npm run lint -s && node src/tests.js | tap-diff"
   },
   "repository": {
     "type": "git",
@@ -32,6 +32,7 @@
     "json-stringify-pretty-compact": "^1.0.4",
     "lodash": "^4.17.4",
     "onchange": "^3.2.1",
+    "tap-diff": "^0.1.1",
     "tape": "^4.6.3"
   },
   "dependencies": {

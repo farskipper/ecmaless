@@ -19,9 +19,6 @@ module.exports = function(src, opts){
 
     var tokens = [];
 
-    var ind;
-    var indent_stack = [0];
-
     var next_is_escaped;
 
     var c;
@@ -67,43 +64,10 @@ module.exports = function(src, opts){
 
 
         ////////////////////////////////////////////////////////////////////////
-        //newlines and indentation
+        //newline
         }else if(c === "\n"){
             ctxChange();
             pushTok("NEWLINE");
-            ind = 0;
-            if(src[i + 1] === " "){
-                i++;
-                while(i < src.length){
-                    c = src[i];
-                    buff += c;
-                    if(buff === "    "){
-                        ind++;
-                        next_start += 4;
-                        buff = "";
-                    }
-                    if(src[i + 1] !== " "){
-                        break;
-                    }
-                    i++;
-                }
-            }
-            if(buff.length > 0){
-                throw {
-                    type: "InvalidIndentation",
-                    message: "use 4 spaces indentation",
-                    src: buff,
-                    loc: {start: next_start, end: next_start + buff.length},
-                };
-            }
-            while(ind > indent_stack[0]){
-                indent_stack.unshift(indent_stack[0] + 1);
-                pushTok("INDENT");
-            }
-            while(ind < indent_stack[0]){
-                pushTok("DEDENT");
-                indent_stack.shift();
-            }
 
         ////////////////////////////////////////////////////////////////////////
         //string
@@ -199,12 +163,6 @@ module.exports = function(src, opts){
         i++;
     }
     ctxChange();
-
-    buff = "";
-    while(0 < indent_stack[0]){
-        pushTok("DEDENT");
-        indent_stack.shift();
-    }
 
     return tokens;
 };

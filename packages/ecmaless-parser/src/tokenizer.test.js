@@ -73,52 +73,6 @@ test("tokenizer", function(t){
     ]);
 
 
-    testTokens("deps:\n    1", [
-        "SYMBOL |deps",
-        "RAW    |:",
-        "NEWLINE|\n",
-        "INDENT |",
-        "NUMBER |1",
-        "DEDENT |",
-    ]);
-
-    testTokens("deps:\n        1", [
-        "SYMBOL |deps",
-        "RAW    |:",
-        "NEWLINE|\n",
-        "INDENT |",
-        "INDENT |",
-        "NUMBER |1",
-        "DEDENT |",
-        "DEDENT |",
-    ]);
-    testTokens("deps:\n        1\n    2", [
-        "SYMBOL |deps",
-        "RAW    |:",
-        "NEWLINE|\n",
-        "INDENT |",
-        "INDENT |",
-        "NUMBER |1",
-        "NEWLINE|\n",
-        "DEDENT |",
-        "NUMBER |2",
-        "DEDENT |",
-    ]);
-    testTokens("deps:\n        1    3\n    2", [
-        "SYMBOL |deps",
-        "RAW    |:",
-        "NEWLINE|\n",
-        "INDENT |",
-        "INDENT |",
-        "NUMBER |1",
-        "SPACES |    ",
-        "NUMBER |3",
-        "NEWLINE|\n",
-        "DEDENT |",
-        "NUMBER |2",
-        "DEDENT |",
-    ]);
-
     var src = "";
     src += "deps:\n";
     src += "    a [\n";
@@ -128,18 +82,17 @@ test("tokenizer", function(t){
         "SYMBOL |deps",
         "RAW    |:",
         "NEWLINE|\n",
-        "INDENT |",
+        "SPACES |    ",
         "SYMBOL |a",
         "SPACES | ",
         "RAW    |[",
         "NEWLINE|\n",
-        "INDENT |",
+        "SPACES |        ",
         "NUMBER |1",
         "NEWLINE|\n",
-        "DEDENT |",
+        "SPACES |    ",
         "RAW    |]",
         "NEWLINE|\n",
-        "DEDENT |",
     ]);
 
     testTokens("1;some comment\n2", [
@@ -152,14 +105,14 @@ test("tokenizer", function(t){
     testTokens("[\n    1,\n    2,\n]", [
         "RAW    |[",
         "NEWLINE|\n",
-        "INDENT |",
+        "SPACES |    ",
         "NUMBER |1",
         "RAW    |,",
         "NEWLINE|\n",
+        "SPACES |    ",
         "NUMBER |2",
         "RAW    |,",
         "NEWLINE|\n",
-        "DEDENT |",
         "RAW    |]"
     ]);
 
@@ -201,41 +154,6 @@ test("tokenizer", function(t){
         }, "no \\r");
     }
 
-    try{
-        tokenizer("a:\n  b");
-        t.fail("should throw on invalid indent");
-    }catch(e){
-        t.deepEquals(e, {
-            type: "InvalidIndentation",
-            message: "use 4 spaces indentation",
-            src: "  ",
-            loc: {start: 3, end: 5},
-        }, "throw on invalid indent");
-    }
-
-    try{
-        tokenizer("a:\n     b");
-        t.fail("should throw on invalid indent");
-    }catch(e){
-        t.deepEquals(e, {
-            type: "InvalidIndentation",
-            message: "use 4 spaces indentation",
-            src: " ",
-            loc: {start: 7, end: 8},
-        }, "throw on invalid indent");
-    }
-
-    try{
-        tokenizer("a:\n    b\n   c");
-        t.fail("should throw on invalid indent");
-    }catch(e){
-        t.deepEquals(e, {
-            type: "InvalidIndentation",
-            message: "use 4 spaces indentation",
-            src: "   ",
-            loc: {start: 9, end: 12},
-        }, "throw on invalid indent");
-    }
 
     t.end();
 });
