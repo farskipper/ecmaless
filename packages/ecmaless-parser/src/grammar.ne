@@ -53,18 +53,18 @@ var tok_SYMBOL = tok("SYMBOL");
 var tok_INDENT = tok("INDENT");
 var tok_DEDENT = tok("DEDENT");
 var tok_NL = tok("NEWLINE");
-var tok_COLON = tok(":");
-var tok_COMMA = tok(",");
-var tok_DOT = tok(".");
-var tok_QUESTION = tok("?");
-var tok_DOTDOTDOT = tok("...");
-var tok_EQ = tok("=");
-var tok_OPEN_PN = tok("(");
-var tok_CLOSE_PN = tok(")");
-var tok_OPEN_SQ = tok("[");
-var tok_CLOSE_SQ = tok("]");
-var tok_OPEN_CU = tok("{");
-var tok_CLOSE_CU = tok("}");
+var tok_COLON = tok("RAW", ":");
+var tok_COMMA = tok("RAW", ",");
+var tok_DOT = tok("RAW", ".");
+var tok_QUESTION = tok("RAW", "?");
+var tok_DOTDOTDOT = tok("RAW", "...");
+var tok_EQ = tok("RAW", "=");
+var tok_OPEN_PN = tok("RAW", "(");
+var tok_CLOSE_PN = tok("RAW", ")");
+var tok_OPEN_SQ = tok("RAW", "[");
+var tok_CLOSE_SQ = tok("RAW", "]");
+var tok_OPEN_CU = tok("RAW", "{");
+var tok_CLOSE_CU = tok("RAW", "}");
 
 var tok_deps = tok("SYMBOL", "deps");
 var tok_def = tok("SYMBOL", "def");
@@ -88,22 +88,22 @@ var isReserved = function(src){
   return reserved[src] === true;
 };
 
-var tok_OR = tok("||");
-var tok_AND = tok("&&");
-var tok_EQEQ = tok("==");
-var tok_NOTEQ = tok("!=");
-var tok_EQEQEQ = tok("===");
-var tok_NOTEQEQ = tok("!==");
-var tok_LT = tok("<");
-var tok_LTEQ = tok("<=");
-var tok_GT = tok(">");
-var tok_GTEQ = tok(">=");
-var tok_PLUS = tok("+");
-var tok_MINUS = tok("-");
-var tok_TIMES = tok("*");
-var tok_DIVIDE = tok("/");
-var tok_MODULO = tok("%");
-var tok_BANG = tok("!");
+var tok_OR = tok("RAW", "||");
+var tok_AND = tok("RAW", "&&");
+var tok_EQEQ = tok("RAW", "==");
+var tok_NOTEQ = tok("RAW", "!=");
+var tok_EQEQEQ = tok("RAW", "===");
+var tok_NOTEQEQ = tok("RAW", "!==");
+var tok_LT = tok("RAW", "<");
+var tok_LTEQ = tok("RAW", "<=");
+var tok_GT = tok("RAW", ">");
+var tok_GTEQ = tok("RAW", ">=");
+var tok_PLUS = tok("RAW", "+");
+var tok_MINUS = tok("RAW", "-");
+var tok_TIMES = tok("RAW", "*");
+var tok_DIVIDE = tok("RAW", "/");
+var tok_MODULO = tok("RAW", "%");
+var tok_BANG = tok("RAW", "!");
 
 var mkType = function(d, type, value){
   return {
@@ -174,14 +174,14 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 
 %}
 
-main -> _NL Dependencies:? Statement_list _NL {% function(d){
+main -> NL:? Dependencies:? Statement_list {% function(d){
   if(d[1]){
     return [d[1]].concat(d[2]);
   }
   return d[2];
 } %}
 
-Dependencies -> %tok_deps %tok_COLON NL INDENT Dependency_list NL DEDENT NL {% function(d){
+Dependencies -> %tok_deps %tok_COLON NL INDENT Dependency:+ DEDENT NL {% function(d){
   return {
     loc: mkLoc(d),
     type: "Dependencies",
@@ -189,10 +189,7 @@ Dependencies -> %tok_deps %tok_COLON NL INDENT Dependency_list NL DEDENT NL {% f
   };
 } %}
 
-Dependency_list -> Dependency {% idArr %}
-    | Dependency_list NL Dependency {% concatArr(2) %}
-
-Dependency -> Identifier String {% function(d){
+Dependency -> Identifier String NL {% function(d){
   return {
     loc: mkLoc(d),
     type: "Dependency",
@@ -204,8 +201,8 @@ Dependency -> Identifier String {% function(d){
 ################################################################################
 # Statement
 
-Statement_list -> Statement {% idArr %}
-    | Statement_list NL Statement {% concatArr(2) %}
+Statement_list -> Statement NL {% idArr %}
+    | Statement_list Statement NL {% concatArr(1) %}
 
 Statement ->
       Define {% id %}
@@ -276,17 +273,14 @@ Break -> %tok_break
 Continue -> %tok_continue
     {% function(d){return {loc: d[0].loc, type: "Continue"};} %}
 
-Cond -> %tok_cond %tok_COLON NL INDENT CondBlocks (ElseBlock NL):? DEDENT {% function(d){
+Cond -> %tok_cond %tok_COLON NL INDENT CondBlock:* (ElseBlock NL):? DEDENT {% function(d){
   return {
     loc: mkLoc(d),
     type: "Cond",
     blocks: d[4],
-    "else": d[5] && d[5][0]
+    "else": d[5] && d[5][0],
   };
 } %}
-
-CondBlocks -> CondBlock {% idArr %}
-    | CondBlocks CondBlock {% concatArr(1) %}
 
 CondBlock -> Expression Block NL {%
   function(d){
@@ -299,18 +293,15 @@ CondBlock -> Expression Block NL {%
   }
 %}
 
-Case -> %tok_case Expression %tok_COLON NL INDENT CaseBlocks (ElseBlock NL):? DEDENT {% function(d){
+Case -> %tok_case Expression %tok_COLON NL INDENT CaseBlock:* (ElseBlock NL):? DEDENT {% function(d){
   return {
     loc: mkLoc(d),
     type: "Case",
     to_test: d[1],
     blocks: d[5],
-    "else": d[6] && d[6][0]
+    "else": d[6] && d[6][0],
   };
 } %}
-
-CaseBlocks -> CaseBlock {% idArr %}
-    | CaseBlocks CaseBlock {% concatArr(1) %}
 
 CaseBlock -> Expression Block NL {%
   function(d){
@@ -331,7 +322,7 @@ TryCatch ->
 
 ElseBlock -> %tok_else Block {% idN(1) %}
 
-Block -> %tok_COLON NL INDENT Statement_list _NL DEDENT {%
+Block -> %tok_COLON NL INDENT Statement_list DEDENT {%
   function(d){
     return {
       loc: mkLoc(d),
@@ -432,25 +423,25 @@ Application -> MemberExpression %tok_OPEN_PN Expression_list %tok_CLOSE_PN {% fu
   };
 } %}
 
-Struct -> %tok_OPEN_CU _NL KeyValPairs %tok_CLOSE_CU {% function(d){
+Struct -> %tok_OPEN_CU KeyValPairs %tok_CLOSE_CU {% function(d){
   return {
     loc: mkLoc(d),
     type: "Struct",
-    value: d[2]
+    value: d[1]
   };
 } %}
 
 KeyValPairs -> null {% noopArr %}
     | KeyValPairs_body {% id %}
-    | NL INDENT KeyValPairs_body_nl COMMA NL DEDENT NL {% idN(2) %}
+    | NL INDENT KeyValPairs_body_nl DEDENT NL {% idN(2) %}
 
 KeyValPairs_body ->
       KeyValPair {% id %}
     | KeyValPairs_body COMMA KeyValPair {% concatArr(2, true) %}
 
 KeyValPairs_body_nl ->
-      KeyValPair {% id %}
-    | KeyValPairs_body_nl COMMA NL KeyValPair {% concatArr(3, true) %}
+      KeyValPair COMMA NL {% id %}
+    | KeyValPairs_body_nl KeyValPair COMMA NL {% concatArr(1, true) %}
 
 KeyValPair -> (String|Number|Symbol) %tok_COLON Expression {% function(d){
   return [d[0][0], d[2]];
@@ -466,15 +457,15 @@ Array -> %tok_OPEN_SQ Expression_list %tok_CLOSE_SQ {% function(d){
 
 Expression_list -> null {% noopArr %}
     | Expression_list_body {% id %}
-    | NL INDENT Expression_list_body_nl _NL COMMA NL DEDENT NL {% idN(2) %}
+    | NL INDENT Expression_list_body_nl DEDENT NL {% idN(2) %}
 
 Expression_list_body ->
       Expression {% idArr %}
     | Expression_list_body COMMA Expression {% concatArr(2) %}
 
 Expression_list_body_nl ->
-      Expression {% idArr %}
-    | Expression_list_body_nl _NL COMMA NL Expression {% concatArr(4) %}
+      Expression NL:? COMMA NL {% idArr %}
+    | Expression_list_body_nl Expression NL:? COMMA NL {% concatArr(1) %}
 
 
 Function -> %tok_fn Params Block {% function(d){
@@ -542,5 +533,4 @@ DEDENT -> %tok_DEDENT {% id %}
 
 COMMA -> %tok_COMMA {% id %}
 
-NL -> %tok_NL {% noop %}
-_NL -> null {% noop %} | %tok_NL {% noop %}
+NL -> %tok_NL {% id %}

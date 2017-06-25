@@ -57,18 +57,18 @@ var tok_SYMBOL = tok("SYMBOL");
 var tok_INDENT = tok("INDENT");
 var tok_DEDENT = tok("DEDENT");
 var tok_NL = tok("NEWLINE");
-var tok_COLON = tok(":");
-var tok_COMMA = tok(",");
-var tok_DOT = tok(".");
-var tok_QUESTION = tok("?");
-var tok_DOTDOTDOT = tok("...");
-var tok_EQ = tok("=");
-var tok_OPEN_PN = tok("(");
-var tok_CLOSE_PN = tok(")");
-var tok_OPEN_SQ = tok("[");
-var tok_CLOSE_SQ = tok("]");
-var tok_OPEN_CU = tok("{");
-var tok_CLOSE_CU = tok("}");
+var tok_COLON = tok("RAW", ":");
+var tok_COMMA = tok("RAW", ",");
+var tok_DOT = tok("RAW", ".");
+var tok_QUESTION = tok("RAW", "?");
+var tok_DOTDOTDOT = tok("RAW", "...");
+var tok_EQ = tok("RAW", "=");
+var tok_OPEN_PN = tok("RAW", "(");
+var tok_CLOSE_PN = tok("RAW", ")");
+var tok_OPEN_SQ = tok("RAW", "[");
+var tok_CLOSE_SQ = tok("RAW", "]");
+var tok_OPEN_CU = tok("RAW", "{");
+var tok_CLOSE_CU = tok("RAW", "}");
 
 var tok_deps = tok("SYMBOL", "deps");
 var tok_def = tok("SYMBOL", "def");
@@ -92,22 +92,22 @@ var isReserved = function(src){
   return reserved[src] === true;
 };
 
-var tok_OR = tok("||");
-var tok_AND = tok("&&");
-var tok_EQEQ = tok("==");
-var tok_NOTEQ = tok("!=");
-var tok_EQEQEQ = tok("===");
-var tok_NOTEQEQ = tok("!==");
-var tok_LT = tok("<");
-var tok_LTEQ = tok("<=");
-var tok_GT = tok(">");
-var tok_GTEQ = tok(">=");
-var tok_PLUS = tok("+");
-var tok_MINUS = tok("-");
-var tok_TIMES = tok("*");
-var tok_DIVIDE = tok("/");
-var tok_MODULO = tok("%");
-var tok_BANG = tok("!");
+var tok_OR = tok("RAW", "||");
+var tok_AND = tok("RAW", "&&");
+var tok_EQEQ = tok("RAW", "==");
+var tok_NOTEQ = tok("RAW", "!=");
+var tok_EQEQEQ = tok("RAW", "===");
+var tok_NOTEQEQ = tok("RAW", "!==");
+var tok_LT = tok("RAW", "<");
+var tok_LTEQ = tok("RAW", "<=");
+var tok_GT = tok("RAW", ">");
+var tok_GTEQ = tok("RAW", ">=");
+var tok_PLUS = tok("RAW", "+");
+var tok_MINUS = tok("RAW", "-");
+var tok_TIMES = tok("RAW", "*");
+var tok_DIVIDE = tok("RAW", "/");
+var tok_MODULO = tok("RAW", "%");
+var tok_BANG = tok("RAW", "!");
 
 var mkType = function(d, type, value){
   return {
@@ -179,24 +179,26 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 var grammar = {
     Lexer: undefined,
     ParserRules: [
-    {"name": "main$ebnf$1", "symbols": ["Dependencies"], "postprocess": id},
+    {"name": "main$ebnf$1", "symbols": ["NL"], "postprocess": id},
     {"name": "main$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "main", "symbols": ["_NL", "main$ebnf$1", "Statement_list", "_NL"], "postprocess":  function(d){
+    {"name": "main$ebnf$2", "symbols": ["Dependencies"], "postprocess": id},
+    {"name": "main$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "main", "symbols": ["main$ebnf$1", "main$ebnf$2", "Statement_list"], "postprocess":  function(d){
           if(d[1]){
             return [d[1]].concat(d[2]);
           }
           return d[2];
         } },
-    {"name": "Dependencies", "symbols": [tok_deps, tok_COLON, "NL", "INDENT", "Dependency_list", "NL", "DEDENT", "NL"], "postprocess":  function(d){
+    {"name": "Dependencies$ebnf$1", "symbols": ["Dependency"]},
+    {"name": "Dependencies$ebnf$1", "symbols": ["Dependencies$ebnf$1", "Dependency"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "Dependencies", "symbols": [tok_deps, tok_COLON, "NL", "INDENT", "Dependencies$ebnf$1", "DEDENT", "NL"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
             type: "Dependencies",
             dependencies: d[4]
           };
         } },
-    {"name": "Dependency_list", "symbols": ["Dependency"], "postprocess": idArr},
-    {"name": "Dependency_list", "symbols": ["Dependency_list", "NL", "Dependency"], "postprocess": concatArr(2)},
-    {"name": "Dependency", "symbols": ["Identifier", "String"], "postprocess":  function(d){
+    {"name": "Dependency", "symbols": ["Identifier", "String", "NL"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
             type: "Dependency",
@@ -204,8 +206,8 @@ var grammar = {
             path: d[1]
           };
         } },
-    {"name": "Statement_list", "symbols": ["Statement"], "postprocess": idArr},
-    {"name": "Statement_list", "symbols": ["Statement_list", "NL", "Statement"], "postprocess": concatArr(2)},
+    {"name": "Statement_list", "symbols": ["Statement", "NL"], "postprocess": idArr},
+    {"name": "Statement_list", "symbols": ["Statement_list", "Statement", "NL"], "postprocess": concatArr(1)},
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
     {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
     {"name": "Statement", "symbols": ["Return"], "postprocess": id},
@@ -275,19 +277,19 @@ var grammar = {
         } },
     {"name": "Break", "symbols": [tok_break], "postprocess": function(d){return {loc: d[0].loc, type: "Break"};}},
     {"name": "Continue", "symbols": [tok_continue], "postprocess": function(d){return {loc: d[0].loc, type: "Continue"};}},
-    {"name": "Cond$ebnf$1$subexpression$1", "symbols": ["ElseBlock", "NL"]},
-    {"name": "Cond$ebnf$1", "symbols": ["Cond$ebnf$1$subexpression$1"], "postprocess": id},
-    {"name": "Cond$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Cond", "symbols": [tok_cond, tok_COLON, "NL", "INDENT", "CondBlocks", "Cond$ebnf$1", "DEDENT"], "postprocess":  function(d){
+    {"name": "Cond$ebnf$1", "symbols": []},
+    {"name": "Cond$ebnf$1", "symbols": ["Cond$ebnf$1", "CondBlock"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "Cond$ebnf$2$subexpression$1", "symbols": ["ElseBlock", "NL"]},
+    {"name": "Cond$ebnf$2", "symbols": ["Cond$ebnf$2$subexpression$1"], "postprocess": id},
+    {"name": "Cond$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Cond", "symbols": [tok_cond, tok_COLON, "NL", "INDENT", "Cond$ebnf$1", "Cond$ebnf$2", "DEDENT"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
             type: "Cond",
             blocks: d[4],
-            "else": d[5] && d[5][0]
+            "else": d[5] && d[5][0],
           };
         } },
-    {"name": "CondBlocks", "symbols": ["CondBlock"], "postprocess": idArr},
-    {"name": "CondBlocks", "symbols": ["CondBlocks", "CondBlock"], "postprocess": concatArr(1)},
     {"name": "CondBlock", "symbols": ["Expression", "Block", "NL"], "postprocess": 
         function(d){
           return {
@@ -298,20 +300,20 @@ var grammar = {
           };
         }
         },
-    {"name": "Case$ebnf$1$subexpression$1", "symbols": ["ElseBlock", "NL"]},
-    {"name": "Case$ebnf$1", "symbols": ["Case$ebnf$1$subexpression$1"], "postprocess": id},
-    {"name": "Case$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Case", "symbols": [tok_case, "Expression", tok_COLON, "NL", "INDENT", "CaseBlocks", "Case$ebnf$1", "DEDENT"], "postprocess":  function(d){
+    {"name": "Case$ebnf$1", "symbols": []},
+    {"name": "Case$ebnf$1", "symbols": ["Case$ebnf$1", "CaseBlock"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "Case$ebnf$2$subexpression$1", "symbols": ["ElseBlock", "NL"]},
+    {"name": "Case$ebnf$2", "symbols": ["Case$ebnf$2$subexpression$1"], "postprocess": id},
+    {"name": "Case$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Case", "symbols": [tok_case, "Expression", tok_COLON, "NL", "INDENT", "Case$ebnf$1", "Case$ebnf$2", "DEDENT"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
             type: "Case",
             to_test: d[1],
             blocks: d[5],
-            "else": d[6] && d[6][0]
+            "else": d[6] && d[6][0],
           };
         } },
-    {"name": "CaseBlocks", "symbols": ["CaseBlock"], "postprocess": idArr},
-    {"name": "CaseBlocks", "symbols": ["CaseBlocks", "CaseBlock"], "postprocess": concatArr(1)},
     {"name": "CaseBlock", "symbols": ["Expression", "Block", "NL"], "postprocess": 
         function(d){
           return {
@@ -326,7 +328,7 @@ var grammar = {
     {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(-1, -1, 4)},
     {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(4, 5, 8)},
     {"name": "ElseBlock", "symbols": [tok_else, "Block"], "postprocess": idN(1)},
-    {"name": "Block", "symbols": [tok_COLON, "NL", "INDENT", "Statement_list", "_NL", "DEDENT"], "postprocess": 
+    {"name": "Block", "symbols": [tok_COLON, "NL", "INDENT", "Statement_list", "DEDENT"], "postprocess": 
         function(d){
           return {
             loc: mkLoc(d),
@@ -409,20 +411,20 @@ var grammar = {
             args: d[2]
           };
         } },
-    {"name": "Struct", "symbols": [tok_OPEN_CU, "_NL", "KeyValPairs", tok_CLOSE_CU], "postprocess":  function(d){
+    {"name": "Struct", "symbols": [tok_OPEN_CU, "KeyValPairs", tok_CLOSE_CU], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
             type: "Struct",
-            value: d[2]
+            value: d[1]
           };
         } },
     {"name": "KeyValPairs", "symbols": [], "postprocess": noopArr},
     {"name": "KeyValPairs", "symbols": ["KeyValPairs_body"], "postprocess": id},
-    {"name": "KeyValPairs", "symbols": ["NL", "INDENT", "KeyValPairs_body_nl", "COMMA", "NL", "DEDENT", "NL"], "postprocess": idN(2)},
+    {"name": "KeyValPairs", "symbols": ["NL", "INDENT", "KeyValPairs_body_nl", "DEDENT", "NL"], "postprocess": idN(2)},
     {"name": "KeyValPairs_body", "symbols": ["KeyValPair"], "postprocess": id},
     {"name": "KeyValPairs_body", "symbols": ["KeyValPairs_body", "COMMA", "KeyValPair"], "postprocess": concatArr(2, true)},
-    {"name": "KeyValPairs_body_nl", "symbols": ["KeyValPair"], "postprocess": id},
-    {"name": "KeyValPairs_body_nl", "symbols": ["KeyValPairs_body_nl", "COMMA", "NL", "KeyValPair"], "postprocess": concatArr(3, true)},
+    {"name": "KeyValPairs_body_nl", "symbols": ["KeyValPair", "COMMA", "NL"], "postprocess": id},
+    {"name": "KeyValPairs_body_nl", "symbols": ["KeyValPairs_body_nl", "KeyValPair", "COMMA", "NL"], "postprocess": concatArr(1, true)},
     {"name": "KeyValPair$subexpression$1", "symbols": ["String"]},
     {"name": "KeyValPair$subexpression$1", "symbols": ["Number"]},
     {"name": "KeyValPair$subexpression$1", "symbols": ["Symbol"]},
@@ -438,11 +440,15 @@ var grammar = {
         } },
     {"name": "Expression_list", "symbols": [], "postprocess": noopArr},
     {"name": "Expression_list", "symbols": ["Expression_list_body"], "postprocess": id},
-    {"name": "Expression_list", "symbols": ["NL", "INDENT", "Expression_list_body_nl", "_NL", "COMMA", "NL", "DEDENT", "NL"], "postprocess": idN(2)},
+    {"name": "Expression_list", "symbols": ["NL", "INDENT", "Expression_list_body_nl", "DEDENT", "NL"], "postprocess": idN(2)},
     {"name": "Expression_list_body", "symbols": ["Expression"], "postprocess": idArr},
     {"name": "Expression_list_body", "symbols": ["Expression_list_body", "COMMA", "Expression"], "postprocess": concatArr(2)},
-    {"name": "Expression_list_body_nl", "symbols": ["Expression"], "postprocess": idArr},
-    {"name": "Expression_list_body_nl", "symbols": ["Expression_list_body_nl", "_NL", "COMMA", "NL", "Expression"], "postprocess": concatArr(4)},
+    {"name": "Expression_list_body_nl$ebnf$1", "symbols": ["NL"], "postprocess": id},
+    {"name": "Expression_list_body_nl$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Expression_list_body_nl", "symbols": ["Expression", "Expression_list_body_nl$ebnf$1", "COMMA", "NL"], "postprocess": idArr},
+    {"name": "Expression_list_body_nl$ebnf$2", "symbols": ["NL"], "postprocess": id},
+    {"name": "Expression_list_body_nl$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Expression_list_body_nl", "symbols": ["Expression_list_body_nl", "Expression", "Expression_list_body_nl$ebnf$2", "COMMA", "NL"], "postprocess": concatArr(1)},
     {"name": "Function", "symbols": [tok_fn, "Params", "Block"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
@@ -501,9 +507,7 @@ var grammar = {
     {"name": "INDENT", "symbols": [tok_INDENT], "postprocess": id},
     {"name": "DEDENT", "symbols": [tok_DEDENT], "postprocess": id},
     {"name": "COMMA", "symbols": [tok_COMMA], "postprocess": id},
-    {"name": "NL", "symbols": [tok_NL], "postprocess": noop},
-    {"name": "_NL", "symbols": [], "postprocess": noop},
-    {"name": "_NL", "symbols": [tok_NL], "postprocess": noop}
+    {"name": "NL", "symbols": [tok_NL], "postprocess": id}
 ]
   , ParserStart: "main"
 }

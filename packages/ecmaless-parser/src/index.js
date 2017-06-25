@@ -1,3 +1,4 @@
+var lexer = require("./lexer");
 var nearley = require("nearley");
 var grammar = require("./grammar.js");
 var tokenizer = require("./tokenizer");
@@ -48,7 +49,7 @@ module.exports = function(src, opts){
 
     var tokens;
     try{
-        tokens = tokenizer(src, {filepath: opts.filepath});
+        tokens = lexer(tokenizer(src));
     }catch(e){
         if(e && (e.type === "InvalidCharacter" || e.type === "InvalidIndentation")){
             throw fmtTokenizerError(e, src, opts.filepath);
@@ -59,12 +60,6 @@ module.exports = function(src, opts){
     var toLoc = EStreeLoc(src, opts.filepath);
 
     tokens = tokens
-        .filter(function(tok){
-            return true
-                && tok.type !== "SPACES"
-                && tok.type !== "COMMENT"
-            ;
-        })
         .map(function(tok){
             return {
                 type: tok.type,

@@ -29,6 +29,7 @@ test("lexer", function(t){
         "SYMBOL |b",
         "NEWLINE|",
         "DEDENT |",
+        "NEWLINE|",
     ]);
 
     testLex("a\n\n    ;comment\n    \n    b", [
@@ -38,6 +39,7 @@ test("lexer", function(t){
         "SYMBOL |b",
         "NEWLINE|",
         "DEDENT |",
+        "NEWLINE|",
     ]);
 
     testLex("a\n        b\n    c", [
@@ -48,9 +50,66 @@ test("lexer", function(t){
         "SYMBOL |b",
         "NEWLINE|\n",
         "DEDENT |",
+        "NEWLINE|",
         "SYMBOL |c",
         "NEWLINE|",
         "DEDENT |",
+        "NEWLINE|",
+    ]);
+
+    testLex("def a\n    b    c", [
+        "SYMBOL |def",
+        "SYMBOL |a",
+        "NEWLINE|\n",
+        "INDENT |    ",
+        "SYMBOL |b",
+        "SYMBOL |c",
+        "NEWLINE|",
+        "DEDENT |",
+        "NEWLINE|",
+    ]);
+
+    testLex("[\n    a\n    b\n]", [
+        "RAW    |[",
+        "NEWLINE|\n",
+        "INDENT |    ",
+        "SYMBOL |a",
+        "NEWLINE|\n",
+        "SYMBOL |b",
+        "NEWLINE|\n",
+        "DEDENT |",
+        "NEWLINE|",
+        "RAW    |]",
+        "NEWLINE|",
+    ]);
+
+    testLex("fn args:\n    a", [
+        "SYMBOL |fn",
+        "SYMBOL |args",
+        "RAW    |:",
+        "NEWLINE|\n",
+        "INDENT |    ",
+        "SYMBOL |a",
+        "NEWLINE|",
+        "DEDENT |",
+        "NEWLINE|",
+    ]);
+
+    testLex("a\n;comment", [
+        "SYMBOL |a",
+        "NEWLINE|\n",
+    ]);
+
+    testLex("a\n    b\nc", [
+        "SYMBOL |a",
+        "NEWLINE|\n",
+        "INDENT |    ",
+        "SYMBOL |b",
+        "NEWLINE|\n",
+        "DEDENT |",
+        "NEWLINE|",
+        "SYMBOL |c",
+        "NEWLINE|",
     ]);
 
     try{

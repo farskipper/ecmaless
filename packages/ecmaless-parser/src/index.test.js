@@ -350,7 +350,7 @@ test("parser", function(t){
     tst("-1", mk.unary("-", mkv(1)));
     tst("+1", mk.unary("+", mkv(1)));
     tst("!a", mk.unary("!", mk.id("a")));
-    tst("3--1", mk.infix("-", mkv(3), mk.unary("-", mkv(1))));
+    tst("3- -1", mk.infix("-", mkv(3), mk.unary("-", mkv(1))));
 
     tst("i = 1", mk.assign("=", mk.id("i"), mkv(1)));
     tst("a[i] = 1 + 1", mk.assign("=",
@@ -441,12 +441,17 @@ test("errors", function(t){
         parser("one two@three", {filepath: "some-file"});
         t.ok(false, "should fail");
     }catch(e){
-        t.equals(e.message, "unable to tokenize\nsome-file:1:7\n \none two@three\n       ^");
+        t.equals(e.message, "No possible parsings\nsome-file:1:4\n \n"
+            + "one two@three\n"
+            + "    ^"
+        );
         t.deepEquals(e.where, {
             filepath: "some-file",
             line: 1,
-            col: 7,
-            excerpt: "one two@three\n       ^"
+            col: 4,
+            excerpt: ""
+                + "one two@three\n"
+                + "    ^"
         });
     }
 
@@ -459,7 +464,9 @@ test("errors", function(t){
             filepath: "some-file",
             line: 1,
             col: 5,
-            excerpt: "if 1:blah\n     ^"
+            excerpt: ""
+                + "if 1:blah\n"
+                + "     ^"
         });
     }
 
