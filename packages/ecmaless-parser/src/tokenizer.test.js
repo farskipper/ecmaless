@@ -45,6 +45,8 @@ test("tokenizer", function(t){
             t.equals(tok.src, loc_src, "loc should point to the same src string");
             return _.padEnd(tok.type, 7) + "|" + tok.src;
         }), expected);
+
+        t.equals(_.map(tokens, "src").join(""), src);
     };
 
     testTokens("123 \"four\"\nblah", [
