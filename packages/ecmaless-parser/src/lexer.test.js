@@ -19,6 +19,7 @@ test("lexer", function(t){
         "SYMBOL |a",
         "NEWLINE|\n",
         "SYMBOL |b",
+        "NEWLINE|",
     ]);
 
     testLex("a\n;comment\n    \n\n    b", [
@@ -26,6 +27,30 @@ test("lexer", function(t){
         "NEWLINE|\n",
         "INDENT |    ",
         "SYMBOL |b",
+        "NEWLINE|",
+        "DEDENT |",
+    ]);
+
+    testLex("a\n\n    ;comment\n    \n    b", [
+        "SYMBOL |a",
+        "NEWLINE|\n",
+        "INDENT |    ",
+        "SYMBOL |b",
+        "NEWLINE|",
+        "DEDENT |",
+    ]);
+
+    testLex("a\n        b\n    c", [
+        "SYMBOL |a",
+        "NEWLINE|\n",
+        "INDENT |    ",
+        "INDENT |    ",
+        "SYMBOL |b",
+        "NEWLINE|\n",
+        "DEDENT |",
+        "SYMBOL |c",
+        "NEWLINE|",
+        "DEDENT |",
     ]);
 
     try{
