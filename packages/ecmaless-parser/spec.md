@@ -381,25 +381,25 @@ obj[key]
 }
 ```
 
-### Dependencies
+### Module
 
 ```js
-deps:
+import:
     a "./a"
     b "./b"
 
 a(b)
 [
     {
-        "type": "Dependencies",
-        "dependencies": [
+        "type": "Imports",
+        "imports": [
             {
-                "type": "Dependency",
+                "type": "Import",
                 "id": {"type": "Identifier", "value": "a"},
                 "path": {"type": "String", "value": "./a"}
             },
             {
-                "type": "Dependency",
+                "type": "Import",
                 "id": {"type": "Identifier", "value": "b"},
                 "path": {"type": "String", "value": "./b"}
             }
@@ -414,4 +414,7 @@ a(b)
         }
     }
 ]
+
+export a
+{"type": "Export", "expression": {"type": "Identifier", "value": "a"}}
 ```

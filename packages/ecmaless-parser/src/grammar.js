@@ -70,7 +70,7 @@ var tok_CLOSE_SQ = tok("RAW", "]");
 var tok_OPEN_CU = tok("RAW", "{");
 var tok_CLOSE_CU = tok("RAW", "}");
 
-var tok_deps = tok("SYMBOL", "deps");
+var tok_import = tok("SYMBOL", "import");
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
 var tok_if = tok("SYMBOL", "if");
@@ -87,6 +87,7 @@ var tok_return = tok("SYMBOL", "return");
 var tok_nil = tok("SYMBOL", "nil");
 var tok_true = tok("SYMBOL", "true");
 var tok_false = tok("SYMBOL", "false");
+var tok_export = tok("SYMBOL", "export");
 
 var isReserved = function(src){
   return reserved[src] === true;
@@ -179,30 +180,50 @@ var grammar = {
     ParserRules: [
     {"name": "main$ebnf$1", "symbols": ["NL"], "postprocess": id},
     {"name": "main$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "main$ebnf$2", "symbols": ["Dependencies"], "postprocess": id},
+    {"name": "main$ebnf$2", "symbols": ["Imports"], "postprocess": id},
     {"name": "main$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "main", "symbols": ["main$ebnf$1", "main$ebnf$2", "Statement_list"], "postprocess":  function(d){
-          if(d[1]){
-            return [d[1]].concat(d[2]);
-          }
-          return d[2];
+    {"name": "main$ebnf$3", "symbols": []},
+    {"name": "main$ebnf$3$subexpression$1", "symbols": ["Statement", "NL"]},
+    {"name": "main$ebnf$3", "symbols": ["main$ebnf$3", "main$ebnf$3$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "main$ebnf$4", "symbols": ["Export"], "postprocess": id},
+    {"name": "main$ebnf$4", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "main$ebnf$5", "symbols": ["NL"], "postprocess": id},
+    {"name": "main$ebnf$5", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "main", "symbols": ["main$ebnf$1", "main$ebnf$2", "main$ebnf$3", "main$ebnf$4", "main$ebnf$5"], "postprocess":  function(d){
+            var r = d[2].map(function(p){
+                return p[0];
+            });
+            if(d[1]){
+                r = [d[1]].concat(r);
+            }
+            if(d[3]){
+                r.push(d[3]);
+            }
+            return r;
         } },
-    {"name": "Dependencies$ebnf$1", "symbols": ["Dependency"]},
-    {"name": "Dependencies$ebnf$1", "symbols": ["Dependencies$ebnf$1", "Dependency"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "Dependencies", "symbols": [tok_deps, tok_COLON, "NL", "INDENT", "Dependencies$ebnf$1", "DEDENT", "NL"], "postprocess":  function(d){
+    {"name": "Imports$ebnf$1", "symbols": ["Import"]},
+    {"name": "Imports$ebnf$1", "symbols": ["Imports$ebnf$1", "Import"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "Imports", "symbols": [tok_import, tok_COLON, "NL", "INDENT", "Imports$ebnf$1", "DEDENT", "NL"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
-            type: "Dependencies",
-            dependencies: d[4]
+            type: "Imports",
+            imports: d[4]
           };
         } },
-    {"name": "Dependency", "symbols": ["Identifier", "String", "NL"], "postprocess":  function(d){
+    {"name": "Import", "symbols": ["Identifier", "String", "NL"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
-            type: "Dependency",
+            type: "Import",
             id: d[0],
             path: d[1]
           };
+        } },
+    {"name": "Export", "symbols": [tok_export, "Expression"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "Export",
+                expression: d[1],
+            };
         } },
     {"name": "Statement_list", "symbols": ["Statement", "NL"], "postprocess": idArr},
     {"name": "Statement_list", "symbols": ["Statement_list", "Statement", "NL"], "postprocess": concatArr(1)},

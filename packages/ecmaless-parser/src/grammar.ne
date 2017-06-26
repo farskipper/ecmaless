@@ -66,7 +66,7 @@ var tok_CLOSE_SQ = tok("RAW", "]");
 var tok_OPEN_CU = tok("RAW", "{");
 var tok_CLOSE_CU = tok("RAW", "}");
 
-var tok_deps = tok("SYMBOL", "deps");
+var tok_import = tok("SYMBOL", "import");
 var tok_def = tok("SYMBOL", "def");
 var tok_fn = tok("SYMBOL", "fn");
 var tok_if = tok("SYMBOL", "if");
@@ -83,6 +83,7 @@ var tok_return = tok("SYMBOL", "return");
 var tok_nil = tok("SYMBOL", "nil");
 var tok_true = tok("SYMBOL", "true");
 var tok_false = tok("SYMBOL", "false");
+var tok_export = tok("SYMBOL", "export");
 
 var isReserved = function(src){
   return reserved[src] === true;
@@ -172,28 +173,44 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 
 %}
 
-main -> NL:? Dependencies:? Statement_list {% function(d){
-  if(d[1]){
-    return [d[1]].concat(d[2]);
-  }
-  return d[2];
+main -> NL:? Imports:? (Statement NL):* Export:? NL:? {% function(d){
+    var r = d[2].map(function(p){
+        return p[0];
+    });
+    if(d[1]){
+        r = [d[1]].concat(r);
+    }
+    if(d[3]){
+        r.push(d[3]);
+    }
+    return r;
 } %}
 
-Dependencies -> %tok_deps %tok_COLON NL INDENT Dependency:+ DEDENT NL {% function(d){
+Imports -> %tok_import %tok_COLON NL INDENT Import:+ DEDENT NL {% function(d){
   return {
     loc: mkLoc(d),
-    type: "Dependencies",
-    dependencies: d[4]
+    type: "Imports",
+    imports: d[4]
   };
 } %}
 
-Dependency -> Identifier String NL {% function(d){
+Import -> Identifier String NL {% function(d){
   return {
     loc: mkLoc(d),
-    type: "Dependency",
+    type: "Import",
     id: d[0],
     path: d[1]
   };
+} %}
+
+
+Export -> %tok_export Expression
+{% function(d){
+    return {
+        loc: mkLoc(d),
+        type: "Export",
+        expression: d[1],
+    };
 } %}
 
 ################################################################################

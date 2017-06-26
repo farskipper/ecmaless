@@ -395,14 +395,14 @@ test("parser", function(t){
     t.end();
 });
 
-test("deps", function(t){
-    var ast = parser("deps:\n    a \"./a\"\na()");
+test("module", function(t){
+    var ast = parser("import:\n    a \"./a\"\na()");
     t.deepEquals(rmLoc(ast), [
         {
-            type: "Dependencies",
-            dependencies: [
+            type: "Imports",
+            imports: [
                 {
-                    type: "Dependency",
+                    type: "Import",
                     id: mk.id("a"),
                     path: mkv("./a")
                 }
@@ -411,24 +411,32 @@ test("deps", function(t){
         mk.stmt(mk.app(mk.id("a"), []))
     ]);
 
-    ast = parser("deps:\n    a \"./a\"\n    b    \"b\"\na(b)");
+    ast = parser("import:\n    a \"./a\"\n    b    \"b\"\na(b)");
     t.deepEquals(rmLoc(ast), [
         {
-            type: "Dependencies",
-            dependencies: [
+            type: "Imports",
+            imports: [
                 {
-                    type: "Dependency",
+                    type: "Import",
                     id: mk.id("a"),
                     path: mkv("./a")
                 },
                 {
-                    type: "Dependency",
+                    type: "Import",
                     id: mk.id("b"),
                     path: mkv("b")
                 }
             ]
         },
         mk.stmt(mk.app(mk.id("a"), [mk.id("b")]))
+    ]);
+
+    ast = parser("export a");
+    t.deepEquals(rmLoc(ast), [
+        {
+            type: "Export",
+            expression: mk.id("a"),
+        },
     ]);
 
     t.end();

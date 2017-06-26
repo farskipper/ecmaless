@@ -47,8 +47,9 @@ _.each({
         "matrix[i][j]",
         "obj[key]",
     ],
-    "### Dependencies": [
-        "deps:\n    a \"./a\"\n    b \"./b\"\n\na(b)",
+    "### Module": [
+        "import:\n    a \"./a\"\n    b \"./b\"\n\na(b)",
+        "export a",
     ]
 }, function(srcs, head){
     console.log();
