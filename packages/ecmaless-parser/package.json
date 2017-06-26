@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/farskipper/ecmaless-parser#readme",
   "devDependencies": {
-    "eslint": "^4.0.0",
+    "eslint": "^4.1.0",
     "json-stringify-pretty-compact": "^1.0.4",
     "lodash": "^4.17.4",
     "onchange": "^3.2.1",
