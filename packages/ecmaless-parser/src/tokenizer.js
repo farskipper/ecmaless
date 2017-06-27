@@ -93,6 +93,14 @@ module.exports = function(src, opts){
                 }
                 i++;
             }
+            if( ! /"""$/.test(buff) || /\\"""$/.test(buff)){
+                throw {
+                    type: "UnterminatedString",
+                    message: "Use \"\"\" to close your docstring",
+                    src: buff,
+                    loc: {start: i - 1, end: i},
+                };
+            }
             pushTok("DOCSTRING");
 
 
@@ -125,6 +133,14 @@ module.exports = function(src, opts){
                     }
                 }
                 i++;
+            }
+            if( ! /"$/.test(buff) || /\\"$/.test(buff)){
+                throw {
+                    type: "UnterminatedString",
+                    message: "Use \" to close your string",
+                    src: buff,
+                    loc: {start: i - 1, end: i},
+                };
             }
             pushTok("STRING");
 

@@ -34,10 +34,56 @@ test("tokenizer", function(t){
             loc: {start: 4, end: 5},
         }, "no ");
     }
+    try{
+        tokenizer("\"foo");
+        t.fail("string must be terminated");
+    }catch(e){
+        t.deepEquals(e, {
+            type: "UnterminatedString",
+            message: "Use \" to close your string",
+            src: "\"foo",
+            loc: {start: 3, end: 4},
+        }, "no ");
+    }
+    try{
+        tokenizer("\"foo\\\"");
+        t.fail("string must be terminated");
+    }catch(e){
+        t.deepEquals(e, {
+            type: "UnterminatedString",
+            message: "Use \" to close your string",
+            src: "\"foo\\\"",
+            loc: {start: 5, end: 6},
+        }, "no ");
+    }
 
     tok1("DOCSTRING", "\"\"\"one\"\"\"");
     tok1("DOCSTRING", "\"\"\"\none\n\"\"\"");
     tok1("DOCSTRING", "\"\"\"one\"\"\"");
+    tok1("DOCSTRING", "\"\"\"one\\\"\"\" two \"\\\"\" three \"\"\"");
+    try{
+        tokenizer("\"\"\"one\"\"");
+        t.fail("docstring must be terminated");
+    }catch(e){
+        t.deepEquals(e, {
+            type: "UnterminatedString",
+            message: "Use \"\"\" to close your docstring",
+            src: "\"\"\"one\"\"",
+            loc: {start: 7, end: 8},
+        }, "no ");
+    }
+    try{
+        tokenizer("\"\"\"one\\\"\"\"");
+        t.fail("docstring must be terminated");
+    }catch(e){
+        t.deepEquals(e, {
+            type: "UnterminatedString",
+            message: "Use \"\"\" to close your docstring",
+            src: "\"\"\"one\\\"\"\"",
+            loc: {start: 9, end: 10},
+        }, "no ");
+    }
+    tokenizer("\"\"\"one\\\"\"\"\"");
 
     tok1("SYMBOL", "foo");
     tok1("SYMBOL", "fooBar");
