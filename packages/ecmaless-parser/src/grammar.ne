@@ -173,25 +173,19 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 
 %}
 
-main -> NL:? Imports:? (Statement NL):* Export:? NL:? {% function(d){
-    var r = d[2].map(function(p){
-        return p[0];
-    });
-    if(d[1]){
-        r = [d[1]].concat(r);
-    }
-    if(d[3]){
-        r.push(d[3]);
-    }
-    return r;
-} %}
-
-Imports -> %tok_import %tok_COLON NL INDENT Import:+ DEDENT NL {% function(d){
-  return {
-    loc: mkLoc(d),
-    type: "Imports",
-    imports: d[4]
-  };
+main ->
+    NL:?
+    (%tok_import %tok_COLON NL INDENT Import:+ DEDENT NL):?
+    Statement_list:?
+    (%tok_export Expression NL):?
+{% function(d){
+    return {
+        loc: mkLoc(d),
+        type: "Module",
+        "import": (d[1] && d[1][4]) || [],
+        body: d[2] || [],
+        "export": d[3] && d[3][1],
+    };
 } %}
 
 Import -> Identifier String NL {% function(d){
@@ -203,15 +197,6 @@ Import -> Identifier String NL {% function(d){
   };
 } %}
 
-
-Export -> %tok_export Expression
-{% function(d){
-    return {
-        loc: mkLoc(d),
-        type: "Export",
-        expression: d[1],
-    };
-} %}
 
 ################################################################################
 # Statement

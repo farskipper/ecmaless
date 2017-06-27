@@ -389,32 +389,38 @@ import:
     b "./b"
 
 a(b)
-[
-    {
-        "type": "Imports",
-        "imports": [
-            {
-                "type": "Import",
-                "id": {"type": "Identifier", "value": "a"},
-                "path": {"type": "String", "value": "./a"}
-            },
-            {
-                "type": "Import",
-                "id": {"type": "Identifier", "value": "b"},
-                "path": {"type": "String", "value": "./b"}
-            }
-        ]
-    },
-    {
-        "type": "ExpressionStatement",
-        "expression": {
-            "type": "Application",
-            "callee": {"type": "Identifier", "value": "a"},
-            "args": [{"type": "Identifier", "value": "b"}]
+{
+    "type": "Module",
+    "import": [
+        {
+            "type": "Import",
+            "id": {"type": "Identifier", "value": "a"},
+            "path": {"type": "String", "value": "./a"}
+        },
+        {
+            "type": "Import",
+            "id": {"type": "Identifier", "value": "b"},
+            "path": {"type": "String", "value": "./b"}
         }
-    }
-]
+    ],
+    "body": [
+        {
+            "type": "ExpressionStatement",
+            "expression": {
+                "type": "Application",
+                "callee": {"type": "Identifier", "value": "a"},
+                "args": [{"type": "Identifier", "value": "b"}]
+            }
+        }
+    ],
+    "export": null
+}
 
 export a
-{"type": "Export", "expression": {"type": "Identifier", "value": "a"}}
+{
+    "type": "Module",
+    "import": [],
+    "body": [],
+    "export": {"type": "Identifier", "value": "a"}
+}
 ```

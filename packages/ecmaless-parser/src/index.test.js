@@ -95,7 +95,7 @@ var mkv = function(v){
 
 test("parser", function(t){
     var tst = function(src, expected){
-        var ast = parser(src);
+        var ast = parser(src).body;
         ast = _.isArray(ast) && _.size(ast) === 1 ? _.head(ast) : ast;
         if(ast.type === "ExpressionStatement"){
             ast = ast.expression;
@@ -397,47 +397,49 @@ test("parser", function(t){
 
 test("module", function(t){
     var ast = parser("import:\n    a \"./a\"\na()");
-    t.deepEquals(rmLoc(ast), [
-        {
-            type: "Imports",
-            imports: [
-                {
-                    type: "Import",
-                    id: mk.id("a"),
-                    path: mkv("./a")
-                }
-            ]
-        },
-        mk.stmt(mk.app(mk.id("a"), []))
-    ]);
+    t.deepEquals(rmLoc(ast), {
+        type: "Module",
+        "import": [
+            {
+                type: "Import",
+                id: mk.id("a"),
+                path: mkv("./a")
+            }
+        ],
+        body: [
+            mk.stmt(mk.app(mk.id("a"), [])),
+        ],
+        "export": null,
+    });
 
     ast = parser("import:\n    a \"./a\"\n    b    \"b\"\na(b)");
-    t.deepEquals(rmLoc(ast), [
-        {
-            type: "Imports",
-            imports: [
-                {
-                    type: "Import",
-                    id: mk.id("a"),
-                    path: mkv("./a")
-                },
-                {
-                    type: "Import",
-                    id: mk.id("b"),
-                    path: mkv("b")
-                }
-            ]
-        },
-        mk.stmt(mk.app(mk.id("a"), [mk.id("b")]))
-    ]);
+    t.deepEquals(rmLoc(ast), {
+        type: "Module",
+        "import": [
+            {
+                type: "Import",
+                id: mk.id("a"),
+                path: mkv("./a")
+            },
+            {
+                type: "Import",
+                id: mk.id("b"),
+                path: mkv("b")
+            },
+        ],
+        body: [
+            mk.stmt(mk.app(mk.id("a"), [mk.id("b")])),
+        ],
+        "export": null,
+    });
 
     ast = parser("export a");
-    t.deepEquals(rmLoc(ast), [
-        {
-            type: "Export",
-            expression: mk.id("a"),
-        },
-    ]);
+    t.deepEquals(rmLoc(ast), {
+        type: "Module",
+        "import": [],
+        body: [],
+        "export": mk.id("a"),
+    });
 
     t.end();
 });
@@ -483,7 +485,7 @@ test("loc", function(t){
     var src = "1";
 
     var ast = parser(src, {filepath: "/some/file/path-ok?"});
-    t.deepEquals(ast[0].loc, {
+    t.deepEquals(ast.body[0].loc, {
         source: "/some/file/path-ok?",
         start: {line: 1, column: 0},
         end: {line: 1, column: 1}

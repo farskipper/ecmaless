@@ -180,35 +180,24 @@ var grammar = {
     ParserRules: [
     {"name": "main$ebnf$1", "symbols": ["NL"], "postprocess": id},
     {"name": "main$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "main$ebnf$2", "symbols": ["Imports"], "postprocess": id},
+    {"name": "main$ebnf$2$subexpression$1$ebnf$1", "symbols": ["Import"]},
+    {"name": "main$ebnf$2$subexpression$1$ebnf$1", "symbols": ["main$ebnf$2$subexpression$1$ebnf$1", "Import"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "main$ebnf$2$subexpression$1", "symbols": [tok_import, tok_COLON, "NL", "INDENT", "main$ebnf$2$subexpression$1$ebnf$1", "DEDENT", "NL"]},
+    {"name": "main$ebnf$2", "symbols": ["main$ebnf$2$subexpression$1"], "postprocess": id},
     {"name": "main$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "main$ebnf$3", "symbols": []},
-    {"name": "main$ebnf$3$subexpression$1", "symbols": ["Statement", "NL"]},
-    {"name": "main$ebnf$3", "symbols": ["main$ebnf$3", "main$ebnf$3$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "main$ebnf$4", "symbols": ["Export"], "postprocess": id},
+    {"name": "main$ebnf$3", "symbols": ["Statement_list"], "postprocess": id},
+    {"name": "main$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "main$ebnf$4$subexpression$1", "symbols": [tok_export, "Expression", "NL"]},
+    {"name": "main$ebnf$4", "symbols": ["main$ebnf$4$subexpression$1"], "postprocess": id},
     {"name": "main$ebnf$4", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "main$ebnf$5", "symbols": ["NL"], "postprocess": id},
-    {"name": "main$ebnf$5", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "main", "symbols": ["main$ebnf$1", "main$ebnf$2", "main$ebnf$3", "main$ebnf$4", "main$ebnf$5"], "postprocess":  function(d){
-            var r = d[2].map(function(p){
-                return p[0];
-            });
-            if(d[1]){
-                r = [d[1]].concat(r);
-            }
-            if(d[3]){
-                r.push(d[3]);
-            }
-            return r;
-        } },
-    {"name": "Imports$ebnf$1", "symbols": ["Import"]},
-    {"name": "Imports$ebnf$1", "symbols": ["Imports$ebnf$1", "Import"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "Imports", "symbols": [tok_import, tok_COLON, "NL", "INDENT", "Imports$ebnf$1", "DEDENT", "NL"], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "Imports",
-            imports: d[4]
-          };
+    {"name": "main", "symbols": ["main$ebnf$1", "main$ebnf$2", "main$ebnf$3", "main$ebnf$4"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "Module",
+                "import": (d[1] && d[1][4]) || [],
+                body: d[2] || [],
+                "export": d[3] && d[3][1],
+            };
         } },
     {"name": "Import", "symbols": ["Identifier", "String", "NL"], "postprocess":  function(d){
           return {
@@ -217,13 +206,6 @@ var grammar = {
             id: d[0],
             path: d[1]
           };
-        } },
-    {"name": "Export", "symbols": [tok_export, "Expression"], "postprocess":  function(d){
-            return {
-                loc: mkLoc(d),
-                type: "Export",
-                expression: d[1],
-            };
         } },
     {"name": "Statement_list", "symbols": ["Statement", "NL"], "postprocess": idArr},
     {"name": "Statement_list", "symbols": ["Statement_list", "Statement", "NL"], "postprocess": concatArr(1)},

@@ -60,6 +60,9 @@ _.each({
     console.log();
     console.log("```js\n" + _.map(srcs, function(src){
         var ast = rmLoc(parser(src));
+        if(ast["import"].length === 0 && !ast["export"]){
+            ast = ast.body;
+        }
         ast = _.isArray(ast) && _.size(ast) === 1 ? _.head(ast) : ast;
         if(ast.type === "ExpressionStatement"){
             ast = ast.expression;
