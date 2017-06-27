@@ -31,6 +31,23 @@ var idN = function(n){
   };
 };
 
+var mkLoc = function(d){
+  var loc = {};
+  var elms = flatten(d);
+  var i = 0;
+  while(i < elms.length){
+    if(elms[i] && elms[i].loc){
+      if(!loc.start){
+        loc.start = elms[i].loc.start;
+        loc.source = elms[i].loc.source;
+      }
+      loc.end = elms[i].loc.end;
+    }
+    i++;
+  }
+  return loc;
+};
+
 var reserved = {};
 
 var tok = function(type, value){
@@ -106,7 +123,7 @@ var tok_BANG = tok("RAW", "!");
 
 var mkType = function(d, type, value){
   return {
-    loc: d[0].loc,
+    loc: mkLoc(d),
     type: type,
     value: value
   };
@@ -120,22 +137,6 @@ var mkMemberExpression = function(loc, method, object, path){
     path: path,
     method: method
   };
-};
-
-var mkLoc = function(d){
-  var loc = {};
-  var elms = flatten(d);
-  var i = 0;
-  while(i < elms.length){
-    if(elms[i] && elms[i].loc){
-      if(!loc.start){
-        loc.start = elms[i].loc;
-      }
-      loc.end = elms[i].loc;
-    }
-    i++;
-  }
-  return loc;
 };
 
 var unaryOp = function(d){
@@ -218,7 +219,7 @@ Statement ->
 
 ExpressionStatement -> Expression {% function(d){
   return {
-    loc: d[0].loc,
+    loc: mkLoc(d),
     type: "ExpressionStatement",
     expression: d[0]
   };
@@ -233,12 +234,8 @@ Return -> %tok_return Expression:? {% function(d){
 } %}
 
 Define -> %tok_def Identifier (%tok_EQ Expression):? {% function(d){
-  var loc = d[0].loc;
-  if(d[2]){
-    loc = {start: d[0].loc.start, end: d[2][1].loc.end};
-  }
   return {
-    loc: loc,
+    loc: mkLoc(d),
     type: "Define",
     id: d[1],
     init: d[2] ? d[2][1] : void 0
@@ -270,6 +267,7 @@ While -> %tok_while Expression Block {% function(d){
 
 Break -> %tok_break
     {% function(d){return {loc: d[0].loc, type: "Break"};} %}
+
 Continue -> %tok_continue
     {% function(d){return {loc: d[0].loc, type: "Continue"};} %}
 

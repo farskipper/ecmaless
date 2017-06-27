@@ -35,6 +35,23 @@ var idN = function(n){
   };
 };
 
+var mkLoc = function(d){
+  var loc = {};
+  var elms = flatten(d);
+  var i = 0;
+  while(i < elms.length){
+    if(elms[i] && elms[i].loc){
+      if(!loc.start){
+        loc.start = elms[i].loc.start;
+        loc.source = elms[i].loc.source;
+      }
+      loc.end = elms[i].loc.end;
+    }
+    i++;
+  }
+  return loc;
+};
+
 var reserved = {};
 
 var tok = function(type, value){
@@ -110,7 +127,7 @@ var tok_BANG = tok("RAW", "!");
 
 var mkType = function(d, type, value){
   return {
-    loc: d[0].loc,
+    loc: mkLoc(d),
     type: type,
     value: value
   };
@@ -124,22 +141,6 @@ var mkMemberExpression = function(loc, method, object, path){
     path: path,
     method: method
   };
-};
-
-var mkLoc = function(d){
-  var loc = {};
-  var elms = flatten(d);
-  var i = 0;
-  while(i < elms.length){
-    if(elms[i] && elms[i].loc){
-      if(!loc.start){
-        loc.start = elms[i].loc;
-      }
-      loc.end = elms[i].loc;
-    }
-    i++;
-  }
-  return loc;
 };
 
 var unaryOp = function(d){
@@ -221,7 +222,7 @@ var grammar = {
     {"name": "Statement", "symbols": ["TryCatch"], "postprocess": id},
     {"name": "ExpressionStatement", "symbols": ["Expression"], "postprocess":  function(d){
           return {
-            loc: d[0].loc,
+            loc: mkLoc(d),
             type: "ExpressionStatement",
             expression: d[0]
           };
@@ -239,12 +240,8 @@ var grammar = {
     {"name": "Define$ebnf$1", "symbols": ["Define$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "Define$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Define", "symbols": [tok_def, "Identifier", "Define$ebnf$1"], "postprocess":  function(d){
-          var loc = d[0].loc;
-          if(d[2]){
-            loc = {start: d[0].loc.start, end: d[2][1].loc.end};
-          }
           return {
-            loc: loc,
+            loc: mkLoc(d),
             type: "Define",
             id: d[1],
             init: d[2] ? d[2][1] : void 0
