@@ -70,6 +70,34 @@ module.exports = function(src, opts){
             pushTok("NEWLINE");
 
         ////////////////////////////////////////////////////////////////////////
+        //docstring
+        }else if(c === "\"" && src[i + 1] === "\"" && src[i + 2] === "\""){
+            ctxChange();
+            buff += "\"\"";
+            i += 3;
+            next_is_escaped = false;
+            while(i < src.length){
+                c = src[i];
+                buff += c;
+                if(next_is_escaped){
+                    next_is_escaped = false;
+                }else{
+                    if(c === "\\"){
+                        next_is_escaped = true;
+                    }
+                    if(c === "\"" && src[i + 1] === "\"" && src[i + 2] === "\""){
+                        buff += "\"\"";
+                        i += 3;
+                        break;
+                    }
+                }
+                i++;
+            }
+            pushTok("DOCSTRING");
+
+
+
+        ////////////////////////////////////////////////////////////////////////
         //string
         }else if(c === "\""){
             ctxChange();
@@ -78,6 +106,14 @@ module.exports = function(src, opts){
             while(i < src.length){
                 c = src[i];
                 buff += c;
+                if(c === "\n"){
+                    throw {
+                        type: "UnexpectedCharacter",
+                        message: "Use \"\"\" for multiline strings",
+                        src: c,
+                        loc: {start: i, end: i + 1},
+                    };
+                }
                 if(next_is_escaped){
                     next_is_escaped = false;
                 }else{
@@ -122,18 +158,22 @@ module.exports = function(src, opts){
 
         ////////////////////////////////////////////////////////////////////////
         //symbol
-        }else if(/^[a-zA-Z_$]$/.test(c)){
+        }else if(/^[a-zA-Z_]$/.test(c)){
             ctxChange();
             buff = "";
             while(i < src.length){
                 c = src[i];
                 buff += c;
-                if(!/^[a-zA-Z0-9_$]$/.test(src[i + 1])){
+                if(!/^[a-zA-Z0-9_]$/.test(src[i + 1])){
                     break;
                 }
                 i++;
             }
-            pushTok("SYMBOL");
+            if(/^[A-Z]$/.test(buff[0])){
+                pushTok("TYPE");
+            }else{
+                pushTok("SYMBOL");
+            }
 
 
         ////////////////////////////////////////////////////////////////////////

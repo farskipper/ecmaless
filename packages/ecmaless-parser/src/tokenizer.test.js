@@ -22,10 +22,31 @@ test("tokenizer", function(t){
     tok1("STRING", "\"\"");
     tok1("STRING", "\"foo\"");
     tok1("STRING", "\"one \\\" two\"");
+    tok1("STRING", "\"one\\ntwo\"");
+    try{
+        tokenizer("\"one\ntwo\"");
+        t.fail("strings must be on one line");
+    }catch(e){
+        t.deepEquals(e, {
+            type: "UnexpectedCharacter",
+            message: "Use \"\"\" for multiline strings",
+            src: "\n",
+            loc: {start: 4, end: 5},
+        }, "no ");
+    }
+
+    tok1("DOCSTRING", "\"\"\"one\"\"\"");
+    tok1("DOCSTRING", "\"\"\"\none\n\"\"\"");
+    tok1("DOCSTRING", "\"\"\"one\"\"\"");
 
     tok1("SYMBOL", "foo");
     tok1("SYMBOL", "fooBar");
-    tok1("SYMBOL", "Baz_qux");
+    tok1("SYMBOL", "foo_bar");
+    tok1("SYMBOL", "a1");
+    tok1("SYMBOL", "_B");
+    tok1("TYPE", "Foo");
+    tok1("TYPE", "Foo_bar");
+    tok1("TYPE", "A1");
 
     tok1("COMMENT", "; some comment");
 
@@ -37,17 +58,22 @@ test("tokenizer", function(t){
     tok1("RAW", "||");
 
 
-    var testTokens = function(src, expected){
+    var testTokens = function(src, expected, message){
         var tokens = tokenizer(src);
 
         t.deepEquals(_.map(tokens, function(tok){
             var loc_src = src.substring(tok.loc.start, tok.loc.end);
             t.equals(tok.src, loc_src, "loc should point to the same src string");
             return _.padEnd(tok.type, 7) + "|" + tok.src;
-        }), expected);
+        }), expected, message);
 
-        t.equals(_.map(tokens, "src").join(""), src);
+        t.equals(_.map(tokens, "src").join(""), src, "all src should be tokenized");
     };
+
+    testTokens("foo$", [
+        "SYMBOL |foo",
+        "RAW    |$",
+    ], "$ is not part of a symbol");
 
     testTokens("123 \"four\"\nblah", [
         "NUMBER |123",
