@@ -23,7 +23,6 @@ var assertDocstringIndents = function(tok, ind){
     var line;
     var i = 1;//skip line 1
     while(i < lines.length){
-        console.log("#" + start);
         line = lines[i];
 
         n_leading = nLeadingSpaces(line);

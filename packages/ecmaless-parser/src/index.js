@@ -51,7 +51,13 @@ module.exports = function(src, opts){
     try{
         tokens = lexer(tokenizer(src));
     }catch(e){
-        if(e && (e.type === "InvalidCharacter" || e.type === "InvalidIndentation")){
+        if(e
+                && (typeof e.type) === "string"
+                && (typeof e.src) === "string"
+                && e.loc
+                && (typeof e.loc.start) === "number"
+                && (typeof e.loc.end) === "number"
+        ){
             throw fmtTokenizerError(e, src, opts.filepath);
         }
         throw e;

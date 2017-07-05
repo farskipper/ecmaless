@@ -113,7 +113,7 @@ test("parser", function(t){
 
     tst("123", mk.num(123));
     tst("\"ok\"", mk.str("ok"));
-    tst("\"\\\"that\\\"\n\"", mk.str("\"that\"\n"));
+    tstFail("\"\\\"that\\\"\n\"", mk.str("\"that\"\n"));
 
     tst("def a", mk.def(mk.id("a")));
     tst("def a = 1.2", mk.def(mk.id("a"), mk.num(1.2)));
@@ -363,8 +363,6 @@ test("parser", function(t){
     tst("nil", {type: "Nil"});
     tst("true", {type: "Boolean", value: true});
     tst("false", {type: "Boolean", value: false});
-
-    tst("\"a\nb\"", {type: "String", value: "a\nb"});
 
     tst("1\n2", [mk.stmt(mkv(1)), mk.stmt(mkv(2))]);
     tst("1\n2\n3", [mk.stmt(mkv(1)), mk.stmt(mkv(2)), mk.stmt(mkv(3))]);
