@@ -112,6 +112,17 @@ test("lexer", function(t){
         "NEWLINE|",
     ]);
 
+    testLex("a:\n    \"\"\"\n    hello world\n    \"\"\"\n", [
+        "SYMBOL |a",
+        "RAW    |:",
+        "NEWLINE|\n",
+        "INDENT |    ",
+        "DOCSTRING|\"\"\"\n    hello world\n    \"\"\"",
+        "NEWLINE|\n",
+        "DEDENT |",
+        "NEWLINE|",
+    ]);
+
     try{
         lexer(tokenizer("a:\n  b"));
         t.fail("should throw on invalid indent");
@@ -146,6 +157,18 @@ test("lexer", function(t){
             src: "   ",
             loc: {start: 9, end: 12},
         }, "throw on invalid indent");
+    }
+
+    try{
+        lexer(tokenizer("a:\n    \"\"\"\n    hello world\n   \"\"\"\n"));
+        t.fail("Dosctrings should match indentation");
+    }catch(e){
+        t.deepEquals(e, {
+            type: "InvalidIndentation",
+            message: "Docstrings should match indentation. Don't worry, indentation is not included in the string.",
+            src: "   ",
+            loc: {start: 27, end: 31},
+        }, "Dosctrings should match indentation");
     }
 
     t.end();

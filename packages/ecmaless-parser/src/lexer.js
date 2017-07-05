@@ -1,3 +1,49 @@
+var nLeadingSpaces = function(str){
+    var i = 0;
+    while(i < str.length){
+        if(str[i] !== " "){
+            break;
+        }
+        i += 1;
+    }
+    return i;
+};
+
+var assertDocstringIndents = function(tok, ind){
+
+    var lines = tok.src.split("\n");
+
+    var ind_cols = ind * 4;
+
+    var start = tok.loc.start + lines[0].length + 1;
+
+
+    var n_leading;
+
+    var line;
+    var i = 1;//skip line 1
+    while(i < lines.length){
+        console.log("#" + start);
+        line = lines[i];
+
+        n_leading = nLeadingSpaces(line);
+
+        if(ind_cols !== n_leading){
+            throw {
+                type: "InvalidIndentation",
+                message: "Docstrings should match indentation. Don't worry, indentation is not included in the string.",
+                src: line.substring(0, n_leading),
+                loc: {
+                    start: start,
+                    end: start + n_leading + 1,
+                },
+            };
+        }
+        start += line.length + 1;
+        i += 1;
+    }
+};
+
 module.exports = function(tokens, opts){
 
     var out = [];
@@ -41,7 +87,7 @@ module.exports = function(tokens, opts){
                 ){
                     break;
                 }
-                i++;
+                i += 1;
             }
             if(curr.type === "SPACES"){
                 ind = (curr.src.length % 4) === 0
@@ -79,10 +125,13 @@ module.exports = function(tokens, opts){
                     pushDedent(curr.loc.end);
                 }
             }
+        }else if(curr.type === "DOCSTRING"){
+            assertDocstringIndents(curr, ind);
+            out.push(curr);
         }else{
             out.push(curr);
         }
-        i++;
+        i += 1;
     }
 
     var last = out.length > 0

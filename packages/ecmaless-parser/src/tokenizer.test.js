@@ -204,6 +204,11 @@ test("tokenizer", function(t){
         "NUMBER |2",
     ]);
 
+    testTokens("\"\"\"foo\"\"\"a", [
+        "DOCSTRING|\"\"\"foo\"\"\"",
+        "SYMBOL |a",
+    ]);
+
     try{
         tokenizer("a:\n\tb");
         t.fail("should throw on tabs");

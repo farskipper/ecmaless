@@ -56,7 +56,7 @@ module.exports = function(src, opts){
                     break;
                 }
                 buff += c;
-                i++;
+                i += 1;
             }
             if(buff.length > 0){
                 pushTok("SPACES");
@@ -87,11 +87,11 @@ module.exports = function(src, opts){
                     }
                     if(c === "\"" && src[i + 1] === "\"" && src[i + 2] === "\""){
                         buff += "\"\"";
-                        i += 3;
+                        i += 2;
                         break;
                     }
                 }
-                i++;
+                i += 1;
             }
             if( ! /"""$/.test(buff) || /\\"""$/.test(buff)){
                 throw {
@@ -109,7 +109,7 @@ module.exports = function(src, opts){
         //string
         }else if(c === "\""){
             ctxChange();
-            i++;
+            i += 1;
             next_is_escaped = false;
             while(i < src.length){
                 c = src[i];
@@ -132,7 +132,7 @@ module.exports = function(src, opts){
                         break;
                     }
                 }
-                i++;
+                i += 1;
             }
             if( ! /"$/.test(buff) || /\\"$/.test(buff)){
                 throw {
@@ -161,7 +161,7 @@ module.exports = function(src, opts){
                         break;
                     }
                 }
-                i++;
+                i += 1;
             }
             if(buff[buff.length - 1] === "."){
                 buff = buff.substring(0, buff.length - 1);
@@ -183,7 +183,7 @@ module.exports = function(src, opts){
                 if(!/^[a-zA-Z0-9_]$/.test(src[i + 1])){
                     break;
                 }
-                i++;
+                i += 1;
             }
             if(/^[A-Z]$/.test(buff[0])){
                 pushTok("TYPE");
@@ -196,14 +196,14 @@ module.exports = function(src, opts){
         //comment
         }else if(c === ";"){
             ctxChange();
-            i++;
+            i += 1;
             while(i < src.length){
                 c = src[i];
                 buff += c;
                 if(src[i + 1] === "\n"){
                     break;
                 }
-                i++;
+                i += 1;
             }
             pushTok("COMMENT");
 
@@ -216,7 +216,7 @@ module.exports = function(src, opts){
         }else{
             buff += c;
         }
-        i++;
+        i += 1;
     }
     ctxChange();
 
