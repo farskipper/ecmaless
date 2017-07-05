@@ -63,9 +63,6 @@ module.exports = function(src, opts){
         next_start = loc.end;
         buff = "";
     };
-    var ctxChange = function(){
-        buff = c;
-    };
 
     while(i < src.length){
         c = src[i];
@@ -73,7 +70,7 @@ module.exports = function(src, opts){
         ////////////////////////////////////////////////////////////////////////
         //spaces
         if(c === " "){
-            ctxChange();
+            buff = c;
             while(i < src.length){
                 c = src[i];
                 if(src[i + 1] !== " "){
@@ -90,14 +87,13 @@ module.exports = function(src, opts){
         ////////////////////////////////////////////////////////////////////////
         //newline
         }else if(c === "\n"){
-            ctxChange();
+            buff = c;
             pushTok("NEWLINE");
 
         ////////////////////////////////////////////////////////////////////////
         //docstring
         }else if(c === "\"" && src[i + 1] === "\"" && src[i + 2] === "\""){
-            ctxChange();
-            buff += "\"\"";
+            buff = "\"\"\"";
             i += 3;
             next_is_escaped = false;
             while(i < src.length){
@@ -132,7 +128,7 @@ module.exports = function(src, opts){
         ////////////////////////////////////////////////////////////////////////
         //string
         }else if(c === "\""){
-            ctxChange();
+            buff = c;
             i += 1;
             next_is_escaped = false;
             while(i < src.length){
@@ -172,7 +168,6 @@ module.exports = function(src, opts){
         ////////////////////////////////////////////////////////////////////////
         //number
         }else if(/^[0-9]$/.test(c) || (c === "." && /^[0-9]$/.test(src[i + 1]))){
-            ctxChange();
             buff = "";
             var has_seen_decimal = c === ".";
             while(i < src.length){
@@ -199,7 +194,6 @@ module.exports = function(src, opts){
         ////////////////////////////////////////////////////////////////////////
         //symbol
         }else if(/^[a-zA-Z_]$/.test(c)){
-            ctxChange();
             buff = "";
             while(i < src.length){
                 c = src[i];
@@ -219,7 +213,7 @@ module.exports = function(src, opts){
         ////////////////////////////////////////////////////////////////////////
         //comment
         }else if(c === ";"){
-            ctxChange();
+            buff = c;
             i += 1;
             while(i < src.length){
                 c = src[i];
@@ -249,7 +243,6 @@ module.exports = function(src, opts){
         }
         i += 1;
     }
-    ctxChange();
 
     return tokens;
 };
