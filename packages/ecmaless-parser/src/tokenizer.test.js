@@ -98,10 +98,8 @@ test("tokenizer", function(t){
 
     tok1("RAW", "{");
     tok1("RAW", "==");
-    tok1("RAW", "!");
     tok1("RAW", "!=");
     tok1("RAW", "|");
-    tok1("RAW", "||");
 
 
     var testTokens = function(src, expected, message){
@@ -144,6 +142,28 @@ test("tokenizer", function(t){
         "RAW    |]",
         "RAW    |}",
         "RAW    |)",
+    ]);
+
+    testTokens("*:", [
+        "RAW    |*",
+        "RAW    |:",
+    ]);
+
+    testTokens("<", [
+        "RAW    |<",
+    ]);
+    testTokens("<=", [
+        "RAW    |<=",
+    ]);
+    testTokens("<!==", [
+        "RAW    |<",
+        "RAW    |!=",
+        "RAW    |=",
+    ]);
+
+    testTokens("a...", [
+        "SYMBOL |a",
+        "RAW    |...",
     ]);
 
 

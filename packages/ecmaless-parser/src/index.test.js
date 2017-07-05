@@ -543,7 +543,7 @@ test("types", function(t){
         ],
     });
 
-    tst("[String ... , Number]", {
+    tst("[String ..., Number]", {
         type: "ArrayType",
         value: [
             mk.ddd({type: "Type", value: "String"}),
@@ -579,7 +579,7 @@ test("types", function(t){
         ]
     });
 
-    tst("{one: String, * : Other}", {
+    tst("{one: String, *: Other}", {
         type: "StructType",
         pairs: [
             [mk.sym("one"), mk.Type("String")],

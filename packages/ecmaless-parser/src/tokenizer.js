@@ -1,3 +1,30 @@
+var raw_toks = {
+    ":": true,
+    ",": true,
+    ".": true,
+    "..": true,//not actually used, this is just a hack
+    "...": true,
+    "?": true,
+    "=": true,
+    "(": true,
+    ")": true,
+    "[": true,
+    "]": true,
+    "{": true,
+    "}": true,
+    "==": true,
+    "!=": true,
+    "<": true,
+    "<=": true,
+    ">": true,
+    ">=": true,
+    "+": true,
+    "-": true,
+    "*": true,
+    "/": true,
+    "%": true,
+};
+
 module.exports = function(src, opts){
     opts = opts || {};
 
@@ -37,9 +64,6 @@ module.exports = function(src, opts){
         buff = "";
     };
     var ctxChange = function(){
-        if(buff.length > 0){
-            pushTok("RAW");
-        }
         buff = c;
     };
 
@@ -210,11 +234,18 @@ module.exports = function(src, opts){
 
         ////////////////////////////////////////////////////////////////////////
         //raw
-        }else if("(){}[]".indexOf(c) >= 0){//single char groups
-            ctxChange();
-            pushTok("RAW");
         }else{
             buff += c;
+
+            while(i < src.length){
+                if(!raw_toks.hasOwnProperty(buff + src[i + 1])){
+                    break;
+                }
+                i += 1;
+                buff += src[i];
+            }
+
+            pushTok("RAW");
         }
         i += 1;
     }
