@@ -120,6 +120,7 @@ var tok_and = tok("SYMBOL", "and");
 var tok_not = tok("SYMBOL", "not");
 
 var tok_ann = tok("SYMBOL", "ann");
+var tok_Fn = tok("TYPE", "Fn");
 
 var isReserved = function(src){
   return reserved[src] === true;
@@ -359,6 +360,9 @@ var grammar = {
         }
         },
     {"name": "TypeExpression", "symbols": ["Type"], "postprocess": id},
+    {"name": "TypeExpression", "symbols": ["ArrayType"], "postprocess": id},
+    {"name": "TypeExpression", "symbols": ["StructType"], "postprocess": id},
+    {"name": "TypeExpression", "symbols": ["FunctionType"], "postprocess": id},
     {"name": "Type", "symbols": [tok_TYPE], "postprocess": 
         function(d){
           return {
@@ -368,6 +372,59 @@ var grammar = {
           };
         }
         },
+    {"name": "ArrayType$ebnf$1", "symbols": ["ArrayType_body"], "postprocess": id},
+    {"name": "ArrayType$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "ArrayType", "symbols": [tok_OPEN_SQ, "ArrayType$ebnf$1", tok_CLOSE_SQ], "postprocess":  function(d){
+          return {
+            loc: mkLoc(d),
+            type: "ArrayType",
+            value: d[1] || [],
+          };
+        } },
+    {"name": "ArrayType_body", "symbols": ["ArrayType_elm"], "postprocess": idArr},
+    {"name": "ArrayType_body", "symbols": ["ArrayType_body", "COMMA", "ArrayType_elm"], "postprocess": concatArr(2)},
+    {"name": "ArrayType_elm$ebnf$1", "symbols": [tok_DOTDOTDOT], "postprocess": id},
+    {"name": "ArrayType_elm$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "ArrayType_elm", "symbols": ["TypeExpression", "ArrayType_elm$ebnf$1"], "postprocess": 
+        function(d){
+            if(!d[1]){
+                return d[0];
+            }
+            return {
+                loc: mkLoc(d),
+                type: "DotDotDot",
+                value: d[0],
+            };
+        }
+        },
+    {"name": "StructType", "symbols": [tok_OPEN_CU, "KeyValPairsType", tok_CLOSE_CU], "postprocess":  function(d){
+          return {
+            loc: mkLoc(d),
+            type: "StructType",
+            pairs: d[1],
+          };
+        } },
+    {"name": "KeyValPairsType", "symbols": [], "postprocess": noopArr},
+    {"name": "KeyValPairsType", "symbols": ["KeyValPairsType_body"], "postprocess": id},
+    {"name": "KeyValPairsType", "symbols": ["NL", "INDENT", "KeyValPairsType_body_nl", "DEDENT", "NL"], "postprocess": idN(2)},
+    {"name": "KeyValPairsType_body", "symbols": ["KeyValPairType"], "postprocess": idArr},
+    {"name": "KeyValPairsType_body", "symbols": ["KeyValPairsType_body", "COMMA", "KeyValPairType"], "postprocess": concatArr(2)},
+    {"name": "KeyValPairsType_body_nl", "symbols": ["KeyValPairType", "COMMA", "NL"], "postprocess": idArr},
+    {"name": "KeyValPairsType_body_nl", "symbols": ["KeyValPairsType_body_nl", "KeyValPairType", "COMMA", "NL"], "postprocess": concatArr(1)},
+    {"name": "KeyValPairType$subexpression$1", "symbols": ["String"]},
+    {"name": "KeyValPairType$subexpression$1", "symbols": ["Number"]},
+    {"name": "KeyValPairType$subexpression$1", "symbols": ["Symbol"]},
+    {"name": "KeyValPairType", "symbols": ["KeyValPairType$subexpression$1", tok_COLON, "TypeExpression"], "postprocess":  function(d){
+            return [d[0][0], d[2]];
+        } },
+    {"name": "FunctionType", "symbols": [tok_Fn, "ArrayType", tok_COLON, "TypeExpression"], "postprocess":  function(d){
+          return {
+            loc: mkLoc(d),
+            type: "FunctionType",
+            params: d[1],
+            "return": d[3]
+          };
+        } },
     {"name": "Expression", "symbols": ["AssignmentExpression"], "postprocess": id},
     {"name": "AssignmentExpression", "symbols": ["ConditionalExpression"], "postprocess": id},
     {"name": "AssignmentExpression", "symbols": ["MemberExpression", tok_EQ, "AssignmentExpression"], "postprocess": 

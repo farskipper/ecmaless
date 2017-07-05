@@ -116,6 +116,7 @@ var tok_and = tok("SYMBOL", "and");
 var tok_not = tok("SYMBOL", "not");
 
 var tok_ann = tok("SYMBOL", "ann");
+var tok_Fn = tok("TYPE", "Fn");
 
 var isReserved = function(src){
   return reserved[src] === true;
@@ -357,8 +358,13 @@ Annotation -> %tok_ann Identifier %tok_EQ TypeExpression {%
   }
 %}
 
+
 TypeExpression ->
       Type {% id %}
+    | ArrayType {% id %}
+    | StructType {% id %}
+    | FunctionType {% id %}
+
 
 Type -> %tok_TYPE {%
   function(d){
@@ -369,6 +375,73 @@ Type -> %tok_TYPE {%
     };
   }
 %}
+
+
+ArrayType -> %tok_OPEN_SQ ArrayType_body:? %tok_CLOSE_SQ {% function(d){
+  return {
+    loc: mkLoc(d),
+    type: "ArrayType",
+    value: d[1] || [],
+  };
+} %}
+
+
+ArrayType_body ->
+      ArrayType_elm {% idArr %}
+    | ArrayType_body COMMA ArrayType_elm {% concatArr(2) %}
+
+
+ArrayType_elm -> TypeExpression %tok_DOTDOTDOT:? {%
+    function(d){
+        if(!d[1]){
+            return d[0];
+        }
+        return {
+            loc: mkLoc(d),
+            type: "DotDotDot",
+            value: d[0],
+        };
+    }
+%}
+
+
+StructType -> %tok_OPEN_CU KeyValPairsType %tok_CLOSE_CU {% function(d){
+  return {
+    loc: mkLoc(d),
+    type: "StructType",
+    pairs: d[1],
+  };
+} %}
+
+
+KeyValPairsType -> null {% noopArr %}
+    | KeyValPairsType_body {% id %}
+    | NL INDENT KeyValPairsType_body_nl DEDENT NL {% idN(2) %}
+
+
+KeyValPairsType_body ->
+      KeyValPairType {% idArr %}
+    | KeyValPairsType_body COMMA KeyValPairType {% concatArr(2) %}
+
+
+KeyValPairsType_body_nl ->
+      KeyValPairType COMMA NL {% idArr %}
+    | KeyValPairsType_body_nl KeyValPairType COMMA NL {% concatArr(1) %}
+
+
+KeyValPairType -> (String|Number|Symbol) %tok_COLON TypeExpression {% function(d){
+    return [d[0][0], d[2]];
+} %}
+
+
+FunctionType -> %tok_Fn ArrayType %tok_COLON TypeExpression {% function(d){
+  return {
+    loc: mkLoc(d),
+    type: "FunctionType",
+    params: d[1],
+    "return": d[3]
+  };
+} %}
 
 ################################################################################
 # Expression

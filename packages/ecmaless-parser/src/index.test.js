@@ -81,6 +81,10 @@ mk.ret = function(e){
     return {type: "Return", expression: e};
 };
 
+mk.Type = function(t){
+    return {type: "Type", value: t};
+};
+
 var mkv = function(v){
     if(_.isNumber(v)){
         return mk.num(v);
@@ -498,21 +502,81 @@ test("loc", function(t){
 
 test("types", function(t){
     var tst = function(src, expected){
-        var ast = parser(src).body;
-        ast = ast.length === 1 ? ast[0] : ast;
-        if(ast.type === "ExpressionStatement"){
-            ast = ast.expression;
-        }
-        t.deepEquals(rmLoc(ast), expected);
+        src = "ann foo = " + src;
+        var ast = parser(src).body[0];
+        t.deepEquals(rmLoc(ast), {
+            type: "Annotation",
+            id: mk.id("foo"),
+            def: expected,
+        });
     };
 
-    tst("ann foo = String", {
-        type: "Annotation",
-        id: mk.id("foo"),
-        def: {
-            type: "Type",
-            value: "String",
+    tst("String", {
+        type: "Type",
+        value: "String",
+    });
+
+    tst("[]", {
+        type: "ArrayType",
+        value: [],
+    });
+
+    tst("[String]", {
+        type: "ArrayType",
+        value: [
+            {type: "Type", value: "String"},
+        ],
+    });
+
+    tst("[String, Number]", {
+        type: "ArrayType",
+        value: [
+            {type: "Type", value: "String"},
+            {type: "Type", value: "Number"},
+        ],
+    });
+
+    tst("[String ...]", {
+        type: "ArrayType",
+        value: [
+            mk.ddd({type: "Type", value: "String"}),
+        ],
+    });
+
+    tst("[String ... , Number]", {
+        type: "ArrayType",
+        value: [
+            mk.ddd({type: "Type", value: "String"}),
+            {type: "Type", value: "Number"},
+        ],
+    });
+
+    tst("Fn [String, Number]: String", {
+        type: "FunctionType",
+        params: {
+            type: "ArrayType",
+            value: [
+                mk.Type("String"),
+                mk.Type("Number"),
+            ],
         },
+        "return": mk.Type("String"),
+    });
+
+    tst("{one: String}", {
+        type: "StructType",
+        pairs: [
+            [mk.sym("one"), mk.Type("String")],
+        ]
+    });
+
+    tst("{\n    \"one\": String,\n    two: Number,\n    3: Bool,\n}", {
+        type: "StructType",
+        pairs: [
+            [mk.str("one"), mk.Type("String")],
+            [mk.sym("two"), mk.Type("Number")],
+            [mk.num(3), mk.Type("Bool")],
+        ]
     });
 
     t.end();
