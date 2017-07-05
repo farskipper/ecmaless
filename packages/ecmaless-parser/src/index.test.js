@@ -220,6 +220,8 @@ test("parser", function(t){
         tst("1 " + op + " 2", mk.infix(op, mkv(1), mkv(2)));
     });
 
+    tst("\"hello \" ++ name", mk.infix("++", mkv("hello "), mk.id("name")));
+
     tst("while a:\n    b", {
         type: "While",
         test: mk.id("a"),

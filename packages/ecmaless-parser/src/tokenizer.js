@@ -19,6 +19,7 @@ var raw_toks = {
     ">": true,
     ">=": true,
     "+": true,
+    "++": true,
     "-": true,
     "*": true,
     "/": true,

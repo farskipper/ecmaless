@@ -43,7 +43,7 @@ var mkLoc = function(d){
       }
       loc.end = elms[i].loc.end;
     }
-    i++;
+    i += 1;
   }
   return loc;
 };
@@ -129,6 +129,7 @@ var tok_LTEQ = tok("RAW", "<=");
 var tok_GT = tok("RAW", ">");
 var tok_GTEQ = tok("RAW", ">=");
 var tok_PLUS = tok("RAW", "+");
+var tok_PLUSPLUS = tok("RAW", "++");
 var tok_MINUS = tok("RAW", "-");
 var tok_TIMES = tok("RAW", "*");
 var tok_DIVIDE = tok("RAW", "/");
@@ -498,6 +499,7 @@ exp_comp -> exp_sum {% id %}
 exp_sum -> exp_product {% id %}
     | exp_sum %tok_PLUS exp_product {% infixOp %}
     | exp_sum %tok_MINUS exp_product {% infixOp %}
+    | exp_sum %tok_PLUSPLUS exp_product {% infixOp %}
 
 exp_product -> UnaryOperator {% id %}
     | exp_product %tok_TIMES UnaryOperator {% infixOp %}
