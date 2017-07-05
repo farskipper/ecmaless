@@ -495,3 +495,25 @@ test("loc", function(t){
 
     t.end();
 });
+
+test("types", function(t){
+    var tst = function(src, expected){
+        var ast = parser(src).body;
+        ast = ast.length === 1 ? ast[0] : ast;
+        if(ast.type === "ExpressionStatement"){
+            ast = ast.expression;
+        }
+        t.deepEquals(rmLoc(ast), expected);
+    };
+
+    tst("ann foo = String", {
+        type: "Annotation",
+        id: mk.id("foo"),
+        def: {
+            type: "Type",
+            value: "String",
+        },
+    });
+
+    t.end();
+});

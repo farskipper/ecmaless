@@ -72,6 +72,7 @@ var tok_NUMBER = tok("NUMBER");
 var tok_STRING = tok("STRING");
 var tok_DOCSTRING = tok("DOCSTRING");
 var tok_SYMBOL = tok("SYMBOL");
+var tok_TYPE = tok("TYPE");
 var tok_INDENT = tok("INDENT");
 var tok_DEDENT = tok("DEDENT");
 var tok_NL = tok("NEWLINE");
@@ -117,6 +118,8 @@ var tok_false = tok("SYMBOL", "false");
 var tok_or = tok("SYMBOL", "or");
 var tok_and = tok("SYMBOL", "and");
 var tok_not = tok("SYMBOL", "not");
+
+var tok_ann = tok("SYMBOL", "ann");
 
 var isReserved = function(src){
   return reserved[src] === true;
@@ -229,6 +232,7 @@ var grammar = {
     {"name": "Statement", "symbols": ["Cond"], "postprocess": id},
     {"name": "Statement", "symbols": ["Case"], "postprocess": id},
     {"name": "Statement", "symbols": ["TryCatch"], "postprocess": id},
+    {"name": "Statement", "symbols": ["Annotation"], "postprocess": id},
     {"name": "ExpressionStatement", "symbols": ["Expression"], "postprocess":  function(d){
           return {
             loc: mkLoc(d),
@@ -341,6 +345,26 @@ var grammar = {
             loc: mkLoc(d),
             type: "Block",
             body: d[3]
+          };
+        }
+        },
+    {"name": "Annotation", "symbols": [tok_ann, "Identifier", tok_EQ, "TypeExpression"], "postprocess": 
+        function(d){
+          return {
+            loc: mkLoc(d),
+            type: "Annotation",
+            id: d[1], 
+            def: d[3], 
+          };
+        }
+        },
+    {"name": "TypeExpression", "symbols": ["Type"], "postprocess": id},
+    {"name": "Type", "symbols": [tok_TYPE], "postprocess": 
+        function(d){
+          return {
+            loc: mkLoc(d),
+            type: "Type",
+            value: d[0].src,
           };
         }
         },

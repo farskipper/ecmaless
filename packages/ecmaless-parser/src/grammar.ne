@@ -68,6 +68,7 @@ var tok_NUMBER = tok("NUMBER");
 var tok_STRING = tok("STRING");
 var tok_DOCSTRING = tok("DOCSTRING");
 var tok_SYMBOL = tok("SYMBOL");
+var tok_TYPE = tok("TYPE");
 var tok_INDENT = tok("INDENT");
 var tok_DEDENT = tok("DEDENT");
 var tok_NL = tok("NEWLINE");
@@ -113,6 +114,8 @@ var tok_false = tok("SYMBOL", "false");
 var tok_or = tok("SYMBOL", "or");
 var tok_and = tok("SYMBOL", "and");
 var tok_not = tok("SYMBOL", "not");
+
+var tok_ann = tok("SYMBOL", "ann");
 
 var isReserved = function(src){
   return reserved[src] === true;
@@ -225,6 +228,7 @@ Statement ->
     | Cond {% id %}
     | Case {% id %}
     | TryCatch {% id %}
+    | Annotation {% id %}
 
 ExpressionStatement -> Expression {% function(d){
   return {
@@ -335,6 +339,33 @@ Block -> %tok_COLON NL INDENT Statement_list DEDENT {%
       loc: mkLoc(d),
       type: "Block",
       body: d[3]
+    };
+  }
+%}
+
+################################################################################
+# Types 
+
+Annotation -> %tok_ann Identifier %tok_EQ TypeExpression {%
+  function(d){
+    return {
+      loc: mkLoc(d),
+      type: "Annotation",
+      id: d[1], 
+      def: d[3], 
+    };
+  }
+%}
+
+TypeExpression ->
+      Type {% id %}
+
+Type -> %tok_TYPE {%
+  function(d){
+    return {
+      loc: mkLoc(d),
+      type: "Type",
+      value: d[0].src,
     };
   }
 %}
