@@ -89,30 +89,39 @@ var tok_OPEN_CU = tok("RAW", "{");
 var tok_CLOSE_CU = tok("RAW", "}");
 
 var tok_import = tok("SYMBOL", "import");
+var tok_export = tok("SYMBOL", "export");
+
 var tok_def = tok("SYMBOL", "def");
+
 var tok_fn = tok("SYMBOL", "fn");
+var tok_return = tok("SYMBOL", "return");
+
 var tok_if = tok("SYMBOL", "if");
 var tok_else = tok("SYMBOL", "else");
+
 var tok_cond = tok("SYMBOL", "cond");
 var tok_case = tok("SYMBOL", "case");
-var tok_while = tok("SYMBOL", "while");
-var tok_break = tok("SYMBOL", "break");
-var tok_continue = tok("SYMBOL", "continue");
+
 var tok_try = tok("SYMBOL", "try");
 var tok_catch = tok("SYMBOL", "catch");
 var tok_finally = tok("SYMBOL", "finally");
-var tok_return = tok("SYMBOL", "return");
+
+var tok_while = tok("SYMBOL", "while");
+var tok_break = tok("SYMBOL", "break");
+var tok_continue = tok("SYMBOL", "continue");
+
 var tok_nil = tok("SYMBOL", "nil");
 var tok_true = tok("SYMBOL", "true");
 var tok_false = tok("SYMBOL", "false");
-var tok_export = tok("SYMBOL", "export");
+
+var tok_or = tok("SYMBOL", "or");
+var tok_and = tok("SYMBOL", "and");
+var tok_not = tok("SYMBOL", "not");
 
 var isReserved = function(src){
   return reserved[src] === true;
 };
 
-var tok_OR = tok("RAW", "||");
-var tok_AND = tok("RAW", "&&");
 var tok_EQEQ = tok("RAW", "==");
 var tok_NOTEQ = tok("RAW", "!=");
 var tok_LT = tok("RAW", "<");
@@ -124,7 +133,6 @@ var tok_MINUS = tok("RAW", "-");
 var tok_TIMES = tok("RAW", "*");
 var tok_DIVIDE = tok("RAW", "/");
 var tok_MODULO = tok("RAW", "%");
-var tok_BANG = tok("RAW", "!");
 
 var mkType = function(d, type, value){
   return {
@@ -362,9 +370,9 @@ var grammar = {
         }
         },
     {"name": "exp_or", "symbols": ["exp_and"], "postprocess": id},
-    {"name": "exp_or", "symbols": ["exp_or", tok_OR, "exp_and"], "postprocess": infixOp},
+    {"name": "exp_or", "symbols": ["exp_or", tok_or, "exp_and"], "postprocess": infixOp},
     {"name": "exp_and", "symbols": ["exp_comp"], "postprocess": id},
-    {"name": "exp_and", "symbols": ["exp_and", tok_AND, "exp_comp"], "postprocess": infixOp},
+    {"name": "exp_and", "symbols": ["exp_and", tok_and, "exp_comp"], "postprocess": infixOp},
     {"name": "exp_comp", "symbols": ["exp_sum"], "postprocess": id},
     {"name": "exp_comp", "symbols": ["exp_comp", tok_EQEQ, "exp_sum"], "postprocess": infixOp},
     {"name": "exp_comp", "symbols": ["exp_comp", tok_NOTEQ, "exp_sum"], "postprocess": infixOp},
@@ -382,7 +390,7 @@ var grammar = {
     {"name": "UnaryOperator", "symbols": ["MemberExpression"], "postprocess": id},
     {"name": "UnaryOperator", "symbols": [tok_PLUS, "UnaryOperator"], "postprocess": unaryOp},
     {"name": "UnaryOperator", "symbols": [tok_MINUS, "UnaryOperator"], "postprocess": unaryOp},
-    {"name": "UnaryOperator", "symbols": [tok_BANG, "UnaryOperator"], "postprocess": unaryOp},
+    {"name": "UnaryOperator", "symbols": [tok_not, "UnaryOperator"], "postprocess": unaryOp},
     {"name": "MemberExpression", "symbols": ["PrimaryExpression"], "postprocess": id},
     {"name": "MemberExpression", "symbols": ["MemberExpression", tok_DOT, "Identifier"], "postprocess":  function(d){
             return mkMemberExpression(mkLoc(d), "dot", d[0], d[2]);

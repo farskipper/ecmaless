@@ -199,8 +199,8 @@ test("parser", function(t){
     tst("1?2:(3?4:5)", mk.ternary(mkv(1), mkv(2), mk.ternary(mkv(3), mkv(4), mkv(5))));
 
     _.each([
-        "||",
-        "&&",
+        "or",
+        "and",
         "==",
         "!=",
         "+",
@@ -351,7 +351,7 @@ test("parser", function(t){
 
     tst("-1", mk.unary("-", mkv(1)));
     tst("+1", mk.unary("+", mkv(1)));
-    tst("!a", mk.unary("!", mk.id("a")));
+    tst("not a", mk.unary("not", mk.id("a")));
     tst("3- -1", mk.infix("-", mkv(3), mk.unary("-", mkv(1))));
 
     tst("i = 1", mk.assign("=", mk.id("i"), mkv(1)));

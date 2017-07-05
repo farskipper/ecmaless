@@ -89,10 +89,10 @@ add(1, 2)
 -1
 {"type": "UnaryOperator", "op": "-", "arg": {"type": "Number", "value": 1}}
 
-!a
+not a
 {
     "type": "UnaryOperator",
-    "op": "!",
+    "op": "not",
     "arg": {"type": "Identifier", "value": "a"}
 }
 
@@ -109,13 +109,13 @@ add(1, 2)
     }
 }
 
-a && b || c
+a and b or c
 {
     "type": "InfixOperator",
-    "op": "||",
+    "op": "or",
     "left": {
         "type": "InfixOperator",
-        "op": "&&",
+        "op": "and",
         "left": {"type": "Identifier", "value": "a"},
         "right": {"type": "Identifier", "value": "b"}
     },

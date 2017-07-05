@@ -24,9 +24,9 @@ _.each({
     ],
     "### Operators": [
         "-1",
-        "!a",
+        "not a",
         "1 + 2 * 3",
-        "a && b || c",
+        "a and b or c",
     ],
     "### Control Flow": [
         "if a:\n    b\nelse:\n    c",
