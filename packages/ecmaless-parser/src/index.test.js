@@ -579,5 +579,13 @@ test("types", function(t){
         ]
     });
 
+    tst("{one: String, * : Other}", {
+        type: "StructType",
+        pairs: [
+            [mk.sym("one"), mk.Type("String")],
+            [{type: "AnyKey"}, mk.Type("Other")],
+        ]
+    });
+
     t.end();
 });

@@ -429,8 +429,16 @@ KeyValPairsType_body_nl ->
     | KeyValPairsType_body_nl KeyValPairType COMMA NL {% concatArr(1) %}
 
 
-KeyValPairType -> (String|Number|Symbol) %tok_COLON TypeExpression {% function(d){
+KeyValPairType -> (String|Number|Symbol|AnyKey) %tok_COLON TypeExpression {% function(d){
     return [d[0][0], d[2]];
+} %}
+
+
+AnyKey -> %tok_TIMES {% function(d){
+    return {
+        loc: mkLoc(d),
+        type: "AnyKey",
+    };
 } %}
 
 

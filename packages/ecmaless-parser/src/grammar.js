@@ -414,8 +414,15 @@ var grammar = {
     {"name": "KeyValPairType$subexpression$1", "symbols": ["String"]},
     {"name": "KeyValPairType$subexpression$1", "symbols": ["Number"]},
     {"name": "KeyValPairType$subexpression$1", "symbols": ["Symbol"]},
+    {"name": "KeyValPairType$subexpression$1", "symbols": ["AnyKey"]},
     {"name": "KeyValPairType", "symbols": ["KeyValPairType$subexpression$1", tok_COLON, "TypeExpression"], "postprocess":  function(d){
             return [d[0][0], d[2]];
+        } },
+    {"name": "AnyKey", "symbols": [tok_TIMES], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "AnyKey",
+            };
         } },
     {"name": "FunctionType", "symbols": [tok_Fn, "ArrayType", tok_COLON, "TypeExpression"], "postprocess":  function(d){
           return {
