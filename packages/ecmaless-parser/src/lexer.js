@@ -9,7 +9,9 @@ var nLeadingSpaces = function(str){
     return i;
 };
 
-var assertDocstringIndents = function(tok, ind){
+var docstringSrcAndAssertIndents = function(tok, ind){
+
+    var out_lines = [];
 
     var lines = tok.src.split("\n");
 
@@ -22,12 +24,15 @@ var assertDocstringIndents = function(tok, ind){
 
     var line;
     var i = 1;//skip line 1
+
+    out_lines.push(lines[0]);
+
     while(i < lines.length){
         line = lines[i];
 
         n_leading = nLeadingSpaces(line);
 
-        if(ind_cols !== n_leading){
+        if(n_leading < ind_cols){
             throw {
                 type: "InvalidIndentation",
                 message: "Docstrings should match indentation. Don't worry, indentation is not included in the string.",
@@ -38,9 +43,14 @@ var assertDocstringIndents = function(tok, ind){
                 },
             };
         }
+
+        out_lines.push(line.substring(ind_cols));
+
         start += line.length + 1;
         i += 1;
     }
+
+    return out_lines.join("\n");
 };
 
 module.exports = function(tokens, opts){
@@ -60,7 +70,7 @@ module.exports = function(tokens, opts){
         });
     };
 
-    var ind;
+    var ind = 0;
     var indent_stack = [0];
 
     var curr;
@@ -125,8 +135,9 @@ module.exports = function(tokens, opts){
                 }
             }
         }else if(curr.type === "DOCSTRING"){
-            assertDocstringIndents(curr, ind);
-            out.push(curr);
+            out.push(Object.assign({}, curr, {
+                src: docstringSrcAndAssertIndents(curr, ind),
+            }));
         }else{
             out.push(curr);
         }

@@ -66,6 +66,7 @@ var tok = function(type, value){
 };
 var tok_NUMBER = tok("NUMBER");
 var tok_STRING = tok("STRING");
+var tok_DOCSTRING = tok("DOCSTRING");
 var tok_SYMBOL = tok("SYMBOL");
 var tok_INDENT = tok("INDENT");
 var tok_DEDENT = tok("DEDENT");
@@ -401,6 +402,7 @@ MemberExpression -> PrimaryExpression {% id %}
 PrimaryExpression ->
       Number {% id %}
     | String {% id %}
+    | Docstring {% id %}
     | Identifier {% id %}
     | Nil {% id %}
     | Boolean {% id %}
@@ -501,6 +503,11 @@ Number -> %tok_NUMBER {% function(d){
 String -> %tok_STRING {% function(d){
   var value = d[0].src.replace(/(^")|("$)/g, "").replace(/\\"/g, "\"");
   return mkType(d, "String", value);
+} %}
+
+Docstring -> %tok_DOCSTRING {% function(d){
+  var value = d[0].src.replace(/(^""")|("""$)/g, "").replace(/\\"/g, "\"");
+  return mkType(d, "Docstring", value);
 } %}
 
 Identifier -> %tok_SYMBOL {% function(d, start, reject){

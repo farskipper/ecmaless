@@ -10,6 +10,9 @@ mk.num = function(value){
 mk.str = function(value){
     return {type: "String", value: value};
 };
+mk.docstr = function(value){
+    return {type: "Docstring", value: value};
+};
 mk.id = function(value){
     return {type: "Identifier", value: value};
 };
@@ -113,7 +116,8 @@ test("parser", function(t){
 
     tst("123", mk.num(123));
     tst("\"ok\"", mk.str("ok"));
-    tstFail("\"\\\"that\\\"\n\"", mk.str("\"that\"\n"));
+    tstFail("\"\\\"that\\\"\n\"");
+    tst("\"\"\"\nsome \"docstring\"\n\"\"\"", mk.docstr("\nsome \"docstring\"\n"));
 
     tst("def a", mk.def(mk.id("a")));
     tst("def a = 1.2", mk.def(mk.id("a"), mk.num(1.2)));

@@ -70,6 +70,7 @@ var tok = function(type, value){
 };
 var tok_NUMBER = tok("NUMBER");
 var tok_STRING = tok("STRING");
+var tok_DOCSTRING = tok("DOCSTRING");
 var tok_SYMBOL = tok("SYMBOL");
 var tok_INDENT = tok("INDENT");
 var tok_DEDENT = tok("DEDENT");
@@ -391,6 +392,7 @@ var grammar = {
         } },
     {"name": "PrimaryExpression", "symbols": ["Number"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": ["String"], "postprocess": id},
+    {"name": "PrimaryExpression", "symbols": ["Docstring"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": ["Identifier"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": ["Nil"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": ["Boolean"], "postprocess": id},
@@ -480,6 +482,10 @@ var grammar = {
     {"name": "String", "symbols": [tok_STRING], "postprocess":  function(d){
           var value = d[0].src.replace(/(^")|("$)/g, "").replace(/\\"/g, "\"");
           return mkType(d, "String", value);
+        } },
+    {"name": "Docstring", "symbols": [tok_DOCSTRING], "postprocess":  function(d){
+          var value = d[0].src.replace(/(^""")|("""$)/g, "").replace(/\\"/g, "\"");
+          return mkType(d, "Docstring", value);
         } },
     {"name": "Identifier", "symbols": [tok_SYMBOL], "postprocess":  function(d, start, reject){
           var src = d[0].src;

@@ -10,7 +10,9 @@ test("lexer", function(t){
 
         t.deepEquals(_.map(tokens, function(tok){
             var loc_src = src.substring(tok.loc.start, tok.loc.end);
-            t.equals(tok.src, loc_src, "loc should point to the same src string");
+            if(tok.type !== "DOCSTRING"){
+                t.equals(tok.src, loc_src, "loc should point to the same src string");
+            }
             return _.padEnd(tok.type, 7) + "|" + tok.src;
         }), expected);
     };
@@ -112,12 +114,22 @@ test("lexer", function(t){
         "NEWLINE|",
     ]);
 
-    testLex("a:\n    \"\"\"\n    hello world\n    \"\"\"\n", [
+    testLex("\"\"\"\nhello world\n\"\"\"", [
+        "DOCSTRING|\"\"\"\nhello world\n\"\"\"",
+        "NEWLINE|",
+    ]);
+
+    testLex("\"\"\"\nhello\n     world\n\"\"\"", [
+        "DOCSTRING|\"\"\"\nhello\n     world\n\"\"\"",
+        "NEWLINE|",
+    ]);
+
+    testLex("a:\n    \"\"\"\n    hello world\n         ?\n    \"\"\"\n", [
         "SYMBOL |a",
         "RAW    |:",
         "NEWLINE|\n",
         "INDENT |    ",
-        "DOCSTRING|\"\"\"\n    hello world\n    \"\"\"",
+        "DOCSTRING|\"\"\"\nhello world\n     ?\n\"\"\"",
         "NEWLINE|\n",
         "DEDENT |",
         "NEWLINE|",
