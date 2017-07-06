@@ -4,69 +4,69 @@
 function id(x) {return x[0]; }
 
 var flatten = function(toFlatten){
-  var isArray = Object.prototype.toString.call(toFlatten) === '[object Array]';
+    var isArray = Object.prototype.toString.call(toFlatten) === '[object Array]';
 
-  if (isArray && toFlatten.length > 0) {
-    var head = toFlatten[0];
-    var tail = toFlatten.slice(1);
+    if (isArray && toFlatten.length > 0) {
+        var head = toFlatten[0];
+        var tail = toFlatten.slice(1);
 
-    return flatten(head).concat(flatten(tail));
-  } else {
-    return [].concat(toFlatten);
-  }
+        return flatten(head).concat(flatten(tail));
+    } else {
+        return [].concat(toFlatten);
+    }
 };
 
 var noop = function(){};
 var noopArr = function(){return [];};
 var idArr = function(d){return [d[0]];};
 var concatArr = function(i, no_wrap){
-  if(no_wrap){
+    if(no_wrap){
+        return function(d){
+            return d[0].concat(d[i]);
+        };
+    }
     return function(d){
-      return d[0].concat(d[i]);
+        return d[0].concat([d[i]]);
     };
-  }
-  return function(d){
-    return d[0].concat([d[i]]);
-  };
 };
 var idN = function(n){
-  return function(d){
-    return d[n];
-  };
+    return function(d){
+        return d[n];
+    };
 };
 
 var mkLoc = function(d){
-  var loc = {};
-  var elms = flatten(d);
-  var i = 0;
-  while(i < elms.length){
-    if(elms[i] && elms[i].loc){
-      if(!loc.start){
-        loc.start = elms[i].loc.start;
-        loc.source = elms[i].loc.source;
-      }
-      loc.end = elms[i].loc.end;
+    var loc = {};
+    var elms = flatten(d);
+    var i = 0;
+    while(i < elms.length){
+        if(elms[i] && elms[i].loc){
+            if(!loc.start){
+                loc.start = elms[i].loc.start;
+                loc.source = elms[i].loc.source;
+            }
+            loc.end = elms[i].loc.end;
+        }
+        i += 1;
     }
-    i += 1;
-  }
-  return loc;
+    return loc;
 };
 
 var reserved = {};
 
 var tok = function(type, value){
-  if((type === "SYMBOL") && typeof value === "string"){
-    reserved[value] = true;
-  }
-  return {test: function(x){
-    if(!x || x.type !== type){
-      return false;
+    if((type === "SYMBOL") && typeof value === "string"){
+        reserved[value] = true;
     }
-    if(value){
-      return x.src === value;
-    }
-    return true;
-  }};
+    return {test: function(x){
+        if(!x || x.type !== type){
+            return false;
+        }
+        if(value){
+            return x.src === value;
+        }
+        return true;
+    }};
 };
 var tok_NUMBER = tok("NUMBER");
 var tok_STRING = tok("STRING");
@@ -123,7 +123,7 @@ var tok_ann = tok("SYMBOL", "ann");
 var tok_Fn = tok("TYPE", "Fn");
 
 var isReserved = function(src){
-  return reserved[src] === true;
+    return reserved[src] === true;
 };
 
 var tok_EQEQ = tok("RAW", "==");
@@ -140,54 +140,54 @@ var tok_DIVIDE = tok("RAW", "/");
 var tok_MODULO = tok("RAW", "%");
 
 var mkType = function(d, type, value){
-  return {
-    loc: mkLoc(d),
-    type: type,
-    value: value
-  };
+    return {
+        loc: mkLoc(d),
+        type: type,
+        value: value,
+    };
 };
 
 var mkMemberExpression = function(loc, method, object, path){
-  return {
-    loc: loc,
-    type: "MemberExpression",
-    object: object,
-    path: path,
-    method: method
-  };
+    return {
+        loc: loc,
+        type: "MemberExpression",
+        object: object,
+        path: path,
+        method: method,
+    };
 };
 
 var unaryOp = function(d){
-  return {
-    loc: mkLoc(d),
-    type: "UnaryOperator",
-    op: d[0].src,
-    arg: d[1]
-  };
+    return {
+        loc: mkLoc(d),
+        type: "UnaryOperator",
+        op: d[0].src,
+        arg: d[1],
+    };
 };
 
 var infixOp = function(d){
-  return {
-    loc: mkLoc(d),
-    type: "InfixOperator",
-    op: d[1].src,
-    left: d[0],
-    right: d[2]
-  };
+    return {
+        loc: mkLoc(d),
+        type: "InfixOperator",
+        op: d[1].src,
+        left: d[0],
+        right: d[2],
+    };
 };
 
 
 var tryCatchMaker = function(i_id, i_catch, i_finally){
-  return function(d){
-    return {
-      loc: mkLoc(d),
-      type: "TryCatch",
-      try_block: d[1],
-      catch_id: i_id > 0 ? d[i_id] : null,
-      catch_block: i_catch > 0 ? d[i_catch] : null,
-      finally_block: i_finally > 0 ? d[i_finally] : null
+    return function(d){
+        return {
+            loc: mkLoc(d),
+            type: "TryCatch",
+            try_block: d[1],
+            catch_id: i_id > 0 ? d[i_id] : null,
+            catch_block: i_catch > 0 ? d[i_catch] : null,
+            finally_block: i_finally > 0 ? d[i_finally] : null,
+        };
     };
-  };
 };
 
 var grammar = {
@@ -215,12 +215,12 @@ var grammar = {
             };
         } },
     {"name": "Import", "symbols": ["Identifier", "String", "NL"], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "Import",
-            id: d[0],
-            path: d[1]
-          };
+            return {
+                loc: mkLoc(d),
+                type: "Import",
+                id: d[0],
+                path: d[1]
+            };
         } },
     {"name": "Statement_list", "symbols": ["Statement", "NL"], "postprocess": idArr},
     {"name": "Statement_list", "symbols": ["Statement_list", "Statement", "NL"], "postprocess": concatArr(1)},
@@ -236,31 +236,31 @@ var grammar = {
     {"name": "Statement", "symbols": ["TryCatch"], "postprocess": id},
     {"name": "Statement", "symbols": ["Annotation"], "postprocess": id},
     {"name": "ExpressionStatement", "symbols": ["Expression"], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "ExpressionStatement",
-            expression: d[0]
-          };
+            return {
+                loc: mkLoc(d),
+                type: "ExpressionStatement",
+                expression: d[0]
+            };
         } },
     {"name": "Return$ebnf$1", "symbols": ["Expression"], "postprocess": id},
     {"name": "Return$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Return", "symbols": [tok_return, "Return$ebnf$1"], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "Return",
-            expression: d[1]
-          };
+            return {
+                loc: mkLoc(d),
+                type: "Return",
+                expression: d[1]
+            };
         } },
     {"name": "Define$ebnf$1$subexpression$1", "symbols": [tok_EQ, "Expression"]},
     {"name": "Define$ebnf$1", "symbols": ["Define$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "Define$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Define", "symbols": [tok_def, "Identifier", "Define$ebnf$1"], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "Define",
-            id: d[1],
-            init: d[2] ? d[2][1] : void 0
-          };
+            return {
+                loc: mkLoc(d),
+                type: "Define",
+                id: d[1],
+                init: d[2] ? d[2][1] : void 0,
+            };
         } },
     {"name": "If$ebnf$1$subexpression$1$subexpression$1", "symbols": ["If"]},
     {"name": "If$ebnf$1$subexpression$1$subexpression$1", "symbols": ["Block"]},
@@ -268,25 +268,25 @@ var grammar = {
     {"name": "If$ebnf$1", "symbols": ["If$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "If$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "If", "symbols": [tok_if, "Expression", "Block", "If$ebnf$1"], "postprocess":  function(d){
-          var else_block = d[3] && d[3][2] && d[3][2][0];
-          if(else_block && else_block.type === "Block"){
-            else_block = else_block;
-          }
-          return {
-            loc: mkLoc(d),
-            type: "If",
-            test: d[1],
-            then: d[2],
-            "else": else_block
-          };
+            var else_block = d[3] && d[3][2] && d[3][2][0];
+            if(else_block && else_block.type === "Block"){
+                else_block = else_block;
+            }
+            return {
+                loc: mkLoc(d),
+                type: "If",
+                test: d[1],
+                then: d[2],
+                "else": else_block
+            };
         } },
     {"name": "While", "symbols": [tok_while, "Expression", "Block"], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "While",
-            test: d[1],
-            block: d[2]
-          };
+            return {
+                loc: mkLoc(d),
+                type: "While",
+                test: d[1],
+                block: d[2]
+            };
         } },
     {"name": "Break", "symbols": [tok_break], "postprocess": function(d){return {loc: d[0].loc, type: "Break"};}},
     {"name": "Continue", "symbols": [tok_continue], "postprocess": function(d){return {loc: d[0].loc, type: "Continue"};}},
@@ -296,98 +296,87 @@ var grammar = {
     {"name": "Cond$ebnf$2", "symbols": ["Cond$ebnf$2$subexpression$1"], "postprocess": id},
     {"name": "Cond$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Cond", "symbols": [tok_cond, tok_COLON, "NL", "INDENT", "Cond$ebnf$1", "Cond$ebnf$2", "DEDENT"], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "Cond",
-            blocks: d[4],
-            "else": d[5] && d[5][0],
-          };
+            return {
+                loc: mkLoc(d),
+                type: "Cond",
+                blocks: d[4],
+                "else": d[5] && d[5][0],
+            };
         } },
-    {"name": "CondBlock", "symbols": ["Expression", "Block", "NL"], "postprocess": 
-        function(d){
-          return {
-            loc: mkLoc(d),
-            type: "CondBlock",
-            test: d[0],
-            block: d[1]
-          };
-        }
-        },
+    {"name": "CondBlock", "symbols": ["Expression", "Block", "NL"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "CondBlock",
+                test: d[0],
+                block: d[1],
+            };
+        } },
     {"name": "Case$ebnf$1", "symbols": []},
     {"name": "Case$ebnf$1", "symbols": ["Case$ebnf$1", "CaseBlock"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "Case$ebnf$2$subexpression$1", "symbols": ["ElseBlock", "NL"]},
     {"name": "Case$ebnf$2", "symbols": ["Case$ebnf$2$subexpression$1"], "postprocess": id},
     {"name": "Case$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Case", "symbols": [tok_case, "Expression", tok_COLON, "NL", "INDENT", "Case$ebnf$1", "Case$ebnf$2", "DEDENT"], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "Case",
-            to_test: d[1],
-            blocks: d[5],
-            "else": d[6] && d[6][0],
-          };
+            return {
+                loc: mkLoc(d),
+                type: "Case",
+                to_test: d[1],
+                blocks: d[5],
+                "else": d[6] && d[6][0],
+            };
         } },
-    {"name": "CaseBlock", "symbols": ["Expression", "Block", "NL"], "postprocess": 
-        function(d){
-          return {
-            loc: mkLoc(d),
-            type: "CaseBlock",
-            value: d[0],
-            block: d[1]
-          };
-        }
-        },
+    {"name": "CaseBlock", "symbols": ["Expression", "Block", "NL"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "CaseBlock",
+                value: d[0],
+                block: d[1],
+            };
+        } },
     {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block"], "postprocess": tryCatchMaker(4, 5, -1)},
     {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(-1, -1, 4)},
     {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(4, 5, 8)},
     {"name": "ElseBlock", "symbols": [tok_else, "Block"], "postprocess": idN(1)},
-    {"name": "Block", "symbols": [tok_COLON, "NL", "INDENT", "Statement_list", "DEDENT"], "postprocess": 
-        function(d){
-          return {
-            loc: mkLoc(d),
-            type: "Block",
-            body: d[3]
-          };
-        }
-        },
-    {"name": "Annotation", "symbols": [tok_ann, "Identifier", tok_EQ, "TypeExpression"], "postprocess": 
-        function(d){
-          return {
-            loc: mkLoc(d),
-            type: "Annotation",
-            id: d[1], 
-            def: d[3], 
-          };
-        }
-        },
+    {"name": "Block", "symbols": [tok_COLON, "NL", "INDENT", "Statement_list", "DEDENT"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "Block",
+                body: d[3],
+            };
+        } },
+    {"name": "Annotation", "symbols": [tok_ann, "Identifier", tok_EQ, "TypeExpression"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "Annotation",
+                id: d[1], 
+                def: d[3], 
+            };
+        } },
     {"name": "TypeExpression", "symbols": ["Type"], "postprocess": id},
     {"name": "TypeExpression", "symbols": ["ArrayType"], "postprocess": id},
     {"name": "TypeExpression", "symbols": ["StructType"], "postprocess": id},
     {"name": "TypeExpression", "symbols": ["FunctionType"], "postprocess": id},
-    {"name": "Type", "symbols": [tok_TYPE], "postprocess": 
-        function(d){
-          return {
-            loc: mkLoc(d),
-            type: "Type",
-            value: d[0].src,
-          };
-        }
-        },
+    {"name": "Type", "symbols": [tok_TYPE], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "Type",
+                value: d[0].src,
+            };
+        } },
     {"name": "ArrayType$ebnf$1", "symbols": ["ArrayType_body"], "postprocess": id},
     {"name": "ArrayType$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "ArrayType", "symbols": [tok_OPEN_SQ, "ArrayType$ebnf$1", tok_CLOSE_SQ], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "ArrayType",
-            value: d[1] || [],
-          };
+            return {
+                loc: mkLoc(d),
+                type: "ArrayType",
+                value: d[1] || [],
+            };
         } },
     {"name": "ArrayType_body", "symbols": ["ArrayType_elm"], "postprocess": idArr},
     {"name": "ArrayType_body", "symbols": ["ArrayType_body", "COMMA", "ArrayType_elm"], "postprocess": concatArr(2)},
     {"name": "ArrayType_elm$ebnf$1", "symbols": [tok_DOTDOTDOT], "postprocess": id},
     {"name": "ArrayType_elm$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "ArrayType_elm", "symbols": ["TypeExpression", "ArrayType_elm$ebnf$1"], "postprocess": 
-        function(d){
+    {"name": "ArrayType_elm", "symbols": ["TypeExpression", "ArrayType_elm$ebnf$1"], "postprocess":  function(d){
             if(!d[1]){
                 return d[0];
             }
@@ -396,14 +385,13 @@ var grammar = {
                 type: "DotDotDot",
                 value: d[0],
             };
-        }
-        },
+        } },
     {"name": "StructType", "symbols": [tok_OPEN_CU, "KeyValPairsType", tok_CLOSE_CU], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "StructType",
-            pairs: d[1],
-          };
+            return {
+                loc: mkLoc(d),
+                type: "StructType",
+                pairs: d[1],
+            };
         } },
     {"name": "KeyValPairsType", "symbols": [], "postprocess": noopArr},
     {"name": "KeyValPairsType", "symbols": ["KeyValPairsType_body"], "postprocess": id},
@@ -426,38 +414,34 @@ var grammar = {
             };
         } },
     {"name": "FunctionType", "symbols": [tok_Fn, "ArrayType", tok_COLON, "TypeExpression"], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "FunctionType",
-            params: d[1],
-            "return": d[3]
-          };
+            return {
+                loc: mkLoc(d),
+                type: "FunctionType",
+                params: d[1],
+                "return": d[3]
+            };
         } },
     {"name": "Expression", "symbols": ["AssignmentExpression"], "postprocess": id},
     {"name": "AssignmentExpression", "symbols": ["ConditionalExpression"], "postprocess": id},
-    {"name": "AssignmentExpression", "symbols": ["MemberExpression", tok_EQ, "AssignmentExpression"], "postprocess": 
-        function(d){
-          return {
-            loc: mkLoc(d),
-            type: "AssignmentExpression",
-            op: d[1].src,
-            left: d[0],
-            right: d[2]
-          };
-        }
-        },
+    {"name": "AssignmentExpression", "symbols": ["MemberExpression", tok_EQ, "AssignmentExpression"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "AssignmentExpression",
+                op: d[1].src,
+                left: d[0],
+                right: d[2]
+            };
+        } },
     {"name": "ConditionalExpression", "symbols": ["exp_or"], "postprocess": id},
-    {"name": "ConditionalExpression", "symbols": ["exp_or", tok_QUESTION, "exp_or", tok_COLON, "exp_or"], "postprocess": 
-        function(d){
-          return {
-            loc: mkLoc(d),
-            type: "ConditionalExpression",
-            test: d[0],
-            consequent: d[2],
-            alternate: d[4]
-          };
-        }
-        },
+    {"name": "ConditionalExpression", "symbols": ["exp_or", tok_QUESTION, "exp_or", tok_COLON, "exp_or"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "ConditionalExpression",
+                test: d[0],
+                consequent: d[2],
+                alternate: d[4],
+            };
+        } },
     {"name": "exp_or", "symbols": ["exp_and"], "postprocess": id},
     {"name": "exp_or", "symbols": ["exp_or", tok_or, "exp_and"], "postprocess": infixOp},
     {"name": "exp_and", "symbols": ["exp_comp"], "postprocess": id},
@@ -500,19 +484,19 @@ var grammar = {
     {"name": "PrimaryExpression", "symbols": ["Struct"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": [tok_OPEN_PN, "Expression", tok_CLOSE_PN], "postprocess": idN(1)},
     {"name": "Application", "symbols": ["MemberExpression", tok_OPEN_PN, "Expression_list", tok_CLOSE_PN], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "Application",
-            callee: d[0],
-            args: d[2]
-          };
+            return {
+                loc: mkLoc(d),
+                type: "Application",
+                callee: d[0],
+                args: d[2],
+            };
         } },
     {"name": "Struct", "symbols": [tok_OPEN_CU, "KeyValPairs", tok_CLOSE_CU], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "Struct",
-            value: d[1]
-          };
+            return {
+                loc: mkLoc(d),
+                type: "Struct",
+                value: d[1]
+            };
         } },
     {"name": "KeyValPairs", "symbols": [], "postprocess": noopArr},
     {"name": "KeyValPairs", "symbols": ["KeyValPairs_body"], "postprocess": id},
@@ -525,14 +509,14 @@ var grammar = {
     {"name": "KeyValPair$subexpression$1", "symbols": ["Number"]},
     {"name": "KeyValPair$subexpression$1", "symbols": ["Symbol"]},
     {"name": "KeyValPair", "symbols": ["KeyValPair$subexpression$1", tok_COLON, "Expression"], "postprocess":  function(d){
-          return [d[0][0], d[2]];
+            return [d[0][0], d[2]];
         } },
     {"name": "Array", "symbols": [tok_OPEN_SQ, "Expression_list", tok_CLOSE_SQ], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "Array",
-            value: d[1]
-          };
+            return {
+                loc: mkLoc(d),
+                type: "Array",
+                value: d[1],
+            };
         } },
     {"name": "Expression_list", "symbols": [], "postprocess": noopArr},
     {"name": "Expression_list", "symbols": ["Expression_list_body"], "postprocess": id},
@@ -546,12 +530,12 @@ var grammar = {
     {"name": "Expression_list_body_nl$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "Expression_list_body_nl", "symbols": ["Expression_list_body_nl", "Expression", "Expression_list_body_nl$ebnf$2", "COMMA", "NL"], "postprocess": concatArr(1)},
     {"name": "Function", "symbols": [tok_fn, "Params", "Block"], "postprocess":  function(d){
-          return {
-            loc: mkLoc(d),
-            type: "Function",
-            params: d[1],
-            block: d[2]
-          };
+            return {
+                loc: mkLoc(d),
+                type: "Function",
+                params: d[1],
+                block: d[2],
+            };
         } },
     {"name": "Params", "symbols": ["Identifier"], "postprocess": id},
     {"name": "Params", "symbols": [tok_OPEN_SQ, tok_CLOSE_SQ], "postprocess": noopArr},
@@ -562,47 +546,45 @@ var grammar = {
     {"name": "Params_body", "symbols": ["Params_body", "COMMA", "Param"], "postprocess": concatArr(2)},
     {"name": "Param$ebnf$1", "symbols": [tok_DOTDOTDOT], "postprocess": id},
     {"name": "Param$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Param", "symbols": ["Identifier", "Param$ebnf$1"], "postprocess": 
-        function(d){
-          if(!d[1]){
-            return d[0];
-          }
-          return {
-            loc: mkLoc(d),
-            type: "DotDotDot",
-            value: d[0]
-          };
-        }
-        },
+    {"name": "Param", "symbols": ["Identifier", "Param$ebnf$1"], "postprocess":  function(d){
+            if(!d[1]){
+                return d[0];
+            }
+            return {
+                loc: mkLoc(d),
+                type: "DotDotDot",
+                value: d[0],
+            };
+        } },
     {"name": "Number", "symbols": [tok_NUMBER], "postprocess":  function(d){
-          return mkType(d, "Number", parseFloat(d[0].src) || 0);
+            return mkType(d, "Number", parseFloat(d[0].src) || 0);
         } },
     {"name": "String", "symbols": [tok_STRING], "postprocess":  function(d){
-          var value = d[0].src.replace(/(^")|("$)/g, "").replace(/\\"/g, "\"");
-          return mkType(d, "String", value);
+            var value = d[0].src.replace(/(^")|("$)/g, "").replace(/\\"/g, "\"");
+            return mkType(d, "String", value);
         } },
     {"name": "Docstring", "symbols": [tok_DOCSTRING], "postprocess":  function(d){
-          var value = d[0].src.replace(/(^""")|("""$)/g, "").replace(/\\"/g, "\"");
-          return mkType(d, "Docstring", value);
+            var value = d[0].src.replace(/(^""")|("""$)/g, "").replace(/\\"/g, "\"");
+            return mkType(d, "Docstring", value);
         } },
     {"name": "Identifier", "symbols": [tok_SYMBOL], "postprocess":  function(d, start, reject){
-          var src = d[0].src;
-          if(isReserved(src)){
-            return reject;
-          }
-          return mkType(d, "Identifier", src);
+            var src = d[0].src;
+            if(isReserved(src)){
+                return reject;
+            }
+            return mkType(d, "Identifier", src);
         } },
     {"name": "Nil", "symbols": [tok_nil], "postprocess":  function(d){
-          return {loc: d[0].loc, type: "Nil"};
+            return {loc: d[0].loc, type: "Nil"};
         } },
     {"name": "Boolean$subexpression$1", "symbols": [tok_true]},
     {"name": "Boolean$subexpression$1", "symbols": [tok_false]},
     {"name": "Boolean", "symbols": ["Boolean$subexpression$1"], "postprocess":  function(d){
-          var t = d[0][0];
-          return {loc: t.loc, type: "Boolean", value: t.src === "true"};
+            var t = d[0][0];
+            return {loc: t.loc, type: "Boolean", value: t.src === "true"};
         } },
     {"name": "Symbol", "symbols": [tok_SYMBOL], "postprocess":  function(d){
-          return mkType(d, "Symbol", d[0].src);
+            return mkType(d, "Symbol", d[0].src);
         } },
     {"name": "INDENT", "symbols": [tok_INDENT], "postprocess": id},
     {"name": "DEDENT", "symbols": [tok_DEDENT], "postprocess": id},
