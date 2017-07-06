@@ -353,14 +353,30 @@ var grammar = {
             };
         } },
     {"name": "TypeExpression", "symbols": ["Type"], "postprocess": id},
+    {"name": "TypeExpression", "symbols": ["TypeVariable"], "postprocess": id},
     {"name": "TypeExpression", "symbols": ["ArrayType"], "postprocess": id},
     {"name": "TypeExpression", "symbols": ["StructType"], "postprocess": id},
     {"name": "TypeExpression", "symbols": ["FunctionType"], "postprocess": id},
-    {"name": "Type", "symbols": [tok_TYPE], "postprocess":  function(d){
+    {"name": "Type$ebnf$1", "symbols": ["TypeParams"], "postprocess": id},
+    {"name": "Type$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Type", "symbols": [tok_TYPE, "Type$ebnf$1"], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
                 type: "Type",
                 value: d[0].src,
+                params: d[1] || [],
+            };
+        } },
+    {"name": "TypeParams", "symbols": [tok_LT, "TypeParam_list", tok_GT], "postprocess": idN(1)},
+    {"name": "TypeParam_list", "symbols": [], "postprocess": noopArr},
+    {"name": "TypeParam_list", "symbols": ["TypeParam_list_body"], "postprocess": id},
+    {"name": "TypeParam_list_body", "symbols": ["TypeExpression"], "postprocess": idArr},
+    {"name": "TypeParam_list_body", "symbols": ["TypeParam_list_body", "COMMA", "TypeExpression"], "postprocess": concatArr(2)},
+    {"name": "TypeVariable", "symbols": ["Identifier"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "TypeVariable",
+                value: d[0].value,
             };
         } },
     {"name": "ArrayType$ebnf$1", "symbols": ["ArrayType_body"], "postprocess": id},

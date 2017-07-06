@@ -82,7 +82,11 @@ mk.ret = function(e){
 };
 
 mk.Type = function(t){
-    return {type: "Type", value: t};
+    return {
+        type: "Type",
+        value: t,
+        params: [],
+    };
 };
 
 var mkv = function(v){
@@ -516,6 +520,7 @@ test("types", function(t){
     tst("String", {
         type: "Type",
         value: "String",
+        params: [],
     });
 
     tst("[]", {
@@ -526,30 +531,30 @@ test("types", function(t){
     tst("[String]", {
         type: "ArrayType",
         value: [
-            {type: "Type", value: "String"},
+            {type: "Type", value: "String", params: []},
         ],
     });
 
     tst("[String, Number]", {
         type: "ArrayType",
         value: [
-            {type: "Type", value: "String"},
-            {type: "Type", value: "Number"},
+            {type: "Type", value: "String", params: []},
+            {type: "Type", value: "Number", params: []},
         ],
     });
 
     tst("[String ...]", {
         type: "ArrayType",
         value: [
-            mk.ddd({type: "Type", value: "String"}),
+            mk.ddd({type: "Type", value: "String", params: []}),
         ],
     });
 
     tst("[String ..., Number]", {
         type: "ArrayType",
         value: [
-            mk.ddd({type: "Type", value: "String"}),
-            {type: "Type", value: "Number"},
+            mk.ddd({type: "Type", value: "String", params: []}),
+            {type: "Type", value: "Number", params: []},
         ],
     });
 
@@ -587,6 +592,25 @@ test("types", function(t){
             [mk.sym("one"), mk.Type("String")],
             [{type: "AnyKey"}, mk.Type("Other")],
         ]
+    });
+
+    tst("Foo<String>", {
+        type: "Type",
+        value: "Foo",
+        params: [
+            mk.Type("String"),
+        ],
+    });
+
+    tst("Foo<a>", {
+        type: "Type",
+        value: "Foo",
+        params: [
+            {
+                type: "TypeVariable",
+                value: "a",
+            },
+        ],
     });
 
     t.end();

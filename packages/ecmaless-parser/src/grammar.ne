@@ -219,7 +219,6 @@ Import -> Identifier String NL
 ################################################################################
 # Statement
 
-
 Statement_list ->
       Statement NL {% idArr %}
     | Statement_list Statement NL {% concatArr(1) %}
@@ -389,17 +388,41 @@ Annotation -> %tok_ann Identifier %tok_EQ TypeExpression
 
 TypeExpression ->
       Type {% id %}
+    | TypeVariable {% id %}
     | ArrayType {% id %}
     | StructType {% id %}
     | FunctionType {% id %}
 
 
-Type -> %tok_TYPE
+Type -> %tok_TYPE TypeParams:?
 {% function(d){
     return {
         loc: mkLoc(d),
         type: "Type",
         value: d[0].src,
+        params: d[1] || [],
+    };
+} %}
+
+
+TypeParams -> %tok_LT TypeParam_list %tok_GT {% idN(1) %}
+
+TypeParam_list ->
+      null {% noopArr %}
+    | TypeParam_list_body {% id %}
+
+
+TypeParam_list_body ->
+      TypeExpression {% idArr %}
+    | TypeParam_list_body COMMA TypeExpression {% concatArr(2) %}
+
+
+TypeVariable -> Identifier
+{% function(d){
+    return {
+        loc: mkLoc(d),
+        type: "TypeVariable",
+        value: d[0].value,
     };
 } %}
 
