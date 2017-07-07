@@ -417,12 +417,12 @@ EnumVariant_list ->
     | EnumVariant_list NL EnumVariant {% concatArr(2) %}
 
 
-EnumVariant -> %tok_TYPE %tok_OPEN_PN TypeExpression_list %tok_CLOSE_PN
+EnumVariant -> Type %tok_OPEN_PN TypeExpression_list %tok_CLOSE_PN
 {% function(d){
     return {
         loc: mkLoc(d),
         type: "EnumVariant",
-        tag: d[0].src,
+        tag: d[0],
         params: d[2],
     };
 } %}
@@ -640,6 +640,7 @@ PrimaryExpression ->
     | Array {% id %}
     | Struct {% id %}
     | %tok_OPEN_PN Expression %tok_CLOSE_PN {% idN(1) %}
+    | EnumValue {% id %}
 
 
 Application -> MemberExpression %tok_OPEN_PN Expression_list %tok_CLOSE_PN
@@ -742,6 +743,18 @@ Param -> Identifier %tok_DOTDOTDOT:?
         loc: mkLoc(d),
         type: "DotDotDot",
         value: d[0],
+    };
+} %}
+
+
+EnumValue -> Type %tok_DOT Type %tok_OPEN_PN Expression_list %tok_CLOSE_PN
+{% function(d){
+    return {
+        loc: mkLoc(d),
+        type: "EnumValue",
+        enum: d[0],
+        tag : d[2],
+        params: d[4],
     };
 } %}
 

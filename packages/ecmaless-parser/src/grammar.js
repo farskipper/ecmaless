@@ -374,11 +374,11 @@ var grammar = {
         } },
     {"name": "EnumVariant_list", "symbols": ["EnumVariant"], "postprocess": idArr},
     {"name": "EnumVariant_list", "symbols": ["EnumVariant_list", "NL", "EnumVariant"], "postprocess": concatArr(2)},
-    {"name": "EnumVariant", "symbols": [tok_TYPE, tok_OPEN_PN, "TypeExpression_list", tok_CLOSE_PN], "postprocess":  function(d){
+    {"name": "EnumVariant", "symbols": ["Type", tok_OPEN_PN, "TypeExpression_list", tok_CLOSE_PN], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
                 type: "EnumVariant",
-                tag: d[0].src,
+                tag: d[0],
                 params: d[2],
             };
         } },
@@ -529,6 +529,7 @@ var grammar = {
     {"name": "PrimaryExpression", "symbols": ["Array"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": ["Struct"], "postprocess": id},
     {"name": "PrimaryExpression", "symbols": [tok_OPEN_PN, "Expression", tok_CLOSE_PN], "postprocess": idN(1)},
+    {"name": "PrimaryExpression", "symbols": ["EnumValue"], "postprocess": id},
     {"name": "Application", "symbols": ["MemberExpression", tok_OPEN_PN, "Expression_list", tok_CLOSE_PN], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
@@ -600,6 +601,15 @@ var grammar = {
                 loc: mkLoc(d),
                 type: "DotDotDot",
                 value: d[0],
+            };
+        } },
+    {"name": "EnumValue", "symbols": ["Type", tok_DOT, "Type", tok_OPEN_PN, "Expression_list", tok_CLOSE_PN], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "EnumValue",
+                enum: d[0],
+                tag : d[2],
+                params: d[4],
             };
         } },
     {"name": "Number", "symbols": [tok_NUMBER], "postprocess":  function(d){

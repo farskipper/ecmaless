@@ -86,6 +86,9 @@ mk.Type = function(t, params){
         type: "Type",
         value: t,
         params: _.map(params, function(param){
+            if(!_.isString(param)){
+                return param;
+            }
             return {
                 type: "TypeVariable",
                 value: param,
@@ -663,38 +666,47 @@ test("Enum", function(t){
         variants: [
             {
                 type: "EnumVariant",
-                tag: "Connected",
+                tag: mk.Type("Connected"),
                 params: [],
             },
             {
                 type: "EnumVariant",
-                tag: "Disconnected",
+                tag: mk.Type("Disconnected"),
                 params: [],
             },
         ],
     });
 
-    tst("enum AsyncResp<err, data>:\n    Error(err)\n    Resp(data)", {
+    tst("enum AsyncResp<err, data>:\n    Error(err)\n    Data(data)", {
         type: "Enum",
         id: mk.Type("AsyncResp", ["err", "data"]),
         variants: [
             {
                 type: "EnumVariant",
-                tag: "Error",
+                tag: mk.Type("Error"),
                 params: [{type: "TypeVariable", value: "err"}],
             },
             {
                 type: "EnumVariant",
-                tag: "Resp",
+                tag: mk.Type("Data"),
                 params: [{type: "TypeVariable", value: "data"}],
             },
         ],
     });
 
-    /*
-    tst("callback(AsyncResp<String, Number>.Error(\"it failed\"))", {
-    });
-    */
+    tst("HttpResp.Error(\"it failed\")", mk.stmt({
+        type: "EnumValue",
+        enum: mk.Type("HttpResp"),
+        tag: mk.Type("Error"),
+        params: [mk.str("it failed")],
+    }));
+
+    tst("AsyncResp<String, Number>.Error(\"it failed\")", mk.stmt({
+        type: "EnumValue",
+        enum: mk.Type("AsyncResp", [mk.Type("String"), mk.Type("Number")]),
+        tag: mk.Type("Error"),
+        params: [mk.str("it failed")],
+    }));
 
     t.end();
 });
