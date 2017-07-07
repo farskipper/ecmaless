@@ -48,8 +48,21 @@ _.each({
         "obj[key]",
     ],
     "### Module": [
-        "import:\n    a \"./a\"\n    b \"./b\"\n\na(b)",
-        "export a",
+        [
+            "import:",
+            "    \"./a\":",
+            "        a",
+            "        c as d",
+            "        Foo",
+            "        Bar as Baz",
+            "",
+            "    \"b\":",
+            "        * as b",
+            "",
+            "    \"c\":",
+            "        *",
+        ].join("\n"),
+        //"export a",
     ]
 }, function(srcs, head){
     console.log();

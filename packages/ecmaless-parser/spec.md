@@ -385,42 +385,64 @@ obj[key]
 
 ```js
 import:
-    a "./a"
-    b "./b"
+    "./a":
+        a
+        c as d
+        Foo
+        Bar as Baz
 
-a(b)
+    "b":
+        * as b
+
+    "c":
+        *
 {
     "type": "Module",
     "import": [
         {
             "type": "Import",
-            "id": {"type": "Identifier", "value": "a"},
-            "path": {"type": "String", "value": "./a"}
+            "path": {"type": "String", "value": "./a"},
+            "names": [
+                {
+                    "type": "ImportName",
+                    "name": {"type": "Identifier", "value": "a"},
+                    "as": null
+                },
+                {
+                    "type": "ImportName",
+                    "name": {"type": "Identifier", "value": "c"},
+                    "as": {"type": "Identifier", "value": "d"}
+                },
+                {
+                    "type": "ImportName",
+                    "name": {"type": "Type", "value": "Foo", "params": []},
+                    "as": null
+                },
+                {
+                    "type": "ImportName",
+                    "name": {"type": "Type", "value": "Bar", "params": []},
+                    "as": {"type": "Type", "value": "Baz", "params": []}
+                }
+            ]
         },
         {
             "type": "Import",
-            "id": {"type": "Identifier", "value": "b"},
-            "path": {"type": "String", "value": "./b"}
-        }
-    ],
-    "body": [
+            "path": {"type": "String", "value": "b"},
+            "names": [
+                {
+                    "type": "ImportName",
+                    "name": null,
+                    "as": {"type": "Identifier", "value": "b"}
+                }
+            ]
+        },
         {
-            "type": "ExpressionStatement",
-            "expression": {
-                "type": "Application",
-                "callee": {"type": "Identifier", "value": "a"},
-                "args": [{"type": "Identifier", "value": "b"}]
-            }
+            "type": "Import",
+            "path": {"type": "String", "value": "c"},
+            "names": [{"type": "ImportName", "name": null, "as": null}]
         }
     ],
-    "export": null
-}
-
-export a
-{
-    "type": "Module",
-    "import": [],
     "body": [],
-    "export": {"type": "Identifier", "value": "a"}
+    "export": null
 }
 ```

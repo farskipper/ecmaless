@@ -416,40 +416,73 @@ test("parser", function(t){
 });
 
 test("module", function(t){
-    var ast = parser("import:\n    a \"./a\"\na()");
+    var src = "";
+    src += "import:\n";
+    src += "    \"./a\":\n";
+    src += "        a\n";
+    src += "        b as c\n";
+    src += "        Foo\n";
+    src += "        Bar as Baz\n";
+    src += "\n";
+    src += "    \"all\":\n";
+    src += "        *\n";
+    src += "\n";
+    src += "    \"wat\":\n";
+    src += "        * as da\n";
+    var ast = parser(src);
     t.deepEquals(rmLoc(ast), {
         type: "Module",
         "import": [
             {
                 type: "Import",
-                id: mk.id("a"),
-                path: mkv("./a")
-            }
-        ],
-        body: [
-            mk.stmt(mk.app(mk.id("a"), [])),
-        ],
-        "export": null,
-    });
-
-    ast = parser("import:\n    a \"./a\"\n    b    \"b\"\na(b)");
-    t.deepEquals(rmLoc(ast), {
-        type: "Module",
-        "import": [
-            {
-                type: "Import",
-                id: mk.id("a"),
-                path: mkv("./a")
+                path: mkv("./a"),
+                names: [
+                    {
+                        type: "ImportName",
+                        name: mk.id("a"),
+                        as: null,
+                    },
+                    {
+                        type: "ImportName",
+                        name: mk.id("b"),
+                        as: mk.id("c"),
+                    },
+                    {
+                        type: "ImportName",
+                        name: mk.Type("Foo"),
+                        as: null,
+                    },
+                    {
+                        type: "ImportName",
+                        name: mk.Type("Bar"),
+                        as: mk.Type("Baz"),
+                    },
+                ],
             },
             {
                 type: "Import",
-                id: mk.id("b"),
-                path: mkv("b")
+                path: mkv("all"),
+                names: [
+                    {
+                        type: "ImportName",
+                        name: null,
+                        as: null,
+                    },
+                ],
+            },
+            {
+                type: "Import",
+                path: mkv("wat"),
+                names: [
+                    {
+                        type: "ImportName",
+                        name: null,
+                        as: mk.id("da"),
+                    },
+                ],
             },
         ],
-        body: [
-            mk.stmt(mk.app(mk.id("a"), [mk.id("b")])),
-        ],
+        body: [],
         "export": null,
     });
 

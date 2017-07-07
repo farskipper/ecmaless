@@ -86,6 +86,7 @@ var tok_OPEN_CU = tok("RAW", "{");
 var tok_CLOSE_CU = tok("RAW", "}");
 
 var tok_import = tok("SYMBOL", "import");
+var tok_as = tok("SYMBOL", "as");
 var tok_export = tok("SYMBOL", "export");
 
 var tok_def = tok("SYMBOL", "def");
@@ -207,15 +208,35 @@ main ->
 } %}
 
 
-Import -> Identifier String NL
+Import -> String %tok_COLON NL INDENT ImportName:+ DEDENT NL
 {% function(d){
     return {
         loc: mkLoc(d),
         type: "Import",
-        id: d[0],
-        path: d[1]
+        path: d[0],
+        names: d[4],
     };
 } %}
+
+ImportName -> ImportName_parts NL
+{% function(d){
+    d = d[0];
+    var name = d[0];
+    if(name.type === "RAW"){// *
+        name = null;
+    }
+    return {
+        loc: mkLoc(d),
+        type: "ImportName",
+        name: name,
+        as: (d[1] && d[1][1]) || null,
+    };
+} %}
+
+ImportName_parts ->
+      Identifier (%tok_as Identifier):?
+    | Type (%tok_as Type):?
+    | %tok_TIMES (%tok_as Identifier):?
 
 
 ################################################################################
