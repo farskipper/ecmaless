@@ -81,11 +81,16 @@ mk.ret = function(e){
     return {type: "Return", expression: e};
 };
 
-mk.Type = function(t){
+mk.Type = function(t, params){
     return {
         type: "Type",
         value: t,
-        params: [],
+        params: _.map(params, function(param){
+            return {
+                type: "TypeVariable",
+                value: param,
+            };
+        }),
     };
 };
 
@@ -506,7 +511,7 @@ test("loc", function(t){
     t.end();
 });
 
-test("types", function(t){
+test("TypeExpression", function(t){
     var tst = function(src, expected){
         src = "ann foo = " + src;
         var ast = parser(src).body[0];
@@ -612,6 +617,84 @@ test("types", function(t){
             },
         ],
     });
+
+    tst("fooBar", {
+        type: "TypeVariable",
+        value: "fooBar",
+    });
+
+    t.end();
+});
+
+test("TypeAlias", function(t){
+    var tst = function(src, expected){
+        var ast = parser(src).body[0];
+        t.deepEquals(rmLoc(ast), expected);
+    };
+
+    tst("alias SomeId = String", {
+        type: "TypeAlias",
+        id: mk.Type("SomeId"),
+        value: mk.Type("String"),
+    });
+
+    tst("alias Foo<a, b> = Fn a : b", {
+        type: "TypeAlias",
+        id: mk.Type("Foo", ["a", "b"]),
+        value: {
+            type: "FunctionType",
+            params: {type: "TypeVariable", value: "a"},
+            "return": {type: "TypeVariable", value: "b"},
+        },
+    });
+
+    t.end();
+});
+
+test("Enum", function(t){
+    var tst = function(src, expected){
+        var ast = parser(src).body[0];
+        t.deepEquals(rmLoc(ast), expected);
+    };
+
+    tst("enum Status:\n    Connected()\n    Disconnected()", {
+        type: "Enum",
+        id: mk.Type("Status"),
+        variants: [
+            {
+                type: "EnumVariant",
+                tag: "Connected",
+                params: [],
+            },
+            {
+                type: "EnumVariant",
+                tag: "Disconnected",
+                params: [],
+            },
+        ],
+    });
+
+    tst("enum AsyncResp<err, data>:\n    Error(err)\n    Resp(data)", {
+        type: "Enum",
+        id: mk.Type("AsyncResp", ["err", "data"]),
+        variants: [
+            {
+                type: "EnumVariant",
+                tag: "Error",
+                params: [{type: "TypeVariable", value: "err"}],
+            },
+            {
+                type: "EnumVariant",
+                tag: "Resp",
+                params: [{type: "TypeVariable", value: "data"}],
+            },
+        ],
+    });
+
+    /*
+    tst("callback(AsyncResp<String, Number>.Error(\"it failed\"))", {
+    });
+    */
 
     t.end();
 });

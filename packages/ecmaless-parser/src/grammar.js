@@ -120,6 +120,8 @@ var tok_and = tok("SYMBOL", "and");
 var tok_not = tok("SYMBOL", "not");
 
 var tok_ann = tok("SYMBOL", "ann");
+var tok_alias = tok("SYMBOL", "alias");
+var tok_enum = tok("SYMBOL", "enum");
 var tok_Fn = tok("TYPE", "Fn");
 
 var isReserved = function(src){
@@ -235,6 +237,8 @@ var grammar = {
     {"name": "Statement", "symbols": ["Case"], "postprocess": id},
     {"name": "Statement", "symbols": ["TryCatch"], "postprocess": id},
     {"name": "Statement", "symbols": ["Annotation"], "postprocess": id},
+    {"name": "Statement", "symbols": ["TypeAlias"], "postprocess": id},
+    {"name": "Statement", "symbols": ["Enum"], "postprocess": id},
     {"name": "ExpressionStatement", "symbols": ["Expression"], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
@@ -352,6 +356,32 @@ var grammar = {
                 def: d[3], 
             };
         } },
+    {"name": "TypeAlias", "symbols": [tok_alias, "Type", tok_EQ, "TypeExpression"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "TypeAlias",
+                id: d[1],
+                value: d[3],
+            };
+        } },
+    {"name": "Enum", "symbols": [tok_enum, "Type", tok_COLON, "NL", "INDENT", "EnumVariant_list", "NL", "DEDENT"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "Enum",
+                id: d[1],
+                variants: d[5],
+            };
+        } },
+    {"name": "EnumVariant_list", "symbols": ["EnumVariant"], "postprocess": idArr},
+    {"name": "EnumVariant_list", "symbols": ["EnumVariant_list", "NL", "EnumVariant"], "postprocess": concatArr(2)},
+    {"name": "EnumVariant", "symbols": [tok_TYPE, tok_OPEN_PN, "TypeExpression_list", tok_CLOSE_PN], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "EnumVariant",
+                tag: d[0].src,
+                params: d[2],
+            };
+        } },
     {"name": "TypeExpression", "symbols": ["Type"], "postprocess": id},
     {"name": "TypeExpression", "symbols": ["TypeVariable"], "postprocess": id},
     {"name": "TypeExpression", "symbols": ["ArrayType"], "postprocess": id},
@@ -367,11 +397,11 @@ var grammar = {
                 params: d[1] || [],
             };
         } },
-    {"name": "TypeParams", "symbols": [tok_LT, "TypeParam_list", tok_GT], "postprocess": idN(1)},
-    {"name": "TypeParam_list", "symbols": [], "postprocess": noopArr},
-    {"name": "TypeParam_list", "symbols": ["TypeParam_list_body"], "postprocess": id},
-    {"name": "TypeParam_list_body", "symbols": ["TypeExpression"], "postprocess": idArr},
-    {"name": "TypeParam_list_body", "symbols": ["TypeParam_list_body", "COMMA", "TypeExpression"], "postprocess": concatArr(2)},
+    {"name": "TypeParams", "symbols": [tok_LT, "TypeExpression_list", tok_GT], "postprocess": idN(1)},
+    {"name": "TypeExpression_list", "symbols": [], "postprocess": noopArr},
+    {"name": "TypeExpression_list", "symbols": ["TypeExpression_list_body"], "postprocess": id},
+    {"name": "TypeExpression_list_body", "symbols": ["TypeExpression"], "postprocess": idArr},
+    {"name": "TypeExpression_list_body", "symbols": ["TypeExpression_list_body", "COMMA", "TypeExpression"], "postprocess": concatArr(2)},
     {"name": "TypeVariable", "symbols": ["Identifier"], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
@@ -429,7 +459,7 @@ var grammar = {
                 type: "AnyKey",
             };
         } },
-    {"name": "FunctionType", "symbols": [tok_Fn, "ArrayType", tok_COLON, "TypeExpression"], "postprocess":  function(d){
+    {"name": "FunctionType", "symbols": [tok_Fn, "TypeExpression", tok_COLON, "TypeExpression"], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
                 type: "FunctionType",

@@ -116,6 +116,8 @@ var tok_and = tok("SYMBOL", "and");
 var tok_not = tok("SYMBOL", "not");
 
 var tok_ann = tok("SYMBOL", "ann");
+var tok_alias = tok("SYMBOL", "alias");
+var tok_enum = tok("SYMBOL", "enum");
 var tok_Fn = tok("TYPE", "Fn");
 
 var isReserved = function(src){
@@ -236,6 +238,8 @@ Statement ->
     | Case {% id %}
     | TryCatch {% id %}
     | Annotation {% id %}
+    | TypeAlias {% id %}
+    | Enum {% id %}
 
 
 ExpressionStatement -> Expression
@@ -386,6 +390,44 @@ Annotation -> %tok_ann Identifier %tok_EQ TypeExpression
 } %}
 
 
+TypeAlias -> %tok_alias Type %tok_EQ TypeExpression
+{% function(d){
+    return {
+        loc: mkLoc(d),
+        type: "TypeAlias",
+        id: d[1],
+        value: d[3],
+    };
+} %}
+
+
+Enum -> %tok_enum Type %tok_COLON NL INDENT EnumVariant_list NL DEDENT
+{% function(d){
+    return {
+        loc: mkLoc(d),
+        type: "Enum",
+        id: d[1],
+        variants: d[5],
+    };
+} %}
+
+
+EnumVariant_list ->
+      EnumVariant {% idArr %}
+    | EnumVariant_list NL EnumVariant {% concatArr(2) %}
+
+
+EnumVariant -> %tok_TYPE %tok_OPEN_PN TypeExpression_list %tok_CLOSE_PN
+{% function(d){
+    return {
+        loc: mkLoc(d),
+        type: "EnumVariant",
+        tag: d[0].src,
+        params: d[2],
+    };
+} %}
+
+
 TypeExpression ->
       Type {% id %}
     | TypeVariable {% id %}
@@ -405,16 +447,16 @@ Type -> %tok_TYPE TypeParams:?
 } %}
 
 
-TypeParams -> %tok_LT TypeParam_list %tok_GT {% idN(1) %}
+TypeParams -> %tok_LT TypeExpression_list %tok_GT {% idN(1) %}
 
-TypeParam_list ->
+TypeExpression_list ->
       null {% noopArr %}
-    | TypeParam_list_body {% id %}
+    | TypeExpression_list_body {% id %}
 
 
-TypeParam_list_body ->
+TypeExpression_list_body ->
       TypeExpression {% idArr %}
-    | TypeParam_list_body COMMA TypeExpression {% concatArr(2) %}
+    | TypeExpression_list_body COMMA TypeExpression {% concatArr(2) %}
 
 
 TypeVariable -> Identifier
@@ -496,7 +538,7 @@ AnyKey -> %tok_TIMES
 } %}
 
 
-FunctionType -> %tok_Fn ArrayType %tok_COLON TypeExpression
+FunctionType -> %tok_Fn TypeExpression %tok_COLON TypeExpression
 {% function(d){
     return {
         loc: mkLoc(d),
