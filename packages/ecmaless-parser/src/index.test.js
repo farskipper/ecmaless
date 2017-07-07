@@ -486,12 +486,41 @@ test("module", function(t){
         "export": null,
     });
 
-    ast = parser("export a");
+    src = "";
+    src += "export:\n";
+    src += "    a\n";
+    src += "    Foo\n";
+    ast = parser(src);
     t.deepEquals(rmLoc(ast), {
         type: "Module",
         "import": [],
         body: [],
-        "export": mk.id("a"),
+        "export": [
+            {
+                type: "ExportName",
+                name: mk.id("a"),
+            },
+            {
+                type: "ExportName",
+                name: mk.Type("Foo"),
+            },
+        ],
+    });
+
+    src = "";
+    src += "export:\n";
+    src += "    *\n";
+    ast = parser(src);
+    t.deepEquals(rmLoc(ast), {
+        type: "Module",
+        "import": [],
+        body: [],
+        "export": [
+            {
+                type: "ExportName",
+                name: null,
+            },
+        ],
     });
 
     t.end();

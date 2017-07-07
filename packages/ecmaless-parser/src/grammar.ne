@@ -196,14 +196,14 @@ main ->
     NL:?
     (%tok_import %tok_COLON NL INDENT Import:+ DEDENT NL):?
     Statement_list:?
-    (%tok_export Expression NL):?
+    (%tok_export %tok_COLON NL INDENT ExportName:+ DEDENT NL):?
 {% function(d){
     return {
         loc: mkLoc(d),
         type: "Module",
         "import": (d[1] && d[1][4]) || [],
         body: d[2] || [],
-        "export": d[3] && d[3][1],
+        "export": d[3] && d[3][4],
     };
 } %}
 
@@ -217,6 +217,7 @@ Import -> String %tok_COLON NL INDENT ImportName:+ DEDENT NL
         names: d[4],
     };
 } %}
+
 
 ImportName -> ImportName_parts NL
 {% function(d){
@@ -233,11 +234,25 @@ ImportName -> ImportName_parts NL
     };
 } %}
 
+
 ImportName_parts ->
       Identifier (%tok_as Identifier):?
     | Type (%tok_as Type):?
     | %tok_TIMES (%tok_as Identifier):?
 
+
+ExportName -> (Identifier | Type | %tok_TIMES) NL
+{% function(d){
+    var name = d[0][0];
+    if(name.type === "RAW"){// *
+        name = null;
+    }
+    return {
+        loc: mkLoc(d),
+        type: "ExportName",
+        name: name,
+    };
+} %}
 
 ################################################################################
 # Statement

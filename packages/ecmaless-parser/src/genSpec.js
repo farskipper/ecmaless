@@ -62,7 +62,17 @@ _.each({
             "    \"c\":",
             "        *",
         ].join("\n"),
-        //"export a",
+
+        [
+            "export:",
+            "    a",
+            "    Foo",
+        ].join("\n"),
+
+        [
+            "export:",
+            "    *",
+        ].join("\n"),
     ]
 }, function(srcs, head){
     console.log();

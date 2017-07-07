@@ -445,4 +445,29 @@ import:
     "body": [],
     "export": null
 }
+
+export:
+    a
+    Foo
+{
+    "type": "Module",
+    "import": [],
+    "body": [],
+    "export": [
+        {"type": "ExportName", "name": {"type": "Identifier", "value": "a"}},
+        {
+            "type": "ExportName",
+            "name": {"type": "Type", "value": "Foo", "params": []}
+        }
+    ]
+}
+
+export:
+    *
+{
+    "type": "Module",
+    "import": [],
+    "body": [],
+    "export": [{"type": "ExportName", "name": null}]
+}
 ```

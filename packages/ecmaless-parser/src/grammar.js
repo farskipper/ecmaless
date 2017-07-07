@@ -205,7 +205,9 @@ var grammar = {
     {"name": "main$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "main$ebnf$3", "symbols": ["Statement_list"], "postprocess": id},
     {"name": "main$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "main$ebnf$4$subexpression$1", "symbols": [tok_export, "Expression", "NL"]},
+    {"name": "main$ebnf$4$subexpression$1$ebnf$1", "symbols": ["ExportName"]},
+    {"name": "main$ebnf$4$subexpression$1$ebnf$1", "symbols": ["main$ebnf$4$subexpression$1$ebnf$1", "ExportName"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "main$ebnf$4$subexpression$1", "symbols": [tok_export, tok_COLON, "NL", "INDENT", "main$ebnf$4$subexpression$1$ebnf$1", "DEDENT", "NL"]},
     {"name": "main$ebnf$4", "symbols": ["main$ebnf$4$subexpression$1"], "postprocess": id},
     {"name": "main$ebnf$4", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "main", "symbols": ["main$ebnf$1", "main$ebnf$2", "main$ebnf$3", "main$ebnf$4"], "postprocess":  function(d){
@@ -214,7 +216,7 @@ var grammar = {
                 type: "Module",
                 "import": (d[1] && d[1][4]) || [],
                 body: d[2] || [],
-                "export": d[3] && d[3][1],
+                "export": d[3] && d[3][4],
             };
         } },
     {"name": "Import$ebnf$1", "symbols": ["ImportName"]},
@@ -252,6 +254,20 @@ var grammar = {
     {"name": "ImportName_parts$ebnf$3", "symbols": ["ImportName_parts$ebnf$3$subexpression$1"], "postprocess": id},
     {"name": "ImportName_parts$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "ImportName_parts", "symbols": [tok_TIMES, "ImportName_parts$ebnf$3"]},
+    {"name": "ExportName$subexpression$1", "symbols": ["Identifier"]},
+    {"name": "ExportName$subexpression$1", "symbols": ["Type"]},
+    {"name": "ExportName$subexpression$1", "symbols": [tok_TIMES]},
+    {"name": "ExportName", "symbols": ["ExportName$subexpression$1", "NL"], "postprocess":  function(d){
+            var name = d[0][0];
+            if(name.type === "RAW"){// *
+                name = null;
+            }
+            return {
+                loc: mkLoc(d),
+                type: "ExportName",
+                name: name,
+            };
+        } },
     {"name": "Statement_list", "symbols": ["Statement", "NL"], "postprocess": idArr},
     {"name": "Statement_list", "symbols": ["Statement_list", "Statement", "NL"], "postprocess": concatArr(1)},
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
