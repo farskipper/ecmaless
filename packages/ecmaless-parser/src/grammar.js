@@ -603,13 +603,16 @@ var grammar = {
                 value: d[0],
             };
         } },
-    {"name": "EnumValue", "symbols": ["Type", tok_DOT, "Type", tok_OPEN_PN, "Expression_list", tok_CLOSE_PN], "postprocess":  function(d){
+    {"name": "EnumValue$ebnf$1$subexpression$1", "symbols": ["Type", tok_DOT]},
+    {"name": "EnumValue$ebnf$1", "symbols": ["EnumValue$ebnf$1$subexpression$1"], "postprocess": id},
+    {"name": "EnumValue$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "EnumValue", "symbols": ["EnumValue$ebnf$1", "Type", tok_OPEN_PN, "Expression_list", tok_CLOSE_PN], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
                 type: "EnumValue",
-                enum: d[0],
-                tag : d[2],
-                params: d[4],
+                enum: d[0] && d[0][0],
+                tag : d[1],
+                params: d[3],
             };
         } },
     {"name": "Number", "symbols": [tok_NUMBER], "postprocess":  function(d){

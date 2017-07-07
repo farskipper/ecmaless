@@ -747,14 +747,14 @@ Param -> Identifier %tok_DOTDOTDOT:?
 } %}
 
 
-EnumValue -> Type %tok_DOT Type %tok_OPEN_PN Expression_list %tok_CLOSE_PN
+EnumValue -> (Type %tok_DOT):? Type %tok_OPEN_PN Expression_list %tok_CLOSE_PN
 {% function(d){
     return {
         loc: mkLoc(d),
         type: "EnumValue",
-        enum: d[0],
-        tag : d[2],
-        params: d[4],
+        enum: d[0] && d[0][0],
+        tag : d[1],
+        params: d[3],
     };
 } %}
 

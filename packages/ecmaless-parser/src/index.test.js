@@ -708,5 +708,53 @@ test("Enum", function(t){
         params: [mk.str("it failed")],
     }));
 
+    tst("Error(\"it failed\")", mk.stmt({
+        type: "EnumValue",
+        enum: null,
+        tag: mk.Type("Error"),
+        params: [mk.str("it failed")],
+    }));
+
+    var src = "";
+    src += "case resp:\n";
+    src += "    Foo(a, b):\n";
+    src += "        one\n";
+    src += "    A.Bar():\n";
+    src += "        two\n";
+    src += "    B<c, String>.Baz(e, f, g):\n";
+    src += "        three\n";
+    t.deepEquals(JSON.stringify(rmLoc(parser(src).body[0].blocks)), JSON.stringify([
+        {
+            type: "CaseBlock",
+            value: {
+                type: "EnumValue",
+                enum: null,
+                tag: mk.Type("Foo"),
+                params: [mk.id("a"), mk.id("b")],
+            },
+            block: mk.block([mk.stmt(mk.id("one"))]),
+        },
+        {
+            type: "CaseBlock",
+            value: {
+                type: "EnumValue",
+                enum: mk.Type("A"),
+                tag: mk.Type("Bar"),
+                params: [],
+            },
+            block: mk.block([mk.stmt(mk.id("two"))]),
+        },
+        {
+            type: "CaseBlock",
+            value: {
+                type: "EnumValue",
+                enum: mk.Type("B", ["c", mk.Type("String")]),
+                tag: mk.Type("Baz"),
+                params: [mk.id("e"), mk.id("f"), mk.id("g")],
+            },
+            block: mk.block([mk.stmt(mk.id("three"))]),
+        },
+    ]));
+
     t.end();
 });
