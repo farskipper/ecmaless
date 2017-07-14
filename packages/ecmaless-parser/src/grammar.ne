@@ -760,9 +760,8 @@ Function -> %tok_fn Params Block
 
 
 Params ->
-      Identifier {% id %}
-    | %tok_OPEN_SQ %tok_CLOSE_SQ {% noopArr %}
-    | %tok_OPEN_SQ Params_body COMMA:? %tok_CLOSE_SQ {% idN(1) %}
+      %tok_OPEN_PN                     %tok_CLOSE_PN {% noopArr %}
+    | %tok_OPEN_PN Params_body COMMA:? %tok_CLOSE_PN {% idN(1) %}
 
 
 Params_body ->
@@ -770,17 +769,7 @@ Params_body ->
     | Params_body COMMA Param {% concatArr(2) %}
 
 
-Param -> Identifier %tok_DOTDOTDOT:?
-{% function(d){
-    if(!d[1]){
-        return d[0];
-    }
-    return {
-        loc: mkLoc(d),
-        type: "DotDotDot",
-        value: d[0],
-    };
-} %}
+Param -> Identifier {% id %}
 
 
 EnumValue -> (Type %tok_DOT):? Type %tok_OPEN_PN Expression_list %tok_CLOSE_PN

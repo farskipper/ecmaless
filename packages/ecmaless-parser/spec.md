@@ -47,24 +47,13 @@ false
 ### Functions
 
 ```js
-fn args:
-    nil
-{
-    "type": "Function",
-    "params": {"type": "Identifier", "value": "args"},
-    "block": {
-        "type": "Block",
-        "body": [{"type": "ExpressionStatement", "expression": {"type": "Nil"}}]
-    }
-}
-
-fn [a, b...]:
+fn (a, b) :
     nil
 {
     "type": "Function",
     "params": [
         {"type": "Identifier", "value": "a"},
-        {"type": "DotDotDot", "value": {"type": "Identifier", "value": "b"}}
+        {"type": "Identifier", "value": "b"}
     ],
     "block": {
         "type": "Block",

@@ -17,8 +17,7 @@ _.each({
         "{\"a\": 1, b: 2}",
     ],
     "### Functions": [
-        "fn args:\n    nil",
-        "fn [a, b...]:\n    nil",
+        "fn (a, b) :\n    nil",
         "return a",
         "add(1, 2)",
     ],

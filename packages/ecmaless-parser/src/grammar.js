@@ -628,25 +628,13 @@ var grammar = {
                 block: d[2],
             };
         } },
-    {"name": "Params", "symbols": ["Identifier"], "postprocess": id},
-    {"name": "Params", "symbols": [tok_OPEN_SQ, tok_CLOSE_SQ], "postprocess": noopArr},
+    {"name": "Params", "symbols": [tok_OPEN_PN, tok_CLOSE_PN], "postprocess": noopArr},
     {"name": "Params$ebnf$1", "symbols": ["COMMA"], "postprocess": id},
     {"name": "Params$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Params", "symbols": [tok_OPEN_SQ, "Params_body", "Params$ebnf$1", tok_CLOSE_SQ], "postprocess": idN(1)},
+    {"name": "Params", "symbols": [tok_OPEN_PN, "Params_body", "Params$ebnf$1", tok_CLOSE_PN], "postprocess": idN(1)},
     {"name": "Params_body", "symbols": ["Param"], "postprocess": idArr},
     {"name": "Params_body", "symbols": ["Params_body", "COMMA", "Param"], "postprocess": concatArr(2)},
-    {"name": "Param$ebnf$1", "symbols": [tok_DOTDOTDOT], "postprocess": id},
-    {"name": "Param$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Param", "symbols": ["Identifier", "Param$ebnf$1"], "postprocess":  function(d){
-            if(!d[1]){
-                return d[0];
-            }
-            return {
-                loc: mkLoc(d),
-                type: "DotDotDot",
-                value: d[0],
-            };
-        } },
+    {"name": "Param", "symbols": ["Identifier"], "postprocess": id},
     {"name": "EnumValue$ebnf$1$subexpression$1", "symbols": ["Type", tok_DOT]},
     {"name": "EnumValue$ebnf$1", "symbols": ["EnumValue$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "EnumValue$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},

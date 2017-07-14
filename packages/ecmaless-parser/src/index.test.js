@@ -161,33 +161,32 @@ test("parser", function(t){
     var fn_body_a = [mk.stmt(mk.id("a"))];
     tstFail("fn \n    a");
     tstFail("fn []\n    a");
-    tst("fn args:\n    a", mk.fn(mk.id("args"), fn_body_a));
-    tst("fn []:\n    a", mk.fn([], fn_body_a));
-    tst("fn[]:\n    a", mk.fn([], fn_body_a));
-    tst("fn[]:\n\n    a", mk.fn([], fn_body_a));
-    tst("fn [  ] :\n    a", mk.fn([], fn_body_a));
-    tstFail("fn [,]:\n    a");
-    tstFail("fn [1]:\n    a");
-    tstFail("fn [1, 2]:\n    a");
-    tst("fn [a]:\n    a", mk.fn([mk.id("a")], fn_body_a));
-    tst("fn [a,]:\n    a", mk.fn([mk.id("a")], fn_body_a));
-    tst("fn [a, b]:\n    a", mk.fn([mk.id("a"), mk.id("b")], fn_body_a));
-    tst("fn [a,b,]:\n    a", mk.fn([mk.id("a"), mk.id("b")], fn_body_a));
-    tst("fn [a, b...]:\n    a", mk.fn([mk.id("a"), mk.ddd(mk.id("b"))], fn_body_a));
-    tst("fn [a, b...]:\n    a", mk.fn([mk.id("a"), mk.ddd(mk.id("b"))], fn_body_a));
+    tstFail("fn ()\n    a");
+    tstFail("fn args:\n    a");
+    tst("fn ():\n    a", mk.fn([], fn_body_a));
+    tst("fn():\n    a", mk.fn([], fn_body_a));
+    tst("fn():\n\n    a", mk.fn([], fn_body_a));
+    tst("fn (  ) :\n    a", mk.fn([], fn_body_a));
+    tstFail("fn (,):\n    a");
+    tstFail("fn (1):\n    a");
+    tstFail("fn (1, 2):\n    a");
+    tst("fn (a):\n    a", mk.fn([mk.id("a")], fn_body_a));
+    tst("fn (a,):\n    a", mk.fn([mk.id("a")], fn_body_a));
+    tst("fn (a, b):\n    a", mk.fn([mk.id("a"), mk.id("b")], fn_body_a));
+    tst("fn (a,b,):\n    a", mk.fn([mk.id("a"), mk.id("b")], fn_body_a));
 
-    tst("a(\n    fn[]:\n        b\n    ,\n)", mk.app(mk.id("a"), [
+    tst("a(\n    fn():\n        b\n    ,\n)", mk.app(mk.id("a"), [
         mk.fn([], [mk.stmt(mk.id("b"))])
     ]));
-    tst("a(\n    1,\n    fn[]:\n        b\n    ,\n)", mk.app(mk.id("a"), [
+    tst("a(\n    1,\n    fn():\n        b\n    ,\n)", mk.app(mk.id("a"), [
         mkv(1),
         mk.fn([], [mk.stmt(mk.id("b"))])
     ]));
-    tst("a(\n    fn[]:\n        b\n    ,\n    1,\n)", mk.app(mk.id("a"), [
+    tst("a(\n    fn():\n        b\n    ,\n    1,\n)", mk.app(mk.id("a"), [
         mk.fn([], [mk.stmt(mk.id("b"))]),
         mkv(1)
     ]));
-    tst("a(\n    1,\n    fn[]:\n        b\n    ,\n    2,\n)", mk.app(mk.id("a"), [
+    tst("a(\n    1,\n    fn():\n        b\n    ,\n    2,\n)", mk.app(mk.id("a"), [
         mkv(1),
         mk.fn([], [mk.stmt(mk.id("b"))]),
         mkv(2)
@@ -388,7 +387,7 @@ test("parser", function(t){
 
     tst("1\n2", [mk.stmt(mkv(1)), mk.stmt(mkv(2))]);
     tst("1\n2\n3", [mk.stmt(mkv(1)), mk.stmt(mkv(2)), mk.stmt(mkv(3))]);
-    tst("fn[]:\n    1\n2", [
+    tst("fn():\n    1\n2", [
         mk.stmt(mk.fn([], [mk.stmt(mkv(1))])),
         mk.stmt(mkv(2))
     ]);
