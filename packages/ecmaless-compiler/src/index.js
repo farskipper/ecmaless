@@ -11,25 +11,25 @@ var comp_ast_node = {
     "Number": function(ast, comp){
         return {
             estree: e("number", ast.value, ast.loc),
-            TYPE: ["Number"],
+            TYPE: {tag: "Number", value: ast.value},
         };
     },
     "String": function(ast, comp){
         return {
             estree: e("string", ast.value, ast.loc),
-            TYPE: ["String"],
+            TYPE: {tag: "String", value: ast.value},
         };
     },
     "Boolean": function(ast, comp){
         return {
             estree: e(ast.value ? "true" : "false", ast.loc),
-            TYPE: ["Boolean"],
+            TYPE: {tag: "Boolean", value: ast.value},
         };
     },
     "Nil": function(ast, comp){
         return {
             estree: e("void", e("number", 0, ast.loc), ast.loc),
-            TYPE: ["Nil"],
+            TYPE: {tag: "Nil"},
         };
     },
     "Identifier": function(ast, comp, ctx){

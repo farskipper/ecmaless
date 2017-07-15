@@ -25,8 +25,8 @@ var testTError = function(t, src, actual, expected, loc_start){
         compToStr(src);
         t.fail("exptected a type error");
     }catch(e){
-        t.equals(e.ecmaless.expected[0], expected);
-        t.equals(e.ecmaless.actual[0], actual);
+        t.equals(e.ecmaless.expected.tag, expected);
+        t.equals(e.ecmaless.actual.tag, actual);
         t.deepEquals(e.ecmaless.loc.start, loc_start);
     }
 };
@@ -52,7 +52,7 @@ test("compile", function(t){
     tc("1 + 2", "1+2;");
     terr("1 + \"a\"", "String", "Number", {line: 1, column: 4});
 
-    tc("\"a\" ++ \"b\"", "'a'+'b';");
+    tc("\"a\" ++ \"b\"", "'ab';");
 
     /*
     tc("[1, 2]", "[1,2];");
