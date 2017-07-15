@@ -255,9 +255,6 @@ finally:
 ### Variables
 
 ```js
-def a
-{"type": "Define", "id": {"type": "Identifier", "value": "a"}}
-
 def a = 1
 {
     "type": "Define",

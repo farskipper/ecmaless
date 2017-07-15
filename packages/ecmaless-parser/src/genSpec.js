@@ -36,7 +36,6 @@ _.each({
         "try:\n    a\ncatch err:\n    b\nfinally:\n    c",
     ],
     "### Variables": [
-        "def a",
         "def a = 1",
         "a = 2",
     ],

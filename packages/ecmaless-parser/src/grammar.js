@@ -234,15 +234,12 @@ var grammar = {
                 expression: d[1],
             };
         } },
-    {"name": "Define$ebnf$1$subexpression$1", "symbols": [tok_EQ, "Expression"]},
-    {"name": "Define$ebnf$1", "symbols": ["Define$ebnf$1$subexpression$1"], "postprocess": id},
-    {"name": "Define$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Define", "symbols": [tok_def, "Identifier", "Define$ebnf$1"], "postprocess":  function(d){
+    {"name": "Define", "symbols": [tok_def, "Identifier", tok_EQ, "Expression"], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
                 type: "Define",
                 id: d[1],
-                init: d[2] ? d[2][1] : void 0,
+                init: d[3],
             };
         } },
     {"name": "If$ebnf$1$subexpression$1$subexpression$1", "symbols": ["If"]},

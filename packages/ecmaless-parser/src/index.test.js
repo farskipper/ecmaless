@@ -135,7 +135,6 @@ test("parser", function(t){
     tstFail("\"\\\"that\\\"\n\"");
     tst("\"\"\"\nsome \"docstring\"\n\"\"\"", mk.docstr("\nsome \"docstring\"\n"));
 
-    tst("def a", mk.def(mk.id("a")));
     tst("def a = 1.2", mk.def(mk.id("a"), mk.num(1.2)));
 
     tst("[]", mk.arr([]));

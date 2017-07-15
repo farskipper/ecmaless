@@ -242,13 +242,13 @@ Return -> %tok_return Expression:?
 } %}
 
 
-Define -> %tok_def Identifier (%tok_EQ Expression):?
+Define -> %tok_def Identifier %tok_EQ Expression
 {% function(d){
     return {
         loc: mkLoc(d),
         type: "Define",
         id: d[1],
-        init: d[2] ? d[2][1] : void 0,
+        init: d[3],
     };
 } %}
 
