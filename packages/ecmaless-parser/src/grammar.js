@@ -101,7 +101,6 @@ var tok_return = tok("SYMBOL", "return");
 var tok_if = tok("SYMBOL", "if");
 var tok_else = tok("SYMBOL", "else");
 
-var tok_cond = tok("SYMBOL", "cond");
 var tok_case = tok("SYMBOL", "case");
 
 var tok_try = tok("SYMBOL", "try");
@@ -198,25 +197,122 @@ var grammar = {
     ParserRules: [
     {"name": "main$ebnf$1", "symbols": ["NL"], "postprocess": id},
     {"name": "main$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "main$ebnf$2$subexpression$1$ebnf$1", "symbols": ["Import"]},
-    {"name": "main$ebnf$2$subexpression$1$ebnf$1", "symbols": ["main$ebnf$2$subexpression$1$ebnf$1", "Import"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "main$ebnf$2$subexpression$1", "symbols": [tok_import, tok_COLON, "NL", "INDENT", "main$ebnf$2$subexpression$1$ebnf$1", "DEDENT", "NL"]},
-    {"name": "main$ebnf$2", "symbols": ["main$ebnf$2$subexpression$1"], "postprocess": id},
+    {"name": "main$ebnf$2", "symbols": ["Statement_list"], "postprocess": id},
     {"name": "main$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "main$ebnf$3", "symbols": ["Statement_list"], "postprocess": id},
-    {"name": "main$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "main$ebnf$4$subexpression$1$ebnf$1", "symbols": ["ExportName"]},
-    {"name": "main$ebnf$4$subexpression$1$ebnf$1", "symbols": ["main$ebnf$4$subexpression$1$ebnf$1", "ExportName"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "main$ebnf$4$subexpression$1", "symbols": [tok_export, tok_COLON, "NL", "INDENT", "main$ebnf$4$subexpression$1$ebnf$1", "DEDENT", "NL"]},
-    {"name": "main$ebnf$4", "symbols": ["main$ebnf$4$subexpression$1"], "postprocess": id},
-    {"name": "main$ebnf$4", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "main", "symbols": ["main$ebnf$1", "main$ebnf$2", "main$ebnf$3", "main$ebnf$4"], "postprocess":  function(d){
+    {"name": "main", "symbols": ["main$ebnf$1", "main$ebnf$2"], "postprocess":  function(d){
+            return d[1] || [];
+        } },
+    {"name": "Statement_list", "symbols": ["Statement", "NL"], "postprocess": idArr},
+    {"name": "Statement_list", "symbols": ["Statement_list", "Statement", "NL"], "postprocess": concatArr(1)},
+    {"name": "Statement", "symbols": ["Define"], "postprocess": id},
+    {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
+    {"name": "Statement", "symbols": ["Return"], "postprocess": id},
+    {"name": "Statement", "symbols": ["If"], "postprocess": id},
+    {"name": "Statement", "symbols": ["While"], "postprocess": id},
+    {"name": "Statement", "symbols": ["Break"], "postprocess": id},
+    {"name": "Statement", "symbols": ["Continue"], "postprocess": id},
+    {"name": "Statement", "symbols": ["Case"], "postprocess": id},
+    {"name": "Statement", "symbols": ["TryCatch"], "postprocess": id},
+    {"name": "Statement", "symbols": ["Annotation"], "postprocess": id},
+    {"name": "Statement", "symbols": ["TypeAlias"], "postprocess": id},
+    {"name": "Statement", "symbols": ["Enum"], "postprocess": id},
+    {"name": "Statement", "symbols": ["ImportBlock"], "postprocess": id},
+    {"name": "Statement", "symbols": ["ExportBlock"], "postprocess": id},
+    {"name": "ExpressionStatement", "symbols": ["Expression"], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
-                type: "Module",
-                "import": (d[1] && d[1][4]) || [],
-                body: d[2] || [],
-                "export": d[3] && d[3][4],
+                type: "ExpressionStatement",
+                expression: d[0],
+            };
+        } },
+    {"name": "Return$ebnf$1", "symbols": ["Expression"], "postprocess": id},
+    {"name": "Return$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Return", "symbols": [tok_return, "Return$ebnf$1"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "Return",
+                expression: d[1],
+            };
+        } },
+    {"name": "Define$ebnf$1$subexpression$1", "symbols": [tok_EQ, "Expression"]},
+    {"name": "Define$ebnf$1", "symbols": ["Define$ebnf$1$subexpression$1"], "postprocess": id},
+    {"name": "Define$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Define", "symbols": [tok_def, "Identifier", "Define$ebnf$1"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "Define",
+                id: d[1],
+                init: d[2] ? d[2][1] : void 0,
+            };
+        } },
+    {"name": "If$ebnf$1$subexpression$1$subexpression$1", "symbols": ["If"]},
+    {"name": "If$ebnf$1$subexpression$1$subexpression$1", "symbols": ["Block"]},
+    {"name": "If$ebnf$1$subexpression$1", "symbols": ["NL", tok_else, "If$ebnf$1$subexpression$1$subexpression$1"]},
+    {"name": "If$ebnf$1", "symbols": ["If$ebnf$1$subexpression$1"], "postprocess": id},
+    {"name": "If$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "If", "symbols": [tok_if, "Expression", "Block", "If$ebnf$1"], "postprocess":  function(d){
+            var else_block = d[3] && d[3][2] && d[3][2][0];
+            if(else_block && else_block.type === "Block"){
+                else_block = else_block;
+            }
+            return {
+                loc: mkLoc(d),
+                type: "If",
+                test: d[1],
+                then: d[2],
+                "else": else_block,
+            };
+        } },
+    {"name": "While", "symbols": [tok_while, "Expression", "Block"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "While",
+                test: d[1],
+                block: d[2],
+            };
+        } },
+    {"name": "Break", "symbols": [tok_break], "postprocess": function(d){return {loc: d[0].loc, type: "Break"};}},
+    {"name": "Continue", "symbols": [tok_continue], "postprocess": function(d){return {loc: d[0].loc, type: "Continue"};}},
+    {"name": "Case$ebnf$1", "symbols": []},
+    {"name": "Case$ebnf$1", "symbols": ["Case$ebnf$1", "CaseBlock"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "Case$ebnf$2$subexpression$1", "symbols": ["ElseBlock", "NL"]},
+    {"name": "Case$ebnf$2", "symbols": ["Case$ebnf$2$subexpression$1"], "postprocess": id},
+    {"name": "Case$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Case", "symbols": [tok_case, "Expression", tok_COLON, "NL", "INDENT", "Case$ebnf$1", "Case$ebnf$2", "DEDENT"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "Case",
+                to_test: d[1],
+                blocks: d[5],
+                "else": d[6] && d[6][0],
+            };
+        } },
+    {"name": "CaseBlock", "symbols": ["Expression", "Block", "NL"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "CaseBlock",
+                value: d[0],
+                block: d[1],
+            };
+        } },
+    {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block"], "postprocess": tryCatchMaker(4, 5, -1)},
+    {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(-1, -1, 4)},
+    {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(4, 5, 8)},
+    {"name": "ElseBlock", "symbols": [tok_else, "Block"], "postprocess": idN(1)},
+    {"name": "Block", "symbols": [tok_COLON, "NL", "INDENT", "Statement_list", "DEDENT"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "Block",
+                body: d[3],
+            };
+        } },
+    {"name": "ImportBlock$ebnf$1", "symbols": ["Import"]},
+    {"name": "ImportBlock$ebnf$1", "symbols": ["ImportBlock$ebnf$1", "Import"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "ImportBlock", "symbols": [tok_import, tok_COLON, "NL", "INDENT", "ImportBlock$ebnf$1", "DEDENT"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "ImportBlock",
+                modules: d[4],
             };
         } },
     {"name": "Import$ebnf$1", "symbols": ["ImportName"]},
@@ -254,6 +350,15 @@ var grammar = {
     {"name": "ImportName_parts$ebnf$3", "symbols": ["ImportName_parts$ebnf$3$subexpression$1"], "postprocess": id},
     {"name": "ImportName_parts$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "ImportName_parts", "symbols": [tok_TIMES, "ImportName_parts$ebnf$3"]},
+    {"name": "ExportBlock$ebnf$1", "symbols": ["ExportName"]},
+    {"name": "ExportBlock$ebnf$1", "symbols": ["ExportBlock$ebnf$1", "ExportName"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "ExportBlock", "symbols": [tok_export, tok_COLON, "NL", "INDENT", "ExportBlock$ebnf$1", "DEDENT"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "ExportBlock",
+                names: d[4],
+            };
+        } },
     {"name": "ExportName$subexpression$1", "symbols": ["Identifier"]},
     {"name": "ExportName$subexpression$1", "symbols": ["Type"]},
     {"name": "ExportName$subexpression$1", "symbols": [tok_TIMES]},
@@ -266,130 +371,6 @@ var grammar = {
                 loc: mkLoc(d),
                 type: "ExportName",
                 name: name,
-            };
-        } },
-    {"name": "Statement_list", "symbols": ["Statement", "NL"], "postprocess": idArr},
-    {"name": "Statement_list", "symbols": ["Statement_list", "Statement", "NL"], "postprocess": concatArr(1)},
-    {"name": "Statement", "symbols": ["Define"], "postprocess": id},
-    {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
-    {"name": "Statement", "symbols": ["Return"], "postprocess": id},
-    {"name": "Statement", "symbols": ["If"], "postprocess": id},
-    {"name": "Statement", "symbols": ["While"], "postprocess": id},
-    {"name": "Statement", "symbols": ["Break"], "postprocess": id},
-    {"name": "Statement", "symbols": ["Continue"], "postprocess": id},
-    {"name": "Statement", "symbols": ["Cond"], "postprocess": id},
-    {"name": "Statement", "symbols": ["Case"], "postprocess": id},
-    {"name": "Statement", "symbols": ["TryCatch"], "postprocess": id},
-    {"name": "Statement", "symbols": ["Annotation"], "postprocess": id},
-    {"name": "Statement", "symbols": ["TypeAlias"], "postprocess": id},
-    {"name": "Statement", "symbols": ["Enum"], "postprocess": id},
-    {"name": "ExpressionStatement", "symbols": ["Expression"], "postprocess":  function(d){
-            return {
-                loc: mkLoc(d),
-                type: "ExpressionStatement",
-                expression: d[0]
-            };
-        } },
-    {"name": "Return$ebnf$1", "symbols": ["Expression"], "postprocess": id},
-    {"name": "Return$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Return", "symbols": [tok_return, "Return$ebnf$1"], "postprocess":  function(d){
-            return {
-                loc: mkLoc(d),
-                type: "Return",
-                expression: d[1]
-            };
-        } },
-    {"name": "Define$ebnf$1$subexpression$1", "symbols": [tok_EQ, "Expression"]},
-    {"name": "Define$ebnf$1", "symbols": ["Define$ebnf$1$subexpression$1"], "postprocess": id},
-    {"name": "Define$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Define", "symbols": [tok_def, "Identifier", "Define$ebnf$1"], "postprocess":  function(d){
-            return {
-                loc: mkLoc(d),
-                type: "Define",
-                id: d[1],
-                init: d[2] ? d[2][1] : void 0,
-            };
-        } },
-    {"name": "If$ebnf$1$subexpression$1$subexpression$1", "symbols": ["If"]},
-    {"name": "If$ebnf$1$subexpression$1$subexpression$1", "symbols": ["Block"]},
-    {"name": "If$ebnf$1$subexpression$1", "symbols": ["NL", tok_else, "If$ebnf$1$subexpression$1$subexpression$1"]},
-    {"name": "If$ebnf$1", "symbols": ["If$ebnf$1$subexpression$1"], "postprocess": id},
-    {"name": "If$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "If", "symbols": [tok_if, "Expression", "Block", "If$ebnf$1"], "postprocess":  function(d){
-            var else_block = d[3] && d[3][2] && d[3][2][0];
-            if(else_block && else_block.type === "Block"){
-                else_block = else_block;
-            }
-            return {
-                loc: mkLoc(d),
-                type: "If",
-                test: d[1],
-                then: d[2],
-                "else": else_block
-            };
-        } },
-    {"name": "While", "symbols": [tok_while, "Expression", "Block"], "postprocess":  function(d){
-            return {
-                loc: mkLoc(d),
-                type: "While",
-                test: d[1],
-                block: d[2]
-            };
-        } },
-    {"name": "Break", "symbols": [tok_break], "postprocess": function(d){return {loc: d[0].loc, type: "Break"};}},
-    {"name": "Continue", "symbols": [tok_continue], "postprocess": function(d){return {loc: d[0].loc, type: "Continue"};}},
-    {"name": "Cond$ebnf$1", "symbols": []},
-    {"name": "Cond$ebnf$1", "symbols": ["Cond$ebnf$1", "CondBlock"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "Cond$ebnf$2$subexpression$1", "symbols": ["ElseBlock", "NL"]},
-    {"name": "Cond$ebnf$2", "symbols": ["Cond$ebnf$2$subexpression$1"], "postprocess": id},
-    {"name": "Cond$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Cond", "symbols": [tok_cond, tok_COLON, "NL", "INDENT", "Cond$ebnf$1", "Cond$ebnf$2", "DEDENT"], "postprocess":  function(d){
-            return {
-                loc: mkLoc(d),
-                type: "Cond",
-                blocks: d[4],
-                "else": d[5] && d[5][0],
-            };
-        } },
-    {"name": "CondBlock", "symbols": ["Expression", "Block", "NL"], "postprocess":  function(d){
-            return {
-                loc: mkLoc(d),
-                type: "CondBlock",
-                test: d[0],
-                block: d[1],
-            };
-        } },
-    {"name": "Case$ebnf$1", "symbols": []},
-    {"name": "Case$ebnf$1", "symbols": ["Case$ebnf$1", "CaseBlock"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "Case$ebnf$2$subexpression$1", "symbols": ["ElseBlock", "NL"]},
-    {"name": "Case$ebnf$2", "symbols": ["Case$ebnf$2$subexpression$1"], "postprocess": id},
-    {"name": "Case$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Case", "symbols": [tok_case, "Expression", tok_COLON, "NL", "INDENT", "Case$ebnf$1", "Case$ebnf$2", "DEDENT"], "postprocess":  function(d){
-            return {
-                loc: mkLoc(d),
-                type: "Case",
-                to_test: d[1],
-                blocks: d[5],
-                "else": d[6] && d[6][0],
-            };
-        } },
-    {"name": "CaseBlock", "symbols": ["Expression", "Block", "NL"], "postprocess":  function(d){
-            return {
-                loc: mkLoc(d),
-                type: "CaseBlock",
-                value: d[0],
-                block: d[1],
-            };
-        } },
-    {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block"], "postprocess": tryCatchMaker(4, 5, -1)},
-    {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(-1, -1, 4)},
-    {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(4, 5, 8)},
-    {"name": "ElseBlock", "symbols": [tok_else, "Block"], "postprocess": idN(1)},
-    {"name": "Block", "symbols": [tok_COLON, "NL", "INDENT", "Statement_list", "DEDENT"], "postprocess":  function(d){
-            return {
-                loc: mkLoc(d),
-                type: "Block",
-                body: d[3],
             };
         } },
     {"name": "Annotation", "symbols": [tok_ann, "Identifier", tok_EQ, "TypeExpression"], "postprocess":  function(d){
@@ -508,7 +489,7 @@ var grammar = {
                 loc: mkLoc(d),
                 type: "FunctionType",
                 params: d[1],
-                "return": d[3]
+                "return": d[3],
             };
         } },
     {"name": "Expression", "symbols": ["AssignmentExpression"], "postprocess": id},
@@ -519,7 +500,7 @@ var grammar = {
                 type: "AssignmentExpression",
                 op: d[1].src,
                 left: d[0],
-                right: d[2]
+                right: d[2],
             };
         } },
     {"name": "ConditionalExpression", "symbols": ["exp_or"], "postprocess": id},
@@ -586,7 +567,7 @@ var grammar = {
             return {
                 loc: mkLoc(d),
                 type: "Struct",
-                value: d[1]
+                value: d[1],
             };
         } },
     {"name": "KeyValPairs", "symbols": [], "postprocess": noopArr},

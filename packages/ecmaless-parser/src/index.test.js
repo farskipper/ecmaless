@@ -114,7 +114,7 @@ var mkv = function(v){
 
 test("parser", function(t){
     var tst = function(src, expected){
-        var ast = parser(src).body;
+        var ast = parser(src);
         ast = _.isArray(ast) && _.size(ast) === 1 ? _.head(ast) : ast;
         if(ast.type === "ExpressionStatement"){
             ast = ast.expression;
@@ -242,34 +242,6 @@ test("parser", function(t){
     tst("continue", {type: "Continue"});
 
     var src = "";
-    src += "cond:\n";
-    src += "    a:\n";
-    src += "        b\n";
-    tst(src, {
-        type: "Cond",
-        blocks: [
-            {type: "CondBlock", test: mk.id("a"), block: mk.block([mk.stmt(mk.id("b"))])}
-        ],
-        "else": null
-    });
-    src = "";
-    src += "cond:\n";
-    src += "    a:\n";
-    src += "        b\n";
-    src += "    c:\n";
-    src += "        d\n";
-    src += "    else:\n";
-    src += "        e";
-    tst(src, {
-        type: "Cond",
-        blocks: [
-            {type: "CondBlock", test: mk.id("a"), block: mk.block([mk.stmt(mk.id("b"))])},
-            {type: "CondBlock", test: mk.id("c"), block: mk.block([mk.stmt(mk.id("d"))])}
-        ],
-        "else": mk.block([mk.stmt(mk.id("e"))])
-    });
-
-    src = "";
     src += "case a:\n";
     src += "    1:\n";
     src += "        b\n";
@@ -429,9 +401,9 @@ test("module", function(t){
     src += "    \"wat\":\n";
     src += "        * as da\n";
     var ast = parser(src);
-    t.deepEquals(rmLoc(ast), {
-        type: "Module",
-        "import": [
+    t.deepEquals(rmLoc(ast)[0], {
+        type: "ImportBlock",
+        "modules": [
             {
                 type: "Import",
                 path: mkv("./a"),
@@ -481,8 +453,6 @@ test("module", function(t){
                 ],
             },
         ],
-        body: [],
-        "export": null,
     });
 
     src = "";
@@ -490,11 +460,9 @@ test("module", function(t){
     src += "    a\n";
     src += "    Foo\n";
     ast = parser(src);
-    t.deepEquals(rmLoc(ast), {
-        type: "Module",
-        "import": [],
-        body: [],
-        "export": [
+    t.deepEquals(rmLoc(ast)[0], {
+        type: "ExportBlock",
+        names: [
             {
                 type: "ExportName",
                 name: mk.id("a"),
@@ -510,11 +478,9 @@ test("module", function(t){
     src += "export:\n";
     src += "    *\n";
     ast = parser(src);
-    t.deepEquals(rmLoc(ast), {
-        type: "Module",
-        "import": [],
-        body: [],
-        "export": [
+    t.deepEquals(rmLoc(ast)[0], {
+        type: "ExportBlock",
+        names: [
             {
                 type: "ExportName",
                 name: null,
@@ -566,7 +532,7 @@ test("loc", function(t){
     var src = "1";
 
     var ast = parser(src, {filepath: "/some/file/path-ok?"});
-    t.deepEquals(ast.body[0].loc, {
+    t.deepEquals(ast[0].loc, {
         source: "/some/file/path-ok?",
         start: {line: 1, column: 0},
         end: {line: 1, column: 1}
@@ -578,7 +544,7 @@ test("loc", function(t){
 test("TypeExpression", function(t){
     var tst = function(src, expected){
         src = "ann foo = " + src;
-        var ast = parser(src).body[0];
+        var ast = parser(src)[0];
         t.deepEquals(rmLoc(ast), {
             type: "Annotation",
             id: mk.id("foo"),
@@ -692,7 +658,7 @@ test("TypeExpression", function(t){
 
 test("TypeAlias", function(t){
     var tst = function(src, expected){
-        var ast = parser(src).body[0];
+        var ast = parser(src)[0];
         t.deepEquals(rmLoc(ast), expected);
     };
 
@@ -717,7 +683,7 @@ test("TypeAlias", function(t){
 
 test("Enum", function(t){
     var tst = function(src, expected){
-        var ast = parser(src).body[0];
+        var ast = parser(src)[0];
         t.deepEquals(rmLoc(ast), expected);
     };
 
@@ -784,7 +750,7 @@ test("Enum", function(t){
     src += "        two\n";
     src += "    B<c, String>.Baz(e, f, g):\n";
     src += "        three\n";
-    t.deepEquals(JSON.stringify(rmLoc(parser(src).body[0].blocks)), JSON.stringify([
+    t.deepEquals(JSON.stringify(rmLoc(parser(src)[0].blocks)), JSON.stringify([
         {
             type: "CaseBlock",
             value: {

@@ -142,64 +142,6 @@ else:
     }
 }
 
-cond:
-    a == 1:
-        b
-    c == 3:
-        d
-    else:
-        e
-{
-    "type": "Cond",
-    "blocks": [
-        {
-            "type": "CondBlock",
-            "test": {
-                "type": "InfixOperator",
-                "op": "==",
-                "left": {"type": "Identifier", "value": "a"},
-                "right": {"type": "Number", "value": 1}
-            },
-            "block": {
-                "type": "Block",
-                "body": [
-                    {
-                        "type": "ExpressionStatement",
-                        "expression": {"type": "Identifier", "value": "b"}
-                    }
-                ]
-            }
-        },
-        {
-            "type": "CondBlock",
-            "test": {
-                "type": "InfixOperator",
-                "op": "==",
-                "left": {"type": "Identifier", "value": "c"},
-                "right": {"type": "Number", "value": 3}
-            },
-            "block": {
-                "type": "Block",
-                "body": [
-                    {
-                        "type": "ExpressionStatement",
-                        "expression": {"type": "Identifier", "value": "d"}
-                    }
-                ]
-            }
-        }
-    ],
-    "else": {
-        "type": "Block",
-        "body": [
-            {
-                "type": "ExpressionStatement",
-                "expression": {"type": "Identifier", "value": "e"}
-            }
-        ]
-    }
-}
-
 case a:
     1:
         b
@@ -386,8 +328,8 @@ import:
     "c":
         *
 {
-    "type": "Module",
-    "import": [
+    "type": "ImportBlock",
+    "modules": [
         {
             "type": "Import",
             "path": {"type": "String", "value": "./a"},
@@ -430,19 +372,15 @@ import:
             "path": {"type": "String", "value": "c"},
             "names": [{"type": "ImportName", "name": null, "as": null}]
         }
-    ],
-    "body": [],
-    "export": null
+    ]
 }
 
 export:
     a
     Foo
 {
-    "type": "Module",
-    "import": [],
-    "body": [],
-    "export": [
+    "type": "ExportBlock",
+    "names": [
         {"type": "ExportName", "name": {"type": "Identifier", "value": "a"}},
         {
             "type": "ExportName",
@@ -453,10 +391,5 @@ export:
 
 export:
     *
-{
-    "type": "Module",
-    "import": [],
-    "body": [],
-    "export": [{"type": "ExportName", "name": null}]
-}
+{"type": "ExportBlock", "names": [{"type": "ExportName", "name": null}]}
 ```

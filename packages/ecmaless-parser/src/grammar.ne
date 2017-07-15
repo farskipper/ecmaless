@@ -97,7 +97,6 @@ var tok_return = tok("SYMBOL", "return");
 var tok_if = tok("SYMBOL", "if");
 var tok_else = tok("SYMBOL", "else");
 
-var tok_cond = tok("SYMBOL", "cond");
 var tok_case = tok("SYMBOL", "case");
 
 var tok_try = tok("SYMBOL", "try");
@@ -192,67 +191,11 @@ var tryCatchMaker = function(i_id, i_catch, i_finally){
 %}
 
 
-main ->
-    NL:?
-    (%tok_import %tok_COLON NL INDENT Import:+ DEDENT NL):?
-    Statement_list:?
-    (%tok_export %tok_COLON NL INDENT ExportName:+ DEDENT NL):?
+main -> NL:? Statement_list:?
 {% function(d){
-    return {
-        loc: mkLoc(d),
-        type: "Module",
-        "import": (d[1] && d[1][4]) || [],
-        body: d[2] || [],
-        "export": d[3] && d[3][4],
-    };
+    return d[1] || [];
 } %}
 
-
-Import -> String %tok_COLON NL INDENT ImportName:+ DEDENT NL
-{% function(d){
-    return {
-        loc: mkLoc(d),
-        type: "Import",
-        path: d[0],
-        names: d[4],
-    };
-} %}
-
-
-ImportName -> ImportName_parts NL
-{% function(d){
-    d = d[0];
-    var name = d[0];
-    if(name.type === "RAW"){// *
-        name = null;
-    }
-    return {
-        loc: mkLoc(d),
-        type: "ImportName",
-        name: name,
-        as: (d[1] && d[1][1]) || null,
-    };
-} %}
-
-
-ImportName_parts ->
-      Identifier (%tok_as Identifier):?
-    | Type (%tok_as Type):?
-    | %tok_TIMES (%tok_as Identifier):?
-
-
-ExportName -> (Identifier | Type | %tok_TIMES) NL
-{% function(d){
-    var name = d[0][0];
-    if(name.type === "RAW"){// *
-        name = null;
-    }
-    return {
-        loc: mkLoc(d),
-        type: "ExportName",
-        name: name,
-    };
-} %}
 
 ################################################################################
 # Statement
@@ -270,12 +213,13 @@ Statement ->
     | While {% id %}
     | Break {% id %}
     | Continue {% id %}
-    | Cond {% id %}
     | Case {% id %}
     | TryCatch {% id %}
     | Annotation {% id %}
     | TypeAlias {% id %}
     | Enum {% id %}
+    | ImportBlock {% id %}
+    | ExportBlock {% id %}
 
 
 ExpressionStatement -> Expression
@@ -283,7 +227,7 @@ ExpressionStatement -> Expression
     return {
         loc: mkLoc(d),
         type: "ExpressionStatement",
-        expression: d[0]
+        expression: d[0],
     };
 } %}
 
@@ -293,7 +237,7 @@ Return -> %tok_return Expression:?
     return {
         loc: mkLoc(d),
         type: "Return",
-        expression: d[1]
+        expression: d[1],
     };
 } %}
 
@@ -320,7 +264,7 @@ If -> %tok_if Expression Block (NL %tok_else (If | Block)):?
         type: "If",
         test: d[1],
         then: d[2],
-        "else": else_block
+        "else": else_block,
     };
 } %}
 
@@ -331,7 +275,7 @@ While -> %tok_while Expression Block
         loc: mkLoc(d),
         type: "While",
         test: d[1],
-        block: d[2]
+        block: d[2],
     };
 } %}
 
@@ -342,28 +286,6 @@ Break -> %tok_break
 
 Continue -> %tok_continue
     {% function(d){return {loc: d[0].loc, type: "Continue"};} %}
-
-
-Cond -> %tok_cond %tok_COLON NL INDENT CondBlock:* (ElseBlock NL):? DEDENT
-{% function(d){
-    return {
-        loc: mkLoc(d),
-        type: "Cond",
-        blocks: d[4],
-        "else": d[5] && d[5][0],
-    };
-} %}
-
-
-CondBlock -> Expression Block NL
-{% function(d){
-    return {
-        loc: mkLoc(d),
-        type: "CondBlock",
-        test: d[0],
-        block: d[1],
-    };
-} %}
 
 
 Case -> %tok_case Expression %tok_COLON NL INDENT CaseBlock:* (ElseBlock NL):? DEDENT
@@ -411,6 +333,76 @@ Block -> %tok_COLON NL INDENT Statement_list DEDENT
         body: d[3],
     };
 } %}
+
+################################################################################
+# Modules
+
+ImportBlock -> %tok_import %tok_COLON NL INDENT Import:+ DEDENT
+{% function(d){
+    return {
+        loc: mkLoc(d),
+        type: "ImportBlock",
+        modules: d[4],
+    };
+} %}
+
+
+Import -> String %tok_COLON NL INDENT ImportName:+ DEDENT NL
+{% function(d){
+    return {
+        loc: mkLoc(d),
+        type: "Import",
+        path: d[0],
+        names: d[4],
+    };
+} %}
+
+
+ImportName -> ImportName_parts NL
+{% function(d){
+    d = d[0];
+    var name = d[0];
+    if(name.type === "RAW"){// *
+        name = null;
+    }
+    return {
+        loc: mkLoc(d),
+        type: "ImportName",
+        name: name,
+        as: (d[1] && d[1][1]) || null,
+    };
+} %}
+
+
+ImportName_parts ->
+      Identifier (%tok_as Identifier):?
+    | Type (%tok_as Type):?
+    | %tok_TIMES (%tok_as Identifier):?
+
+
+ExportBlock -> %tok_export %tok_COLON NL INDENT ExportName:+ DEDENT
+{% function(d){
+    return {
+        loc: mkLoc(d),
+        type: "ExportBlock",
+        names: d[4],
+    };
+} %}
+
+
+ExportName -> (Identifier | Type | %tok_TIMES) NL
+{% function(d){
+    var name = d[0][0];
+    if(name.type === "RAW"){// *
+        name = null;
+    }
+    return {
+        loc: mkLoc(d),
+        type: "ExportName",
+        name: name,
+    };
+} %}
+
 
 ################################################################################
 # Types 
@@ -580,7 +572,7 @@ FunctionType -> %tok_Fn TypeExpression %tok_COLON TypeExpression
         loc: mkLoc(d),
         type: "FunctionType",
         params: d[1],
-        "return": d[3]
+        "return": d[3],
     };
 } %}
 
@@ -599,7 +591,7 @@ AssignmentExpression -> ConditionalExpression {% id %}
         type: "AssignmentExpression",
         op: d[1].src,
         left: d[0],
-        right: d[2]
+        right: d[2],
     };
 } %}
 
@@ -626,30 +618,30 @@ exp_and -> exp_comp {% id %}
 
 
 exp_comp -> exp_sum {% id %}
-    | exp_comp %tok_EQEQ exp_sum {% infixOp %}
+    | exp_comp %tok_EQEQ  exp_sum {% infixOp %}
     | exp_comp %tok_NOTEQ exp_sum {% infixOp %}
-    | exp_comp %tok_LT exp_sum {% infixOp %}
-    | exp_comp %tok_LTEQ exp_sum {% infixOp %}
-    | exp_comp %tok_GT exp_sum {% infixOp %}
-    | exp_comp %tok_GTEQ exp_sum {% infixOp %}
+    | exp_comp %tok_LT    exp_sum {% infixOp %}
+    | exp_comp %tok_LTEQ  exp_sum {% infixOp %}
+    | exp_comp %tok_GT    exp_sum {% infixOp %}
+    | exp_comp %tok_GTEQ  exp_sum {% infixOp %}
 
 
 exp_sum -> exp_product {% id %}
-    | exp_sum %tok_PLUS exp_product {% infixOp %}
-    | exp_sum %tok_MINUS exp_product {% infixOp %}
+    | exp_sum %tok_PLUS     exp_product {% infixOp %}
+    | exp_sum %tok_MINUS    exp_product {% infixOp %}
     | exp_sum %tok_PLUSPLUS exp_product {% infixOp %}
 
 
 exp_product -> UnaryOperator {% id %}
-    | exp_product %tok_TIMES UnaryOperator {% infixOp %}
+    | exp_product %tok_TIMES  UnaryOperator {% infixOp %}
     | exp_product %tok_DIVIDE UnaryOperator {% infixOp %}
     | exp_product %tok_MODULO UnaryOperator {% infixOp %}
 
 
 UnaryOperator -> MemberExpression {% id %}
-    | %tok_PLUS UnaryOperator {% unaryOp %}
+    | %tok_PLUS  UnaryOperator {% unaryOp %}
     | %tok_MINUS UnaryOperator {% unaryOp %}
-    | %tok_not UnaryOperator {% unaryOp %}
+    | %tok_not   UnaryOperator {% unaryOp %}
 
 
 MemberExpression -> PrimaryExpression {% id %}
@@ -695,7 +687,7 @@ Struct -> %tok_OPEN_CU KeyValPairs %tok_CLOSE_CU
     return {
         loc: mkLoc(d),
         type: "Struct",
-        value: d[1]
+        value: d[1],
     };
 } %}
 
