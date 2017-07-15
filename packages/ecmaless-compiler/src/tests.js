@@ -4,7 +4,7 @@ var parser = require("ecmaless-parser");
 var compiler = require("./");
 var escodegen = require("escodegen");
 
-var testCompile = function(t, src, expected){
+var compToStr = function(src){
     var ast = parser(src);
     var est = compiler(ast).estree;
     est = {
@@ -13,11 +13,27 @@ var testCompile = function(t, src, expected){
         "body": est
     };
     var js = escodegen.generate(est, {format: {compact: true}});
-    t.equals(js, expected);
+    return js;
+};
+
+var testCompile = function(t, src, expected){
+    t.equals(compToStr(src), expected);
+};
+
+var testTError = function(t, src, actual, expected, loc_start){
+    try{
+        compToStr(src);
+        t.fail("exptected a type error");
+    }catch(e){
+        t.equals(e.ecmaless.expected[0], expected);
+        t.equals(e.ecmaless.actual[0], actual);
+        t.deepEquals(e.ecmaless.loc.start, loc_start);
+    }
 };
 
 test("compile", function(t){
     var tc = _.partial(testCompile, t);
+    var terr = _.partial(testTError, t);
 
     tc("100.25", "100.25;");
     tc("\"a b\"", "'a b';");
@@ -25,6 +41,20 @@ test("compile", function(t){
     tc("false", "false;");
     tc("nil", "void 0;");
 
+    tc("true or  false", "true||false;");
+    tc("true and false", "true&&false;");
+
+    terr("true and 1", "Number", "Boolean", {line: 1, column: 9});
+    terr("true or  1", "Number", "Boolean", {line: 1, column: 9});
+    terr("\"a\" and true", "String", "Boolean", {line: 1, column: 0});
+    terr("\"a\" or  true", "String", "Boolean", {line: 1, column: 0});
+
+    tc("1 + 2", "1+2;");
+    terr("1 + \"a\"", "String", "Number", {line: 1, column: 4});
+
+    tc("\"a\" ++ \"b\"", "'a'+'b';");
+
+    /*
     tc("[1, 2]", "[1,2];");
     tc("{a: 1, b: 2}", "({'a':1,'b':2});");
 
@@ -103,6 +133,7 @@ test("scope", function(t){
             loc: {end: {column: 1, line: 1}, source: undefined, start: {column: 0, line: 1}}
         }
     }, compiler(parser("a\na\na")).undefined_symbols);
+    */
 
     t.end();
 });

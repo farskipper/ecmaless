@@ -11,21 +11,25 @@ var comp_ast_node = {
     "Number": function(ast, comp){
         return {
             estree: e("number", ast.value, ast.loc),
+            TYPE: ["Number"],
         };
     },
     "String": function(ast, comp){
         return {
             estree: e("string", ast.value, ast.loc),
+            TYPE: ["String"],
         };
     },
     "Boolean": function(ast, comp){
         return {
             estree: e(ast.value ? "true" : "false", ast.loc),
+            TYPE: ["Boolean"],
         };
     },
     "Nil": function(ast, comp){
         return {
             estree: e("void", e("number", 0, ast.loc), ast.loc),
+            TYPE: ["Nil"],
         };
     },
     "Identifier": function(ast, comp, ctx){
@@ -102,21 +106,7 @@ var comp_ast_node = {
             estree: estree,
         };
     },
-    "InfixOperator": function(ast, comp, ctx){
-        var left = comp(ast.left);
-        var right = comp(ast.right);
-        var estree;
-        if(ast.op === "or"){
-            estree = e("||", left.estree, right.estree, ast.loc);
-        }else if(ast.op === "and"){
-            estree = e("&&", left.estree, right.estree, ast.loc);
-        }else{
-            estree = e(ast.op, left.estree, right.estree, ast.loc);
-        }
-        return {
-            estree: estree,
-        };
-    },
+    "InfixOperator": require("./c/InfixOperator"),
     "AssignmentExpression": function(ast, comp, ctx){
         var left = comp(ast.left);
         var right = comp(ast.right);
