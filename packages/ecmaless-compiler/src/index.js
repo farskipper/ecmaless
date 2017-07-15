@@ -7,68 +7,57 @@ var sysIDtoJsID = function(id){
     return "$$$ecmaless$$$" + toId(id);
 };
 
-var nativejs_infix_ops = {
-    "<": true,
-    "<=": true,
-    ">": true,
-    ">=": true,
-    "+": true,
-    "-": true,
-    "*": true,
-    "/": true,
-    "%": true,
-};
-
-var wrapTruthyTest = function(test, ctx){
-    var loc = test.loc;
-    if(test && test.type === "BinaryExpression" && test.operator === "==="){
-        return test;
-    }
-    if(test && test.type === "CallExpression" && test.callee){
-        if(test.callee.type === "Identifier"){
-            if(false
-                || test.callee.name === sysIDtoJsID("==")
-                || test.callee.name === sysIDtoJsID("!=")
-                || test.callee.name === sysIDtoJsID("!")
-            ){
-                return test;
-            }
-        }
-    }
-    return e("call", ctx.useSystemIdentifier("truthy", loc, true), [test], loc);
-};
-
-var comp_by_type = {
+var comp_ast_node = {
     "Number": function(ast, comp){
-        return e("number", ast.value, ast.loc);
+        return {
+            estree: e("number", ast.value, ast.loc),
+        };
     },
     "String": function(ast, comp){
-        return e("string", ast.value, ast.loc);
+        return {
+            estree: e("string", ast.value, ast.loc),
+        };
+    },
+    "Boolean": function(ast, comp){
+        return {
+            estree: e(ast.value ? "true" : "false", ast.loc),
+        };
+    },
+    "Nil": function(ast, comp){
+        return {
+            estree: e("void", e("number", 0, ast.loc), ast.loc),
+        };
     },
     "Identifier": function(ast, comp, ctx){
         ctx.useIdentifier(ast.value, ast.loc);
-        return e("id", toId(ast.value), ast.loc);
-    },
-    "Nil": function(ast, comp){
-        return e("void", e("number", 0, ast.loc), ast.loc);
-    },
-    "Boolean": function(ast, comp){
-        return e(ast.value ? "true" : "false", ast.loc);
+        return {
+            estree: e("id", toId(ast.value), ast.loc),
+        };
     },
     "Array": function(ast, comp){
-        return e("array", comp(ast.value), ast.loc);
+        var est_vals = [];
+        _.each(ast.value, function(v_ast){
+            var v = comp(v_ast);
+            est_vals.push(v.estree);
+        });
+        return {
+            estree: e("array", est_vals, ast.loc),
+        };
     },
     "Struct": function(ast, comp){
-        return e("object-raw", _.map(_.chunk(ast.value, 2), function(pair){
+        var estree = e("object-raw", _.map(_.chunk(ast.value, 2), function(pair){
             var key = pair[0];
             if(key.type === "Symbol"){
                 key = e("string", key.value, key.loc);
             }else{
-                key = comp(key);
+                key = comp(key).estree;
             }
-            var val = comp(pair[1] || {loc: key.loc, type: "Nil"});
+            var val = comp(pair[1]).estree;
             return e("object-property", key, val, {start: key.loc.start, end: val.loc.end});
         }), ast.loc);
+        return {
+            estree: estree,
+        };
     },
     "Function": function(ast, comp, ctx){
         ctx.pushScope();
@@ -76,49 +65,71 @@ var comp_by_type = {
         var body = [];
         _.each(ast.params, function(p, i){
             ctx.defIdentifier(p.value);
-            params.push(comp(p));
+            params.push(comp(p).estree);
         });
         _.each(ast.block.body, function(b, i){
             if((i === _.size(ast.block.body) - 1) && b.type === "ExpressionStatement"){
-                body.push(e("return", comp(b.expression), b.loc));
+                body.push(e("return", comp(b.expression).estree, b.loc));
             }else{
-                body.push(comp(b));
+                body.push(comp(b).estree);
             }
         });
         ctx.popScope();
         var id;
-        return e("function", params, body, id, ast.loc);
+        return {
+            estree: e("function", params, body, id, ast.loc),
+        };
     },
     "Application": function(ast, comp){
-        return e("call", comp(ast.callee), comp(ast.args), ast.loc);
+        var est_args = [];
+        _.each(ast.args, function(ast_arg){
+            var arg = comp(ast_arg);
+            est_args.push(arg.estree);
+        });
+        return {
+            estree: e("call", comp(ast.callee).estree, est_args, ast.loc),
+        };
     },
     "UnaryOperator": function(ast, comp, ctx){
+        var arg = comp(ast.arg);
+        var estree;
         if(ast.op === "-" || ast.op === "+"){
-            return e(ast.op, comp(ast.arg), ast.loc);
+            estree = e(ast.op, arg.estree, ast.loc);
+        }else{
+            estree = e("call", ctx.useSystemIdentifier(ast.op, ast.loc, true), [arg.estree], ast.loc);
         }
-        return e("call", ctx.useSystemIdentifier(ast.op, ast.loc, true), [comp(ast.arg)], ast.loc);
+        return {
+            estree: estree,
+        };
     },
     "InfixOperator": function(ast, comp, ctx){
-        if(nativejs_infix_ops.hasOwnProperty(ast.op)){
-            return e(ast.op, comp(ast.left), comp(ast.right), ast.loc);
-        }
+        var left = comp(ast.left);
         var right = comp(ast.right);
-        if(ast.op === "or" || ast.op === "and"){
-            right = e("fn", [], [e("return", right, right.loc)], right.loc);
+        var estree;
+        if(ast.op === "or"){
+            estree = e("||", left.estree, right.estree, ast.loc);
+        }else if(ast.op === "and"){
+            estree = e("&&", left.estree, right.estree, ast.loc);
+        }else{
+            estree = e(ast.op, left.estree, right.estree, ast.loc);
         }
-        return e("call", ctx.useSystemIdentifier(ast.op, ast.loc, true), [
-            comp(ast.left),
-            right
-        ], ast.loc);
+        return {
+            estree: estree,
+        };
     },
     "AssignmentExpression": function(ast, comp, ctx){
+        var left = comp(ast.left);
+        var right = comp(ast.right);
         if(ast.left.type === "Identifier"){
-            return e("=", comp(ast.left), comp(ast.right), ast.loc);
+            return {
+                estree: e("=", left.estree, right.estree, ast.loc),
+            };
         }else if(ast.left.type === "MemberExpression"){
-            var left = comp(ast.left);
-            left.callee.name = ctx.useSystemIdentifier("set", ast.loc);
-            left["arguments"].push(comp(ast.right));
-            return left;
+            left.estree.callee.name = ctx.useSystemIdentifier("set", ast.loc);
+            left.estree["arguments"].push(right.estree);
+            return {
+                estree: left.estree,
+            };
         }
         throw new Error("Only Identifier or MemberExpression can be assigned");
     },
@@ -129,40 +140,57 @@ var comp_by_type = {
                 path = e("string", ast.path.value, ast.path.loc);
             }
         }else if(ast.method === "index"){
-            path = comp(ast.path);
+            path = comp(ast.path).estree;
         }else{
             throw new Error("Unsupported MemberExpression method: " + ast.method);
         }
-        return e("call", ctx.useSystemIdentifier("get", ast.loc, true), [
-            comp(ast.object),
-            path
-        ], ast.loc);
+        return {
+            estree: e("call", ctx.useSystemIdentifier("get", ast.loc, true), [
+                comp(ast.object).estree,
+                path
+            ], ast.loc),
+        };
     },
     "ConditionalExpression": function(ast, comp, ctx){
-        return e("?",
-            wrapTruthyTest(comp(ast.test), ctx),
-            comp(ast.consequent),
-            comp(ast.alternate),
-            ast.loc
-        );
+        return {
+            estree: e("?",
+                comp(ast.test).estree,
+                comp(ast.consequent).estree,
+                comp(ast.alternate).estree,
+                ast.loc
+            ),
+        };
     },
     "Block": function(ast, comp, ctx){
         ctx.pushScope();
-        var body = comp(ast.body);
+        var body = _.map(ast.body, function(ast){
+            return comp(ast).estree;
+        });
         ctx.popScope();
-        return e("block", body, ast.loc);
+        return {
+            estree: e("block", body, ast.loc),
+        };
     },
     "ExpressionStatement": function(ast, comp){
-        return e(";", comp(ast.expression), ast.loc);
+        var expr = comp(ast.expression);
+        return {
+            estree: e(";", expr.estree, ast.loc),
+        };
     },
     "Return": function(ast, comp){
-        return e("return", comp(ast.expression), ast.loc);
+        return {
+            estree: e("return", comp(ast.expression).estree, ast.loc),
+        };
     },
     "If": function(ast, comp, ctx){
-        var test = comp(ast.test);
-        var then = comp(ast.then);
-        var els_ = ast["else"] ? comp(ast["else"]) : void 0;
-        return e("if", wrapTruthyTest(test, ctx), then, els_, ast.loc);
+        var test = comp(ast.test).estree;
+        var then = comp(ast.then).estree;
+        var els_ = ast["else"]
+            ? comp(ast["else"]).estree
+            : void 0;
+        return {
+            estree: e("if", test, then, els_, ast.loc),
+        };
     },
     "Case": function(ast, comp){
         var mkTest = function(val){
@@ -172,52 +200,64 @@ var comp_by_type = {
                 op: "==",
                 left: ast.to_test,
                 right: val
-            });
+            }).estree;
         };
         var prev = ast["else"]
-            ? comp(ast["else"])
+            ? comp(ast["else"]).estree
             : undefined;
         var i = _.size(ast.blocks) - 1;
         while(i >= 0){
             var block = ast.blocks[i];
             prev = e("if",
                 mkTest(block.value),
-                comp(block.block),
+                comp(block.block).estree,
                 prev,
                 block.loc
             );
             i--;
         }
-        return prev;
+        return {
+            estree: prev,
+        };
     },
     "While": function(ast, comp, ctx){
-        return e("while", wrapTruthyTest(comp(ast.test), ctx), comp(ast.block), ast.loc);
+        return {
+            estree: e("while", comp(ast.test).estree, comp(ast.block).estree, ast.loc),
+        };
     },
     "Break": function(ast, comp){
-        return e("break", ast.loc);
+        return {
+            estree: e("break", ast.loc),
+        };
     },
     "Continue": function(ast, comp){
-        return e("continue", ast.loc);
+        return {
+            estree: e("continue", ast.loc),
+        };
     },
     "TryCatch": function(ast, comp){
-        return e("try",
-            comp(ast.try_block),
-            comp(ast.catch_id),
-            comp(ast.catch_block),
-            comp(ast.finally_block),
-            ast.loc
-        );
+        return {
+            estree: e("try",
+                comp(ast.try_block).estree,
+                comp(ast.catch_id).estree,
+                comp(ast.catch_block).estree,
+                comp(ast.finally_block).estree,
+                ast.loc
+            ),
+        };
     },
     "Define": function(ast, comp, ctx){
         if(ast.id.type !== "Identifier"){
             throw new Error("Only Identifiers can be defined");
         }
         ctx.defIdentifier(ast.id.value);
-        var init = comp(ast.init || {loc: ast.id.loc, type: "Nil"});
-        if(init && init.type === "FunctionExpression"){
-            init.id = comp(ast.id);
+        var init = comp(ast.init).estree;
+        if(init.type === "FunctionExpression"){
+            init.id = comp(ast.id).estree;
         }
-        return e("var", comp(ast.id), init, ast.loc);
+        return {
+            estree: e("var", comp(ast.id).estree, init, ast.loc),
+        };
     },
 };
 
@@ -258,20 +298,18 @@ module.exports = function(ast){
     };
 
     var compile = function compile(ast){
-        if(_.isArray(ast)){
-            return _.map(ast, function(a){
-                return compile(a);
-            });
-        }else if(!_.has(ast, "type")){
+        if(!_.has(ast, "type")){
             throw new Error("Invalid ast node: " + JSON.stringify(ast));
-        }else if(!_.has(comp_by_type, ast.type)){
+        }else if(!_.has(comp_ast_node, ast.type)){
             throw new Error("Unsupported ast node type: " + ast.type);
         }
-        return comp_by_type[ast.type](ast, compile, ctx);
+        return comp_ast_node[ast.type](ast, compile, ctx);
     };
 
     return {
-        estree: compile(ast),
+        estree: _.map(ast, function(ast){
+            return compile(ast).estree;
+        }),
         undefined_symbols: undefined_symbols
     };
 };

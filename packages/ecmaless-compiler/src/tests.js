@@ -21,9 +21,9 @@ test("compile", function(t){
 
     tc("100.25", "100.25;");
     tc("\"a b\"", "'a b';");
-    tc("nil", "void 0;");
     tc("true", "true;");
     tc("false", "false;");
+    tc("nil", "void 0;");
 
     tc("[1, 2]", "[1,2];");
     tc("{a: 1, b: 2}", "({'a':1,'b':2});");
@@ -38,23 +38,22 @@ test("compile", function(t){
     tc("-1", "-1;");
     tc("1 + 2", "1+2;");
     tc("1 - 2 + 3 / 4 * 5 % 3", "1-2+3/4*5%3;");
-    tc("a == b != c", "$$$ecmaless$$$$33$$61$($$$ecmaless$$$$61$$61$(a,b),c);");
+    tc("a == b != c", "a==b!=c;");
 
-    tc("if a:\n    b", "if($$$ecmaless$$$truthy(a)){b;}");
-    tc("if a == b:\n    c", "if($$$ecmaless$$$$61$$61$(a,b)){c;}");
-    tc("if a:\n    b\nelse if c:\n    d\nelse:\n    e", "if($$$ecmaless$$$truthy(a)){b;}else if($$$ecmaless$$$truthy(c)){d;}else{e;}");
-    tc("a ? b : c", "$$$ecmaless$$$truthy(a)?b:c;");
+    tc("if a:\n    b", "if(a){b;}");
+    tc("if a == b:\n    c", "if(a==b){c;}");
+    tc("if a:\n    b\nelse if c:\n    d\nelse:\n    e", "if(a){b;}else if(c){d;}else{e;}");
+    tc("a ? b : c", "a?b:c;");
     tc(
         "case a:\n    1:\n        b\n    2:\n        c\n    else:\n        d",
-        "if($$$ecmaless$$$$61$$61$(a,1)){b;}else if($$$ecmaless$$$$61$$61$(a,2)){c;}else{d;}"
+        "if(a==1){b;}else if(a==2){c;}else{d;}"
     );
-    tc("while a:\n    b", "while($$$ecmaless$$$truthy(a)){b;}");
+    tc("while a:\n    b", "while(a){b;}");
     tc("break", "break;");
     tc("continue", "continue;");
 
     tc("try:\n    a\ncatch b:\n    c\nfinally:\n    d", "try{a;}catch(b){c;}finally{d;}");
 
-    tc("def a", "var a=void 0;");
     tc("def a = 1", "var a=1;");
     tc("a = 1", "a=1;");
 
@@ -69,8 +68,8 @@ test("compile", function(t){
     tc("def add = fn (a, b):\n    nil", "var add=function add(a,b){return void 0;};");
 
     //boolean ops, preserve expected evaluation
-    tc("a or b", "$$$ecmaless$$$or(a,function(){return b;});");
-    tc("a and b", "$$$ecmaless$$$and(a,function(){return b;});");
+    tc("a or b", "a||b;");
+    tc("a and b", "a&&b;");
 
     t.end();
 });
@@ -85,18 +84,17 @@ test("scope", function(t){
     ts("1", []);
     ts("a", ["a"]);
     ts("def a = 1\na", []);
-    ts("def a\na", []);
     ts("fn(a):\n    a", []);
     ts("fn(a,b,c):\n    a(b,c)", []);
 
-    ts("if 1:\n    def a\n    a\na", ["$$$ecmaless$$$truthy", "a"]);
+    ts("if 1:\n    def a = 1\n    a\na", ["a"]);
 
     ts("a[1] = 2", ["$$$ecmaless$$$get", "a", "$$$ecmaless$$$set"]);
 
-    ts("1 or 2", ["$$$ecmaless$$$or"]);
-    ts("not a", ["$$$ecmaless$$$not", "a"]);
+    ts("1 or 2", []);
+    ts("not a", ["a", "$$$ecmaless$$$not"]);
     ts("a + b", ["a", "b"]);
-    ts("1 == 2", ["$$$ecmaless$$$=="]);
+    ts("1 == 2", []);
 
     t.deepEquals({
         a: {
