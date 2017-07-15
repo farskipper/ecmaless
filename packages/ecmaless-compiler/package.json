@@ -3,14 +3,6 @@
   "version": "0.4.3",
   "description": "ecmaless AST -> ESTree",
   "main": "index.js",
-  "scripts": {
-    "start": "onchange '*.js' 'test-files/' -i -- npm test",
-    "test": "node tests.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/farskipper/ecmaless-compiler.git"
-  },
   "keywords": [
     "ecmaless",
     "compiler",
@@ -18,20 +10,28 @@
   ],
   "author": "farskipper",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/farskipper/ecmaless-compiler.git"
+  },
   "bugs": {
     "url": "https://github.com/farskipper/ecmaless-compiler/issues"
   },
   "homepage": "https://github.com/farskipper/ecmaless-compiler#readme",
-  "devDependencies": {
-    "ecmaless-parser": "^0.6.0",
-    "escodegen": "^1.8.0",
-    "onchange": "^2.5.0",
-    "tape": "^4.6.0"
-  },
   "dependencies": {
-    "estree-builder": "^1.5.0",
-    "lodash": "^4.13.1",
+    "estree-builder": "^1.9.0",
+    "lodash": "^4.17.4",
     "symbol-table": "^1.1.0",
     "to-js-identifier": "^1.0.0"
+  },
+  "devDependencies": {
+    "ecmaless-parser": "^0.7.0",
+    "escodegen": "^1.8.0",
+    "onchange": "^3.0.0",
+    "tape": "^4.7.0"
+  },
+  "scripts": {
+    "start": "onchange '*.js' 'test-files/' -i -- npm test",
+    "test": "node tests.js"
   }
 }
