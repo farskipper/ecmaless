@@ -2,7 +2,7 @@
   "name": "ecmaless-compiler",
   "version": "0.4.3",
   "description": "ecmaless AST -> ESTree",
-  "main": "index.js",
+  "main": "src/index.js",
   "keywords": [
     "ecmaless",
     "compiler",
@@ -27,11 +27,13 @@
   "devDependencies": {
     "ecmaless-parser": "^0.7.0",
     "escodegen": "^1.8.0",
+    "eslint": "^4.2.0",
     "onchange": "^3.0.0",
     "tape": "^4.7.0"
   },
   "scripts": {
-    "start": "onchange '*.js' 'test-files/' -i -- npm test",
-    "test": "node tests.js"
+    "start": "onchange src/ -i -- npm test",
+    "lint": "eslint src/ && echo lint-ok",
+    "test": "npm run lint -s && node src/tests.js"
   }
 }
