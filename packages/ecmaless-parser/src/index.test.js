@@ -593,15 +593,12 @@ test("TypeExpression", function(t){
         ],
     });
 
-    tst("Fn [String, Number]: String", {
+    tst("Fn (String, Number) String", {
         type: "FunctionType",
-        params: {
-            type: "ArrayType",
-            value: [
-                mk.Type("String"),
-                mk.Type("Number"),
-            ],
-        },
+        params: [
+            mk.Type("String"),
+            mk.Type("Number"),
+        ],
         "return": mk.Type("String"),
     });
 
@@ -668,12 +665,12 @@ test("TypeAlias", function(t){
         value: mk.Type("String"),
     });
 
-    tst("alias Foo<a, b> = Fn a : b", {
+    tst("alias Foo<a, b> = Fn (a) b", {
         type: "TypeAlias",
         id: mk.Type("Foo", ["a", "b"]),
         value: {
             type: "FunctionType",
-            params: {type: "TypeVariable", value: "a"},
+            params: [{type: "TypeVariable", value: "a"}],
             "return": {type: "TypeVariable", value: "b"},
         },
     });

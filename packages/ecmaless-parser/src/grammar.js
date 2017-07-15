@@ -484,12 +484,12 @@ var grammar = {
                 type: "AnyKey",
             };
         } },
-    {"name": "FunctionType", "symbols": [tok_Fn, "TypeExpression", tok_COLON, "TypeExpression"], "postprocess":  function(d){
+    {"name": "FunctionType", "symbols": [tok_Fn, tok_OPEN_PN, "TypeExpression_list", tok_CLOSE_PN, "TypeExpression"], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
                 type: "FunctionType",
-                params: d[1],
-                "return": d[3],
+                params: d[2],
+                "return": d[4],
             };
         } },
     {"name": "Expression", "symbols": ["AssignmentExpression"], "postprocess": id},

@@ -566,13 +566,13 @@ AnyKey -> %tok_TIMES
 } %}
 
 
-FunctionType -> %tok_Fn TypeExpression %tok_COLON TypeExpression
+FunctionType -> %tok_Fn %tok_OPEN_PN  TypeExpression_list %tok_CLOSE_PN TypeExpression
 {% function(d){
     return {
         loc: mkLoc(d),
         type: "FunctionType",
-        params: d[1],
-        "return": d[3],
+        params: d[2],
+        "return": d[4],
     };
 } %}
 
