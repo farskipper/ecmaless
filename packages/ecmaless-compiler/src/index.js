@@ -7,20 +7,6 @@ var sysIDtoJsID = function(id){
     return "$$$ecmaless$$$" + toId(id);
 };
 
-var sliceArgs = function(loc, start, end){
-    var args = [];
-    args.push(e("id", "arguments", loc));
-    args.push(e("number", start, loc));
-    if(_.isNumber(end)){
-        if(end < 0){
-            args.push(e("-", e("number", -end, loc)));
-        }else{
-            args.push(e("number", end, loc));
-        }
-    }
-    return e("call", e("id", "Array.prototype.slice.call", loc), args, loc);
-};
-
 var nativejs_infix_ops = {
     "<": true,
     "<=": true,
@@ -41,11 +27,9 @@ var wrapTruthyTest = function(test, ctx){
     if(test && test.type === "CallExpression" && test.callee){
         if(test.callee.type === "Identifier"){
             if(false
-          || test.callee.name === sysIDtoJsID("==")
-          || test.callee.name === sysIDtoJsID("!=")
-          || test.callee.name === sysIDtoJsID("===")
-          || test.callee.name === sysIDtoJsID("!==")
-          || test.callee.name === sysIDtoJsID("!")
+                || test.callee.name === sysIDtoJsID("==")
+                || test.callee.name === sysIDtoJsID("!=")
+                || test.callee.name === sysIDtoJsID("!")
             ){
                 return test;
             }
@@ -90,56 +74,10 @@ var comp_by_type = {
         ctx.pushScope();
         var params = [];
         var body = [];
-        if(ast.params && ast.params.type === "Identifier"){
-            ctx.defIdentifier(ast.params.value);
-            body.push(e("var",
-                comp(ast.params),
-                sliceArgs(ast.params.loc, 0),
-                ast.params.loc
-            ));
-        }else{
-            var has_ddd = false;
-            _.each(ast.params, function(p, i){
-                if(p.type === "DotDotDot"){
-                    if(has_ddd){
-                        throw new Error("Only one ... allowed in an argument list");
-                    }
-                    ctx.defIdentifier(p.value.value);
-                    has_ddd = true;
-                    var arg_i_from_end = i - _.size(ast.params) + 1;
-                    body.push(e("var",
-                        comp(p.value),
-                        arg_i_from_end < 0
-                            ? sliceArgs(ast.params.loc, i, arg_i_from_end)
-                            : sliceArgs(ast.params.loc, i),
-                        p.loc
-                    ));
-                }else{
-                    ctx.defIdentifier(p.value);
-                    if(has_ddd){
-                        body.push(e("var",
-                            comp(p),
-                            e("get",
-                                e("id", "arguments", p.loc),
-                                e("-",
-                                    e(".",
-                                        e("id", "arguments", p.loc),
-                                        e("id", "length", p.loc),
-                                        p.loc
-                                    ),
-                                    e("number", _.size(ast.params) - i, p.loc),
-                                    p.loc
-                                ),
-                                p.loc
-                            ),
-                            p.loc
-                        ));
-                    }else{
-                        params.push(comp(p));
-                    }
-                }
-            });
-        }
+        _.each(ast.params, function(p, i){
+            ctx.defIdentifier(p.value);
+            params.push(comp(p));
+        });
         _.each(ast.block.body, function(b, i){
             if((i === _.size(ast.block.body) - 1) && b.type === "ExpressionStatement"){
                 body.push(e("return", comp(b.expression), b.loc));
@@ -165,7 +103,7 @@ var comp_by_type = {
             return e(ast.op, comp(ast.left), comp(ast.right), ast.loc);
         }
         var right = comp(ast.right);
-        if(ast.op === "||" || ast.op === "&&"){
+        if(ast.op === "or" || ast.op === "and"){
             right = e("fn", [], [e("return", right, right.loc)], right.loc);
         }
         return e("call", ctx.useSystemIdentifier(ast.op, ast.loc, true), [
@@ -225,23 +163,6 @@ var comp_by_type = {
         var then = comp(ast.then);
         var els_ = ast["else"] ? comp(ast["else"]) : void 0;
         return e("if", wrapTruthyTest(test, ctx), then, els_, ast.loc);
-    },
-    "Cond": function(ast, comp, ctx){
-        var prev = ast["else"]
-            ? comp(ast["else"])
-            : undefined;
-        var i = _.size(ast.blocks) - 1;
-        while(i >= 0){
-            var block = ast.blocks[i];
-            prev = e("if",
-                wrapTruthyTest(comp(block.test), ctx),
-                comp(block.block),
-                prev,
-                block.loc
-            );
-            i--;
-        }
-        return prev;
     },
     "Case": function(ast, comp){
         var mkTest = function(val){
