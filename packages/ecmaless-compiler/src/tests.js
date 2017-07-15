@@ -52,15 +52,20 @@ test("compile", function(t){
     tc("1 + 2", "1+2;");
     terr("1 + \"a\"", "String", "Number", {line: 1, column: 4});
 
-    tc("\"a\" ++ \"b\"", "'ab';");
+    tc("\"foo\" ++ \"bar\"", "'foobar';");
 
-    /*
+    tc("def a=\"foo\"\na ++ \"bar\"", "var a='foo';'foobar';");
+
     tc("[1, 2]", "[1,2];");
     tc("{a: 1, b: 2}", "({'a':1,'b':2});");
 
-    tc("fn (a, b):\n    nil", "(function(a,b){return void 0;});");
+    var src = "";
+    src += "ann add=Fn(Number, Number) Number\n";
+    src += "def add=fn(a, b):\n";
+    src += "    return a + b\n";
+    tc(src, "var add=function add(a,b){return a+b;};");
 
-    tc("return false", "return false;");
+    /*
     tc("add()", "add();");
     tc("add(1, 2)", "add(1,2);");
 

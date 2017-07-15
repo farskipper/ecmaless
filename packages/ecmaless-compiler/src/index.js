@@ -1,6 +1,7 @@
 var _ = require("lodash");
 var e = require("estree-builder");
 var toId = require("to-js-identifier");
+var assertT = require("./assertT");
 var SymbolTable = require("symbol-table");
 
 var sysIDtoJsID = function(id){
@@ -33,9 +34,10 @@ var comp_ast_node = {
         };
     },
     "Identifier": function(ast, comp, ctx){
-        ctx.useIdentifier(ast.value, ast.loc);
+        var id = ctx.useIdentifier(ast.value, ast.loc);
         return {
             estree: e("id", toId(ast.value), ast.loc),
+            TYPE: id.TYPE,
         };
     },
     "Array": function(ast, comp){
@@ -63,21 +65,29 @@ var comp_ast_node = {
             estree: estree,
         };
     },
-    "Function": function(ast, comp, ctx){
+    "Function": function(ast, comp, ctx, from_caller){
+        var expTYPE = from_caller && from_caller.TYPE;
+        if(!expTYPE || expTYPE.tag !== "Fn"){
+            //TODO better error
+            throw new Error("Sorry, function types are not infered");
+        }
+        if(_.size(expTYPE.params) !== _.size(ast.params)){
+            //TODO better error
+            throw new Error("Function should have " + _.size(expTYPE.params) + " params not " + _.size(ast.params));
+        }
+
         ctx.pushScope();
-        var params = [];
-        var body = [];
-        _.each(ast.params, function(p, i){
-            ctx.defIdentifier(p.value);
-            params.push(comp(p).estree);
+
+        var params = _.map(ast.params, function(p, i){
+            ctx.defIdentifier(p.value, expTYPE.params[i]);
+            return comp(p).estree;
         });
-        _.each(ast.block.body, function(b, i){
-            if((i === _.size(ast.block.body) - 1) && b.type === "ExpressionStatement"){
-                body.push(e("return", comp(b.expression).estree, b.loc));
-            }else{
-                body.push(comp(b).estree);
+        var body = _.compact(_.map(ast.block.body, function(b){
+            var c = comp(b);
+            if(c){
+                return c.estree;
             }
-        });
+        }));
         ctx.popScope();
         var id;
         return {
@@ -240,14 +250,55 @@ var comp_ast_node = {
         if(ast.id.type !== "Identifier"){
             throw new Error("Only Identifiers can be defined");
         }
-        ctx.defIdentifier(ast.id.value);
-        var init = comp(ast.init).estree;
-        if(init.type === "FunctionExpression"){
-            init.id = comp(ast.id).estree;
+        var curr_val = ctx.get(ast.id.value);
+        if(curr_val && curr_val.defined){
+            throw new Error("Already defined: " + ast.id.value);
+        }
+        var annotated = curr_val && curr_val.TYPE;
+
+        var init = comp(ast.init, {TYPE: annotated});
+
+        if(annotated){
+            //ensure it matches the annotation
+            assertT(init.TYPE, annotated.TYPE, ast.id.loc);
+        }
+
+        ctx.defIdentifier(ast.id.value, init.TYPE);
+
+        var id = comp(ast.id);
+
+        if(init.estree.type === "FunctionExpression"){
+            init.estree.id = id.estree;
         }
         return {
-            estree: e("var", comp(ast.id).estree, init, ast.loc),
+            estree: e("var", id.estree, init.estree, ast.loc),
         };
+    },
+    "Annotation": function(ast, comp, ctx){
+        var def = comp(ast.def);
+        ctx.annIdentifier(ast.id.value, def.TYPE);
+        return void 0;//nothing to compile
+    },
+    "FunctionType": function(ast, comp, ctx){
+        var params = _.map(ast.params, function(p){
+            return comp(p).TYPE;
+        });
+        var ret = comp(ast["return"]).TYPE;
+        return {
+            TYPE: {
+                tag: "Fn",
+                params: params,
+                "return": ret,
+            },
+        };
+    },
+    "Type": function(ast, comp, ctx){
+        if(ast.value === "Number"){
+            return {
+                TYPE: {tag: "Number"},
+            };
+        }
+        throw new Error("Type not supported: " + ast.value);
     },
 };
 
@@ -262,8 +313,21 @@ module.exports = function(ast){
         popScope: function(){
             symt_stack.shift();
         },
-        defIdentifier: function(id){
-            symt_stack[0].set(id, {id: id});
+        annIdentifier: function(id, TYPE){
+            symt_stack[0].set(id, {
+                id: id,
+                TYPE: TYPE,
+            });
+        },
+        defIdentifier: function(id, TYPE){
+            symt_stack[0].set(id, {
+                id: id,
+                TYPE: TYPE,
+                defined: true,
+            });
+        },
+        get: function(id){
+            return symt_stack[0].get(id);
         },
         useIdentifier: function(id, loc, js_id){
             if(!symt_stack[0].has(id)){
@@ -287,19 +351,22 @@ module.exports = function(ast){
         }
     };
 
-    var compile = function compile(ast){
+    var compile = function compile(ast, from_caller){
         if(!_.has(ast, "type")){
             throw new Error("Invalid ast node: " + JSON.stringify(ast));
         }else if(!_.has(comp_ast_node, ast.type)){
             throw new Error("Unsupported ast node type: " + ast.type);
         }
-        return comp_ast_node[ast.type](ast, compile, ctx);
+        return comp_ast_node[ast.type](ast, compile, ctx, from_caller);
     };
 
     return {
-        estree: _.map(ast, function(ast){
-            return compile(ast).estree;
-        }),
+        estree: _.compact(_.map(ast, function(ast){
+            var c = compile(ast);
+            if(c){
+                return c.estree;
+            }
+        })),
         undefined_symbols: undefined_symbols
     };
 };
