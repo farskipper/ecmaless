@@ -158,13 +158,26 @@ var comp_ast_node = {
         };
     },
     "ConditionalExpression": function(ast, comp, ctx){
+        var test = comp(ast.test);
+        var consequent = comp(ast.consequent);
+        var alternate = comp(ast.alternate);
+
+        assertT(test.TYPE, {tag: "Boolean"}, ast.test.loc);
+
+        //TODO better error i.e. explain both need to match
+        assertT(alternate.TYPE, consequent.TYPE, ast.alternate.loc);
+
+        //remove specifics b/c it may be either branch
+        var TYPE = _.omit(_.omit(consequent.TYPE, "value"), "loc");
+
         return {
             estree: e("?",
-                comp(ast.test).estree,
-                comp(ast.consequent).estree,
-                comp(ast.alternate).estree,
+                test.estree,
+                consequent.estree,
+                alternate.estree,
                 ast.loc
             ),
+            TYPE: TYPE,
         };
     },
     "Block": function(ast, comp, ctx){
@@ -189,13 +202,14 @@ var comp_ast_node = {
         };
     },
     "If": function(ast, comp, ctx){
-        var test = comp(ast.test).estree;
+        var test = comp(ast.test);
+        assertT(test.TYPE, {tag: "Boolean"}, ast.test.loc);
         var then = comp(ast.then).estree;
         var els_ = ast["else"]
             ? comp(ast["else"]).estree
             : void 0;
         return {
-            estree: e("if", test, then, els_, ast.loc),
+            estree: e("if", test.estree, then, els_, ast.loc),
         };
     },
     "Case": function(ast, comp){
@@ -227,8 +241,10 @@ var comp_ast_node = {
         };
     },
     "While": function(ast, comp, ctx){
+        var test = comp(ast.test);
+        assertT(test.TYPE, {tag: "Boolean"}, ast.test.loc);
         return {
-            estree: e("while", comp(ast.test).estree, comp(ast.block).estree, ast.loc),
+            estree: e("while", test.estree, comp(ast.block).estree, ast.loc),
         };
     },
     "Break": function(ast, comp){

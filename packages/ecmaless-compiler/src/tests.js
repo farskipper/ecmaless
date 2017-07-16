@@ -97,27 +97,49 @@ test("compile", function(t){
     terr("not 0", "Number", "Boolean", {line: 1, column: 4});
     terr("+true", "Boolean", "Number", {line: 1, column: 1});
     terr("-true", "Boolean", "Number", {line: 1, column: 1});
-    /*
-    tc("1 + 2", "1+2;");
-    tc("1 - 2 + 3 / 4 * 5 % 3", "1-2+3/4*5%3;");
-    tc("a == b != c", "a==b!=c;");
 
-    tc("if a:\n    b", "if(a){b;}");
-    tc("if a == b:\n    c", "if(a==b){c;}");
-    tc("if a:\n    b\nelse if c:\n    d\nelse:\n    e", "if(a){b;}else if(c){d;}else{e;}");
-    tc("a ? b : c", "a?b:c;");
+    tc("1 - 2 + 3 / 4 * 5 % 3", "1-2+3/4*5%3;");
+
+    //TODO tc("not (1 == 1)", "!(1==1)");
+    //TODO tc("a == b != c", "a==b!=c;");
+
+    tc("if true:\n    1", "if(true){1;}");
+    terr("if 1:\n    1", "Number", "Boolean", {line: 1, column: 3});
+    //TODO tc("if a == b:\n    c", "if(a==b){c;}");
     tc(
-        "case a:\n    1:\n        b\n    2:\n        c\n    else:\n        d",
-        "if(a==1){b;}else if(a==2){c;}else{d;}"
+        "if true:\n    1\nelse if true:\n    2\nelse:\n    3",
+        "if(true){1;}else if(true){2;}else{3;}"
     );
-    tc("while a:\n    b", "while(a){b;}");
+    terr("if true:\n    1\nelse if 1:\n    2", "Number", "Boolean", {line: 3, column: 8});
+
+    tc("true ? 1 : 2", "true?1:2;");
+    terr("1 ? 2 : 3", "Number", "Boolean", {line: 1, column: 0});
+    terr("true ? 2 : true", "Boolean", "Number", {line: 1, column: 11});
+    terr("true ? false : 2", "Number", "Boolean", {line: 1, column: 15});
+
+    tc("(true ? 1 : 2) + 3", "(true?1:2)+3;");
+
+    //TODO tc(
+    //TODO     "case a:\n    1:\n        b\n    2:\n        c\n    else:\n        d",
+    //TODO     "if(a==1){b;}else if(a==2){c;}else{d;}"
+    //TODO );
+
+    tc("while true:\n    1", "while(true){1;}");
+    terr("while 1:\n    1", "Number", "Boolean", {line: 1, column: 6});
     tc("break", "break;");
     tc("continue", "continue;");
 
-    tc("try:\n    a\ncatch b:\n    c\nfinally:\n    d", "try{a;}catch(b){c;}finally{d;}");
+    //TODO tc("try:\n    a\ncatch b:\n    c\nfinally:\n    d", "try{a;}catch(b){c;}finally{d;}");
 
-    tc("def a = 1", "var a=1;");
-    tc("a = 1", "a=1;");
+    /*
+    src = "";
+    src += "def a = 1\n";
+    src += "a = 2";
+    tc("src", "var a=1;");
+
+    src = "";
+    src += "def a = 1\n";
+    src += "a = true";
 
     tc("a.b", "$$$ecmaless$$$get(a,'b');");
     tc("a[b]", "$$$ecmaless$$$get(a,b);");
