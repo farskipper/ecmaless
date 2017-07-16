@@ -35,6 +35,9 @@ var comp_ast_node = {
     },
     "Identifier": function(ast, comp, ctx){
         var id = ctx.useIdentifier(ast.value, ast.loc);
+        if(!id){
+            throw new Error("Not defined: " + ast.value);
+        }
         return {
             estree: e("id", toId(ast.value), ast.loc),
             TYPE: id.TYPE,
@@ -85,6 +88,8 @@ var comp_ast_node = {
         var body = _.compact(_.map(ast.block.body, function(b){
             var c = comp(b);
             if(c){
+                //TODO check return type matches expTYPE
+                //TODO check return type matches expTYPE
                 return c.estree;
             }
         }));
@@ -92,16 +97,28 @@ var comp_ast_node = {
         var id;
         return {
             estree: e("function", params, body, id, ast.loc),
+            TYPE: expTYPE,
         };
     },
     "Application": function(ast, comp){
-        var est_args = [];
-        _.each(ast.args, function(ast_arg){
-            var arg = comp(ast_arg);
-            est_args.push(arg.estree);
+
+        var callee = comp(ast.callee);
+        var args = _.map(ast.args, function(arg){
+            return comp(arg);
         });
+
+        assertT({
+            tag: "Fn",
+            params: _.map(args, function(arg, i){
+                return _.assign({}, arg.TYPE, {
+                    loc: ast.args[i].loc,
+                });
+            }),
+        }, callee.TYPE, ast.callee.loc);
+
         return {
-            estree: e("call", comp(ast.callee).estree, est_args, ast.loc),
+            estree: e("call", callee.estree, _.map(args, "estree"), ast.loc),
+            TYPE: callee.TYPE["return"],
         };
     },
     "UnaryOperator": function(ast, comp, ctx){
@@ -260,7 +277,7 @@ var comp_ast_node = {
 
         if(annotated){
             //ensure it matches the annotation
-            assertT(init.TYPE, annotated.TYPE, ast.id.loc);
+            assertT(init.TYPE, annotated, ast.id.loc);
         }
 
         ctx.defIdentifier(ast.id.value, init.TYPE);

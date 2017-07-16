@@ -1,4 +1,6 @@
-module.exports = function(actual, expected, loc){
+var _ = require("lodash");
+
+module.exports = function assertT(actual, expected, loc){
     var aTag = actual && actual.tag;
     var eTag = expected && expected.tag;
 
@@ -11,5 +13,15 @@ module.exports = function(actual, expected, loc){
             loc: loc,
         };
         throw err;
+    }
+
+    if(aTag === "Fn"){
+        if(_.size(actual.params) !== _.size(expected.params)){
+            throw new TypeError("Expected "  + _.size(expected.params) + " params but was " + _.size(actual.params));
+        }
+        _.each(actual.params, function(param, i){
+            var exp = expected.params[i];
+            assertT(param, exp, param.loc || exp.loc || loc);
+        });
     }
 };

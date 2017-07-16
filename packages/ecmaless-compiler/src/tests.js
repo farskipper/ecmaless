@@ -60,15 +60,33 @@ test("compile", function(t){
     tc("{a: 1, b: 2}", "({'a':1,'b':2});");
 
     var src = "";
-    src += "ann add=Fn(Number, Number) Number\n";
-    src += "def add=fn(a, b):\n";
+    src += "ann add = Fn (Number, Number) Number\n";
+    src += "def add = fn (a, b):\n";
     src += "    return a + b\n";
+    src += "\n";
     tc(src, "var add=function add(a,b){return a+b;};");
+    tc(src + "add(1, 2)", "var add=function add(a,b){return a+b;};add(1,2);");
+    terr(src + "add(\"a\", 2)", "String", "Number", {line: 5, column: 4});
+    terr(src + "\"a\" ++ add(1, 2)", "Number", "String", {line: 5, column: 7});
+
+    src = "";
+    src += "def add = \"foo\"\n";
+    src += "add(1, 2)";
+    terr(src, "Fn", "String", {line: 2, column: 0});
+
+    try{
+        src = "";
+        src += "ann add = Fn (Number, Number) Number\n";
+        src += "def add = fn (a, b):\n";
+        src += "    return a + b\n";
+        src += "add()";
+        compToStr(src);
+        t.fail("exptected a type error");
+    }catch(e){
+        t.equals(e + "", "TypeError: Expected 2 params but was 0");
+    }
 
     /*
-    tc("add()", "add();");
-    tc("add(1, 2)", "add(1,2);");
-
     tc("+a", "+a;");
     tc("-1", "-1;");
     tc("1 + 2", "1+2;");
