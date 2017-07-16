@@ -86,9 +86,18 @@ test("compile", function(t){
         t.equals(e + "", "TypeError: Expected 2 params but was 0");
     }
 
-    /*
-    tc("+a", "+a;");
+    src = "";
+    src += "ann foo = String\n";
+    src += "def foo = 10\n";
+    terr(src, "Number", "String", {line: 2, column: 4});
+
     tc("-1", "-1;");
+    tc("+1", "1;");
+    tc("not true", "!true;");
+    terr("not 0", "Number", "Boolean", {line: 1, column: 4});
+    terr("+true", "Boolean", "Number", {line: 1, column: 1});
+    terr("-true", "Boolean", "Number", {line: 1, column: 1});
+    /*
     tc("1 + 2", "1+2;");
     tc("1 - 2 + 3 / 4 * 5 % 3", "1-2+3/4*5%3;");
     tc("a == b != c", "a==b!=c;");

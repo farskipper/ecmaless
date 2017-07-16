@@ -12,25 +12,25 @@ var comp_ast_node = {
     "Number": function(ast, comp){
         return {
             estree: e("number", ast.value, ast.loc),
-            TYPE: {tag: "Number", value: ast.value},
+            TYPE: {tag: "Number", value: ast.value, loc: ast.loc},
         };
     },
     "String": function(ast, comp){
         return {
             estree: e("string", ast.value, ast.loc),
-            TYPE: {tag: "String", value: ast.value},
+            TYPE: {tag: "String", value: ast.value, loc: ast.loc},
         };
     },
     "Boolean": function(ast, comp){
         return {
             estree: e(ast.value ? "true" : "false", ast.loc),
-            TYPE: {tag: "Boolean", value: ast.value},
+            TYPE: {tag: "Boolean", value: ast.value, loc: ast.loc},
         };
     },
     "Nil": function(ast, comp){
         return {
             estree: e("void", e("number", 0, ast.loc), ast.loc),
-            TYPE: {tag: "Nil"},
+            TYPE: {tag: "Nil", loc: ast.loc},
         };
     },
     "Identifier": function(ast, comp, ctx){
@@ -121,18 +121,7 @@ var comp_ast_node = {
             TYPE: callee.TYPE["return"],
         };
     },
-    "UnaryOperator": function(ast, comp, ctx){
-        var arg = comp(ast.arg);
-        var estree;
-        if(ast.op === "-" || ast.op === "+"){
-            estree = e(ast.op, arg.estree, ast.loc);
-        }else{
-            estree = e("call", ctx.useSystemIdentifier(ast.op, ast.loc, true), [arg.estree], ast.loc);
-        }
-        return {
-            estree: estree,
-        };
-    },
+    "UnaryOperator": require("./c/UnaryOperator"),
     "InfixOperator": require("./c/InfixOperator"),
     "AssignmentExpression": function(ast, comp, ctx){
         var left = comp(ast.left);
@@ -310,9 +299,15 @@ var comp_ast_node = {
         };
     },
     "Type": function(ast, comp, ctx){
-        if(ast.value === "Number"){
+        var basics = {
+            "Number": true,
+            "String": true,
+            "Boolean": true,
+            "Nil": true,
+        };
+        if(_.has(basics, ast.value)){
             return {
-                TYPE: {tag: "Number"},
+                TYPE: {tag: ast.value, loc: ast.loc},
             };
         }
         throw new Error("Type not supported: " + ast.value);
