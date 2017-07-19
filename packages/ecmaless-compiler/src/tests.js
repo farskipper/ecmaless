@@ -131,17 +131,27 @@ test("compile", function(t){
 
     //TODO tc("try:\n    a\ncatch b:\n    c\nfinally:\n    d", "try{a;}catch(b){c;}finally{d;}");
 
-    /*
     src = "";
     src += "def a = 1\n";
     src += "a = 2";
-    tc("src", "var a=1;");
+    tc(src, "var a=1;a=2;");
 
     src = "";
     src += "def a = 1\n";
     src += "a = true";
+    terr(src, "Boolean", "Number", {line: 2, column: 4});
 
-    tc("a.b", "$$$ecmaless$$$get(a,'b');");
+    src = "";
+    src += "def foo = {a: 1}\n";
+    src += "foo.a + 2";
+    tc(src, "var foo={'a':1};foo.a+2;");
+
+
+    src = "";
+    src += "def foo = [1, 2]\n";
+    src += "foo[0] + 3";
+    tc(src, "var foo=[1,2];foo[0]+3;");
+    /*
     tc("a[b]", "$$$ecmaless$$$get(a,b);");
     tc("a.b[c][1][\"e\"]", "$$$ecmaless$$$get($$$ecmaless$$$get($$$ecmaless$$$get($$$ecmaless$$$get(a,'b'),c),1),'e');");
 

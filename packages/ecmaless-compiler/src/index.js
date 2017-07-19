@@ -8,6 +8,11 @@ var sysIDtoJsID = function(id){
     return "$$$ecmaless$$$" + toId(id);
 };
 
+var omitTypeInstanceSpecifics = function(TYPE){
+    //TODO recurse down in complex types
+    return _.omit(_.omit(TYPE, "value"), "loc");
+};
+
 var comp_ast_node = {
     "Number": function(ast, comp){
         return {
@@ -44,28 +49,62 @@ var comp_ast_node = {
         };
     },
     "Array": function(ast, comp){
+        var TYPE = {
+            tag: "Array",
+            type: void 0,
+            loc: ast.loc,
+        };
         var est_vals = [];
-        _.each(ast.value, function(v_ast){
+        _.each(ast.value, function(v_ast, i){
             var v = comp(v_ast);
+            if(TYPE.type){
+                //TODO better error message i.e. array elements all must have same type
+                assertT(v.TYPE, TYPE.type, v_ast.loc);
+            }else{
+                TYPE.type = v.TYPE;
+            }
             est_vals.push(v.estree);
         });
         return {
             estree: e("array", est_vals, ast.loc),
+            TYPE: TYPE,
         };
     },
     "Struct": function(ast, comp){
-        var estree = e("object-raw", _.map(_.chunk(ast.value, 2), function(pair){
+        var TYPE = {
+            tag: "Struct",
+            by_key: {},
+            loc: ast.loc,
+        };
+        var est_pairs = [];
+        _.each(_.chunk(ast.value, 2), function(pair){
             var key = pair[0];
+            var key_str;
+            var key_est;
             if(key.type === "Symbol"){
-                key = e("string", key.value, key.loc);
+                key_str = key.value;
+                key_est = e("string", key.value, key.loc);
+            }else if(key.type === "String"){
+                key_str = key.value;
+                key_est = comp(key).estree;
             }else{
-                key = comp(key).estree;
+                throw new Error("Invalid struct key.type: " + key.type);
             }
-            var val = comp(pair[1]).estree;
-            return e("object-property", key, val, {start: key.loc.start, end: val.loc.end});
-        }), ast.loc);
+
+            var val = comp(pair[1]);
+
+            if(_.has(TYPE.by_key, key_str)){
+                //TODO better error
+                throw new Error("No duplicate keys: " + key_str);
+            }
+
+            TYPE.by_key[key_str] = val.TYPE;
+
+            est_pairs.push(e("object-property", key_est, val.estree, {start: pair[0].loc.start, end: pair[1].loc.end}));
+        });
         return {
-            estree: estree,
+            estree: e("object-raw", est_pairs, ast.loc),
+            TYPE: TYPE,
         };
     },
     "Function": function(ast, comp, ctx, from_caller){
@@ -126,36 +165,68 @@ var comp_ast_node = {
     "AssignmentExpression": function(ast, comp, ctx){
         var left = comp(ast.left);
         var right = comp(ast.right);
+
+        //TODO better error i.e. explain can't change types
+        assertT(right.TYPE, left.TYPE, ast.right.loc);
+
         if(ast.left.type === "Identifier"){
             return {
                 estree: e("=", left.estree, right.estree, ast.loc),
+                TYPE: left.TYPE,
             };
         }else if(ast.left.type === "MemberExpression"){
             left.estree.callee.name = ctx.useSystemIdentifier("set", ast.loc);
             left.estree["arguments"].push(right.estree);
             return {
                 estree: left.estree,
+                TYPE: left.TYPE,
             };
         }
         throw new Error("Only Identifier or MemberExpression can be assigned");
     },
     "MemberExpression": function(ast, comp, ctx){
-        var path;
-        if(ast.method === "dot"){
-            if(ast.path && ast.path.type === "Identifier"){
-                path = e("string", ast.path.value, ast.path.loc);
+
+        var obj = comp(ast.object);
+
+        if(ast.method === "dot" && ast.path && ast.path.type === "Identifier"){
+
+            var key = ast.path.value;
+
+            if(obj.TYPE.tag !== "Struct"){
+                //TODO better error
+                throw new TypeError(". notation only works on Struct");
             }
+            if( ! _.has(obj.TYPE.by_key, key)){
+                //TODO better error
+                throw new TypeError("Key does not exist: " + key);
+            }
+
+            return {
+                estree: e(".", obj.estree, e("id", key, ast.path.loc), ast.loc),
+                TYPE: obj.TYPE.by_key[key],
+            };
         }else if(ast.method === "index"){
-            path = comp(ast.path).estree;
+            var path = comp(ast.path);
+            if(obj.TYPE.tag === "Array"){
+                if(path.TYPE.tag !== "Number"){//TODO Int
+                    //TODO better error
+                    throw new TypeError("Array subscript notation only works with Ints");
+                }
+                return {
+                    estree: e("get", obj.estree, path.estree, ast.loc),
+                    TYPE: {
+                        tag: "Maybe",
+                        params: [obj.TYPE.type],
+                        loc: ast.loc,
+                    },
+                };
+            }else{
+                //TODO better error
+                throw new TypeError("subscript notation only works on Arrays");
+            }
         }else{
             throw new Error("Unsupported MemberExpression method: " + ast.method);
         }
-        return {
-            estree: e("call", ctx.useSystemIdentifier("get", ast.loc, true), [
-                comp(ast.object).estree,
-                path
-            ], ast.loc),
-        };
     },
     "ConditionalExpression": function(ast, comp, ctx){
         var test = comp(ast.test);
@@ -168,7 +239,7 @@ var comp_ast_node = {
         assertT(alternate.TYPE, consequent.TYPE, ast.alternate.loc);
 
         //remove specifics b/c it may be either branch
-        var TYPE = _.omit(_.omit(consequent.TYPE, "value"), "loc");
+        var TYPE = omitTypeInstanceSpecifics(consequent.TYPE);
 
         return {
             estree: e("?",
