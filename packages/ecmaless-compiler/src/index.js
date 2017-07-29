@@ -397,7 +397,77 @@ var comp_ast_node = {
                 TYPE: {tag: ast.value, loc: ast.loc},
             };
         }
+        if(ctx.has(ast.value)){
+            return ctx.get(ast.value);
+        }
+        //TODO better error
         throw new Error("Type not supported: " + ast.value);
+    },
+    "TypeAlias": function(ast, comp, ctx){
+        var TYPE = comp(ast.value).TYPE;
+        ctx.defType(ast.id.value, TYPE);
+        return {
+            TYPE: TYPE,
+        };
+    },
+    "Enum": function(ast, comp, ctx){
+        var TYPE = {
+            tag: "Enum",
+            variants: {},
+            loc: ast.loc,
+        };
+        _.each(ast.variants, function(variant){
+            var tag = variant.tag.value;
+            if(_.has(TYPE.variants, tag)){
+                //TODO better error
+                throw new Error("No duplicate variants: " + tag);
+            }
+            TYPE.variants[tag] = _.map(variant.params, function(param){
+                return comp(param).TYPE;
+            });
+        });
+        ctx.defType(ast.id.value, TYPE);
+        return {
+            TYPE: TYPE,
+        };
+    },
+    "EnumValue": function(ast, comp, ctx){
+        if(!ast.enum || !ctx.has(ast.enum.value)){
+            //TODO better error
+            throw new Error("Enum not defined: " + ast.enum.value);
+        }
+
+        var enumT;
+        if(ast.enum){
+            enumT = ctx.get(ast.enum.value).TYPE;
+            if(enumT.tag !== "Enum"){
+                //TODO better error
+                throw new Error("Not an enum: " + ast.enum.value);
+            }
+        }else{
+            //TODO infer enum type
+            throw new Error("Sorry, cannot infer enum type");
+        }
+        if(!_.has(enumT.variants, ast.tag.value)){
+            //TODO better error
+            throw new Error("Not an enum variant: " + ast.enum.value + "." + ast.tag.value);
+        }
+        var paramsT = enumT.variants[ast.tag.value];
+        if(_.size(paramsT) !== _.size(ast.params)){
+            //TODO better error
+            throw new Error("Expected " + _.size(paramsT) + " params not " + _.size(ast.params) + " for " + ast.enum.value + "." + ast.tag.value);
+        }
+        var params = _.map(ast.params, function(p_ast, i){
+            var param = comp(p_ast);
+            assertT(param.TYPE, paramsT[i], p_ast.loc);
+            return param.estree;
+        });
+        return {
+            estree: e("obj", {
+                tag: e("string", ast.tag.value, ast.tag.loc),
+                params: e("array", params, ast.loc),
+            }, ast.loc),
+        };
     },
 };
 
@@ -418,12 +488,21 @@ module.exports = function(ast){
                 TYPE: TYPE,
             });
         },
+        defType: function(id, TYPE){
+            symt_stack[0].set(id, {
+                id: id,
+                TYPE: TYPE,
+            });
+        },
         defIdentifier: function(id, TYPE){
             symt_stack[0].set(id, {
                 id: id,
                 TYPE: TYPE,
                 defined: true,
             });
+        },
+        has: function(id){
+            return symt_stack[0].has(id);
         },
         get: function(id){
             return symt_stack[0].get(id);

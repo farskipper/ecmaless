@@ -146,7 +146,27 @@ test("compile", function(t){
     src += "foo.a + 2";
     tc(src, "var foo={'a':1};foo.a+2;");
 
+    src = "";
+    src += "alias Foo = Number\n";
+    src += "ann foo = Foo\n";
+    src += "def foo = 1\n";
+    tc(src, "var foo=1;");
 
+    src = "";
+    src += "enum Foo:\n";
+    src += "    Bar(String, Number)\n";
+    src += "    Baz()\n";
+    src += "\n";
+    tc(src + "def foo = Foo.Bar(\"one\", 2)", "var foo={'tag':'Bar','params':['one',2]};");
+    terr(src + "def foo = Foo.Bar(1, 2)", "Number", "String", {line: 5, column: 18});
+    try{
+        tc(src + "def foo = Foo.Baz(1)", "");
+        t.fail("should throw");
+    }catch(e){
+        t.equals(e + "", "Error: Expected 0 params not 1 for Foo.Baz");//TODO better error
+    }
+
+    /*
     src = "";
     src += "def foo = [1, 2]\n";
     src += "foo[0] + 3";
