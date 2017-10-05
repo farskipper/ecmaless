@@ -1,6 +1,6 @@
 # ecmaless
 
-[![build status](https://secure.travis-ci.org/farskipper/ecmaless.png)](https://travis-ci.org/farskipper/ecmaless)
+[![Build Status](https://travis-ci.org/farskipper/ecmaless.svg)](https://travis-ci.org/farskipper/ecmaless)
 
 A small compile to JS language.
 

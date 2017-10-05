@@ -1,47 +1,17 @@
 {
   "name": "ecmaless",
-  "version": "0.3.0",
-  "description": "A small compile to JS language.",
-  "main": "index.js",
-  "bin": {
-    "ecmaless": "bin/ecmaless"
-  },
-  "scripts": {
-    "start": "onchange '**/*.js' -i -- npm test -s",
-    "test": "node tests.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/farskipper/ecmaless.git"
-  },
-  "keywords": [
-    "language",
-    "lisp",
-    "scheme",
-    "racket",
-    "clojure",
-    "freedom",
-    "minimalism"
-  ],
-  "author": "farskipper",
+  "private": true,
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/farskipper/ecmaless/issues"
-  },
-  "homepage": "https://github.com/farskipper/ecmaless#readme",
-  "dependencies": {
-    "btoa": "^1.1.2",
-    "ecmaless-compiler": "^0.4.0",
-    "ecmaless-parser": "^0.6.0",
-    "ecmaless-stdlib": "^0.3.0",
-    "escodegen": "^1.8.0",
-    "esprima": "^2.7.3",
-    "estree-builder": "^1.5.0",
-    "lodash": "^4.13.1"
+  "scripts": {
+    "out": "lerna exec --bail=false -- npm out",
+    "up": "lerna exec -- npm up",
+    "clean": "lerna clean",
+    "bootstrap": "lerna bootstrap --hoist",
+    "setup": "npm i && npm run bootstrap",
+    "publish": "lerna publish",
+    "test": "lerna run test"
   },
   "devDependencies": {
-    "contra": "^1.9.4",
-    "onchange": "^2.5.0",
-    "tape": "^4.6.0"
+    "lerna": "^2.3.1"
   }
 }
