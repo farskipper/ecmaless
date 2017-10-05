@@ -37,9 +37,6 @@ mk.arr = function(value){
 mk.struct = function(value){
     return {type: "Struct", value: value};
 };
-mk.ddd = function(value){
-    return {type: "DotDotDot", value: value};
-};
 mk.mem = function(method, object, path){
     return {type: "MemberExpression", object: object, path: path, method: method};
 };
@@ -555,41 +552,6 @@ test("TypeExpression", function(t){
         type: "Type",
         value: "String",
         params: [],
-    });
-
-    tst("[]", {
-        type: "ArrayType",
-        value: [],
-    });
-
-    tst("[String]", {
-        type: "ArrayType",
-        value: [
-            {type: "Type", value: "String", params: []},
-        ],
-    });
-
-    tst("[String, Number]", {
-        type: "ArrayType",
-        value: [
-            {type: "Type", value: "String", params: []},
-            {type: "Type", value: "Number", params: []},
-        ],
-    });
-
-    tst("[String ...]", {
-        type: "ArrayType",
-        value: [
-            mk.ddd({type: "Type", value: "String", params: []}),
-        ],
-    });
-
-    tst("[String ..., Number]", {
-        type: "ArrayType",
-        value: [
-            mk.ddd({type: "Type", value: "String", params: []}),
-            {type: "Type", value: "Number", params: []},
-        ],
     });
 
     tst("Fn (String, Number) String", {

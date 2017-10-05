@@ -2,8 +2,6 @@ var raw_toks = {
     ":": true,
     ",": true,
     ".": true,
-    "..": true,//not actually used, this is just a hack
-    "...": true,
     "?": true,
     "=": true,
     "(": true,

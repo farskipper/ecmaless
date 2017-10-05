@@ -161,11 +161,6 @@ test("tokenizer", function(t){
         "RAW    |=",
     ]);
 
-    testTokens("a...", [
-        "SYMBOL |a",
-        "RAW    |...",
-    ]);
-
 
     var src = "";
     src += "deps:\n";

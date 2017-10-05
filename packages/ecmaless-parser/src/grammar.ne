@@ -76,7 +76,6 @@ var tok_COLON = tok("RAW", ":");
 var tok_COMMA = tok("RAW", ",");
 var tok_DOT = tok("RAW", ".");
 var tok_QUESTION = tok("RAW", "?");
-var tok_DOTDOTDOT = tok("RAW", "...");
 var tok_EQ = tok("RAW", "=");
 var tok_OPEN_PN = tok("RAW", "(");
 var tok_CLOSE_PN = tok("RAW", ")");
@@ -459,7 +458,6 @@ EnumVariant -> Type %tok_OPEN_PN TypeExpression_list %tok_CLOSE_PN
 TypeExpression ->
       Type {% id %}
     | TypeVariable {% id %}
-    | ArrayType {% id %}
     | StructType {% id %}
     | FunctionType {% id %}
 
@@ -493,34 +491,6 @@ TypeVariable -> Identifier
         loc: mkLoc(d),
         type: "TypeVariable",
         value: d[0].value,
-    };
-} %}
-
-
-ArrayType -> %tok_OPEN_SQ ArrayType_body:? %tok_CLOSE_SQ
-{% function(d){
-    return {
-        loc: mkLoc(d),
-        type: "ArrayType",
-        value: d[1] || [],
-    };
-} %}
-
-
-ArrayType_body ->
-      ArrayType_elm {% idArr %}
-    | ArrayType_body COMMA ArrayType_elm {% concatArr(2) %}
-
-
-ArrayType_elm -> TypeExpression %tok_DOTDOTDOT:?
-{% function(d){
-    if(!d[1]){
-        return d[0];
-    }
-    return {
-        loc: mkLoc(d),
-        type: "DotDotDot",
-        value: d[0],
     };
 } %}
 

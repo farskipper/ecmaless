@@ -80,7 +80,6 @@ var tok_COLON = tok("RAW", ":");
 var tok_COMMA = tok("RAW", ",");
 var tok_DOT = tok("RAW", ".");
 var tok_QUESTION = tok("RAW", "?");
-var tok_DOTDOTDOT = tok("RAW", "...");
 var tok_EQ = tok("RAW", "=");
 var tok_OPEN_PN = tok("RAW", "(");
 var tok_CLOSE_PN = tok("RAW", ")");
@@ -406,7 +405,6 @@ var grammar = {
         } },
     {"name": "TypeExpression", "symbols": ["Type"], "postprocess": id},
     {"name": "TypeExpression", "symbols": ["TypeVariable"], "postprocess": id},
-    {"name": "TypeExpression", "symbols": ["ArrayType"], "postprocess": id},
     {"name": "TypeExpression", "symbols": ["StructType"], "postprocess": id},
     {"name": "TypeExpression", "symbols": ["FunctionType"], "postprocess": id},
     {"name": "Type$ebnf$1", "symbols": ["TypeParams"], "postprocess": id},
@@ -429,29 +427,6 @@ var grammar = {
                 loc: mkLoc(d),
                 type: "TypeVariable",
                 value: d[0].value,
-            };
-        } },
-    {"name": "ArrayType$ebnf$1", "symbols": ["ArrayType_body"], "postprocess": id},
-    {"name": "ArrayType$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "ArrayType", "symbols": [tok_OPEN_SQ, "ArrayType$ebnf$1", tok_CLOSE_SQ], "postprocess":  function(d){
-            return {
-                loc: mkLoc(d),
-                type: "ArrayType",
-                value: d[1] || [],
-            };
-        } },
-    {"name": "ArrayType_body", "symbols": ["ArrayType_elm"], "postprocess": idArr},
-    {"name": "ArrayType_body", "symbols": ["ArrayType_body", "COMMA", "ArrayType_elm"], "postprocess": concatArr(2)},
-    {"name": "ArrayType_elm$ebnf$1", "symbols": [tok_DOTDOTDOT], "postprocess": id},
-    {"name": "ArrayType_elm$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "ArrayType_elm", "symbols": ["TypeExpression", "ArrayType_elm$ebnf$1"], "postprocess":  function(d){
-            if(!d[1]){
-                return d[0];
-            }
-            return {
-                loc: mkLoc(d),
-                type: "DotDotDot",
-                value: d[0],
             };
         } },
     {"name": "StructType", "symbols": [tok_OPEN_CU, "KeyValPairsType", tok_CLOSE_CU], "postprocess":  function(d){
