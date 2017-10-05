@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/farskipper/ecmaless-stdlib.git"
+    "url": "git+https://github.com/farskipper/ecmaless.git"
   },
   "keywords": [
     "ecmaless",
@@ -22,12 +22,12 @@
   "author": "farskipper",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/farskipper/ecmaless-stdlib/issues"
+    "url": "https://github.com/farskipper/ecmaless/issues"
   },
-  "homepage": "https://github.com/farskipper/ecmaless-stdlib#readme",
+  "homepage": "https://github.com/farskipper/ecmaless#readme",
   "devDependencies": {
     "ecmaless": "^0.2.0",
-    "onchange": "^3.0.0",
-    "tape": "^4.6.0"
+    "onchange": "^3.2.1",
+    "tape": "^4.8.0"
   }
 }

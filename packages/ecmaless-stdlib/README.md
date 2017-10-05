@@ -1,6 +1,6 @@
 # ecmaless-stdlib
 
-[![build status](https://secure.travis-ci.org/farskipper/ecmaless-stdlib.png)](https://travis-ci.org/farskipper/ecmaless-stdlib)
+[![Build Status](https://travis-ci.org/farskipper/ecmaless.svg?branch=master)](https://travis-ci.org/farskipper/ecmaless)
 
 Standard library for ecmaless
 

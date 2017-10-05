@@ -12,14 +12,14 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/farskipper/ecmaless-compiler.git"
+    "url": "git+https://github.com/farskipper/ecmaless.git"
   },
   "bugs": {
-    "url": "https://github.com/farskipper/ecmaless-compiler/issues"
+    "url": "https://github.com/farskipper/ecmaless/issues"
   },
-  "homepage": "https://github.com/farskipper/ecmaless-compiler#readme",
+  "homepage": "https://github.com/farskipper/ecmaless#readme",
   "dependencies": {
-    "estree-builder": "^1.9.0",
+    "estree-builder": "^1.10.0",
     "lodash": "^4.17.4",
     "symbol-table": "^1.1.0",
     "to-js-identifier": "^1.0.0"
@@ -27,9 +27,9 @@
   "devDependencies": {
     "ecmaless-parser": "^0.7.0",
     "escodegen": "^1.8.0",
-    "eslint": "^4.2.0",
-    "onchange": "^3.0.0",
-    "tape": "^4.7.0"
+    "eslint": "^4.8.0",
+    "onchange": "^3.2.1",
+    "tape": "^4.8.0"
   },
   "scripts": {
     "start": "onchange src/ -i -- npm test",

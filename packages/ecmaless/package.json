@@ -36,12 +36,12 @@
     "ecmaless-stdlib": "^0.3.0",
     "escodegen": "^1.8.0",
     "esprima": "^2.7.3",
-    "estree-builder": "^1.5.0",
-    "lodash": "^4.13.1"
+    "estree-builder": "^1.10.0",
+    "lodash": "^4.17.4"
   },
   "devDependencies": {
     "contra": "^1.9.4",
-    "onchange": "^2.5.0",
-    "tape": "^4.6.0"
+    "onchange": "^3.2.1",
+    "tape": "^4.8.0"
   }
 }

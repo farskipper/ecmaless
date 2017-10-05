@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/farskipper/ecmaless-parser.git"
+    "url": "git+https://github.com/farskipper/ecmaless.git"
   },
   "keywords": [
     "ecmaless",
@@ -24,16 +24,16 @@
   "author": "farskipper",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/farskipper/ecmaless-parser/issues"
+    "url": "https://github.com/farskipper/ecmaless/issues"
   },
-  "homepage": "https://github.com/farskipper/ecmaless-parser#readme",
+  "homepage": "https://github.com/farskipper/ecmaless#readme",
   "devDependencies": {
-    "eslint": "^4.1.1",
+    "eslint": "^4.8.0",
     "faucet": "0.0.1",
     "json-stringify-pretty-compact": "^1.0.4",
     "lodash": "^4.17.4",
     "onchange": "^3.2.1",
-    "tape": "^4.7.0"
+    "tape": "^4.8.0"
   },
   "dependencies": {
     "estree-loc": "^2.0.0",
