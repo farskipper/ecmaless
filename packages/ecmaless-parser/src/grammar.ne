@@ -506,8 +506,7 @@ StructType -> %tok_OPEN_CU KeyValPairsType %tok_CLOSE_CU
 
 
 KeyValPairsType ->
-      null {% noopArr %}
-    | KeyValPairsType_body {% id %}
+      KeyValPairsType_body {% id %}
     | NL INDENT KeyValPairsType_body_nl DEDENT NL {% idN(2) %}
 
 
@@ -521,18 +520,9 @@ KeyValPairsType_body_nl ->
     | KeyValPairsType_body_nl KeyValPairType COMMA NL {% concatArr(1) %}
 
 
-KeyValPairType -> (String|Number|Symbol|AnyKey) %tok_COLON TypeExpression
+KeyValPairType -> Symbol %tok_COLON TypeExpression
 {% function(d){
-    return [d[0][0], d[2]];
-} %}
-
-
-AnyKey -> %tok_TIMES
-{% function(d){
-    return {
-        loc: mkLoc(d),
-        type: "AnyKey",
-    };
+    return [d[0], d[2]];
 } %}
 
 

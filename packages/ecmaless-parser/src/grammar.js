@@ -436,25 +436,14 @@ var grammar = {
                 pairs: d[1],
             };
         } },
-    {"name": "KeyValPairsType", "symbols": [], "postprocess": noopArr},
     {"name": "KeyValPairsType", "symbols": ["KeyValPairsType_body"], "postprocess": id},
     {"name": "KeyValPairsType", "symbols": ["NL", "INDENT", "KeyValPairsType_body_nl", "DEDENT", "NL"], "postprocess": idN(2)},
     {"name": "KeyValPairsType_body", "symbols": ["KeyValPairType"], "postprocess": idArr},
     {"name": "KeyValPairsType_body", "symbols": ["KeyValPairsType_body", "COMMA", "KeyValPairType"], "postprocess": concatArr(2)},
     {"name": "KeyValPairsType_body_nl", "symbols": ["KeyValPairType", "COMMA", "NL"], "postprocess": idArr},
     {"name": "KeyValPairsType_body_nl", "symbols": ["KeyValPairsType_body_nl", "KeyValPairType", "COMMA", "NL"], "postprocess": concatArr(1)},
-    {"name": "KeyValPairType$subexpression$1", "symbols": ["String"]},
-    {"name": "KeyValPairType$subexpression$1", "symbols": ["Number"]},
-    {"name": "KeyValPairType$subexpression$1", "symbols": ["Symbol"]},
-    {"name": "KeyValPairType$subexpression$1", "symbols": ["AnyKey"]},
-    {"name": "KeyValPairType", "symbols": ["KeyValPairType$subexpression$1", tok_COLON, "TypeExpression"], "postprocess":  function(d){
-            return [d[0][0], d[2]];
-        } },
-    {"name": "AnyKey", "symbols": [tok_TIMES], "postprocess":  function(d){
-            return {
-                loc: mkLoc(d),
-                type: "AnyKey",
-            };
+    {"name": "KeyValPairType", "symbols": ["Symbol", tok_COLON, "TypeExpression"], "postprocess":  function(d){
+            return [d[0], d[2]];
         } },
     {"name": "FunctionType", "symbols": [tok_Fn, tok_OPEN_PN, "TypeExpression_list", tok_CLOSE_PN, "TypeExpression"], "postprocess":  function(d){
             return {

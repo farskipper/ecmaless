@@ -547,6 +547,14 @@ test("TypeExpression", function(t){
             def: expected,
         });
     };
+    var tstFail = function(src){
+        try{
+            parser("ann foo = " + src);
+            t.fail(src + " should not parse");
+        }catch(e){
+            t.ok(e);
+        }
+    };
 
     tst("String", {
         type: "Type",
@@ -570,22 +578,42 @@ test("TypeExpression", function(t){
         ]
     });
 
-    tst("{\n    \"one\": String,\n    two: Number,\n    3: Bool,\n}", {
-        type: "StructType",
-        pairs: [
-            [mk.str("one"), mk.Type("String")],
-            [mk.sym("two"), mk.Type("Number")],
-            [mk.num(3), mk.Type("Bool")],
-        ]
-    });
-
-    tst("{one: String, *: Other}", {
+    tst("{one: String, two: Number}", {
         type: "StructType",
         pairs: [
             [mk.sym("one"), mk.Type("String")],
-            [{type: "AnyKey"}, mk.Type("Other")],
+            [mk.sym("two"), mk.Type("Number")],
         ]
     });
+
+    tst("{\n    one: String,\n}", {
+        type: "StructType",
+        pairs: [
+            [mk.sym("one"), mk.Type("String")],
+        ]
+    });
+
+    tst("{\n    one: String,\n    two: Number,\n}", {
+        type: "StructType",
+        pairs: [
+            [mk.sym("one"), mk.Type("String")],
+            [mk.sym("two"), mk.Type("Number")],
+        ]
+    });
+
+    tst("{def: String, fn: Number}", {
+        type: "StructType",
+        pairs: [
+            [mk.sym("def"), mk.Type("String")],
+            [mk.sym("fn"), mk.Type("Number")],
+        ]
+    });
+
+    tstFail("{}");
+    tstFail("{1: String}");
+    tstFail("{\"1\": String}");
+    tstFail("{\n    one: String,\n    two: Number\n}");
+    tstFail("{one: String,}");
 
     tst("Foo<String>", {
         type: "Type",
