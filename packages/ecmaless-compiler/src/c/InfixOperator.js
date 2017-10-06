@@ -8,6 +8,9 @@ module.exports = function(ast, comp, ctx){
     var right = comp(ast.right);
 
     var assertLR = function(typeName){
+        if(typeName === "Comparable"){
+            typeName = left.TYPE.tag;
+        }
         assertT(left.TYPE, {tag: typeName}, ast.left.loc);
         assertT(right.TYPE, {tag: typeName}, ast.right.loc);
     };

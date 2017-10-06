@@ -24,4 +24,16 @@ module.exports = function assertT(actual, expected, loc){
             assertT(param, exp, param.loc || exp.loc || loc);
         });
     }
+
+    if(aTag === "Struct"){
+        if(!_.isEqual(_.keys(actual.by_key), _.keys(expected.by_key))){
+            //TODO better error
+            throw new TypeError("TODO better error Bad Struct keys");
+        }
+        _.each(actual.by_key, function(v, key){
+            var act = actual.by_key[key];
+            var exp = expected.by_key[key];
+            assertT(act, exp, act.loc || exp.loc || loc);
+        });
+    }
 };

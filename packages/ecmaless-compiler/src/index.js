@@ -469,6 +469,24 @@ var comp_ast_node = {
             }, ast.loc),
         };
     },
+    "StructType": function(ast, comp, ctx){
+        var by_key = {};
+        _.each(ast.pairs, function(p){
+            var key = p[0];
+            var val = p[1];
+            if(key.type !== "Symbol" || !_.isString(key.value)){
+                throw new Error("StructType keys must be Symbols");
+            }
+            by_key[key.value] = comp(val).TYPE;
+        });
+        return {
+            TYPE: {
+                tag: "Struct",
+                by_key: by_key,
+                loc: ast.loc,
+            },
+        };
+    },
 };
 
 module.exports = function(ast){

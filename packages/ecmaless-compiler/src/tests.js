@@ -100,12 +100,15 @@ test("compile", function(t){
 
     tc("1 - 2 + 3 / 4 * 5 % 3", "1-2+3/4*5%3;");
 
-    //TODO tc("not (1 == 1)", "!(1==1)");
-    //TODO tc("a == b != c", "a==b!=c;");
+    tc("1 == 3", "1==3;");
+    tc("not (1 == 1)", "!(1==1);");
+    tc("\"a\" == \"b\"", "'a'=='b';");
+    terr("\"a\" == 2", "Number", "String", {line: 1, column: 7});
 
     tc("if true:\n    1", "if(true){1;}");
     terr("if 1:\n    1", "Number", "Boolean", {line: 1, column: 3});
-    //TODO tc("if a == b:\n    c", "if(a==b){c;}");
+    tc("if 1 == 3:\n    4", "if(1==3){4;}");
+
     tc(
         "if true:\n    1\nelse if true:\n    2\nelse:\n    3",
         "if(true){1;}else if(true){2;}else{3;}"
@@ -164,6 +167,18 @@ test("compile", function(t){
         t.fail("should throw");
     }catch(e){
         t.equals(e + "", "Error: Expected 0 params not 1 for Foo.Baz");//TODO better error
+    }
+
+    src = "";
+    src += "alias Foo = {a: Number, b: String}\n";
+    src += "ann foo = Foo\n";
+    tc(src + "def foo = {a: 1, b: \"wat\"}", "var foo={'a':1,'b':'wat'};");
+    terr(src + "def foo = {a: 1, b: 2}", "Number", "String", {line: 3, column: 20});
+    try{
+        tc(src + "def foo = {a: 1}", "");
+        t.fail("should throw");
+    }catch(e){
+        t.equals(e + "", "TypeError: TODO better error Bad Struct keys");//TODO better error
     }
 
     /*
