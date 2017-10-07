@@ -8,9 +8,9 @@ var compToStr = function(src){
     var ast = parser(src);
     var est = compiler(ast).estree;
     est = {
-        "loc": {start: _.head(est).loc.start, end: _.last(est).loc.end},
+        "loc": est.loc,
         "type": "Program",
-        "body": est
+        "body": est.body.body,
     };
     var js = escodegen.generate(est, {format: {compact: true}});
     return js;

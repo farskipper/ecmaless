@@ -570,8 +570,10 @@ module.exports = function(ast){
         TYPE = exported.TYPE;
     }
 
+    var main_loc = {start: _.head(estree).loc.start, end: _.last(estree).loc.end};
+
     return {
-        estree: estree,
+        estree: e("function", [], estree, main_loc),
         TYPE: TYPE,
     };
 };
