@@ -33,7 +33,7 @@
   "dependencies": {
     "btoa": "^1.1.2",
     "ecmaless-compiler": "^0.4.0",
-    "ecmaless-parser": "^0.6.0",
+    "ecmaless-parser": "^0.7.0",
     "ecmaless-stdlib": "^0.3.0",
     "escodegen": "^1.8.0",
     "esprima": "^2.7.3",

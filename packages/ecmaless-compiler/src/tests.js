@@ -181,6 +181,16 @@ test("compile", function(t){
         t.equals(e + "", "TypeError: TODO better error Bad Struct keys");//TODO better error
     }
 
+
+    tc("def a = 1\nexport:\n    a", "var a=1;return{'a':a};");
+    try{
+        tc("export:\n    a", "");
+        t.fail("should throw");
+    }catch(e){
+        t.equals(e + "", "Error: Not defined: a");
+    }
+
+
     /*
     src = "";
     src += "def foo = [1, 2]\n";

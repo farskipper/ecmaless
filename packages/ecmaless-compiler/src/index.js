@@ -2,6 +2,7 @@ var _ = require("lodash");
 var e = require("estree-builder");
 var toId = require("to-js-identifier");
 var assertT = require("./assertT");
+var ExportBlock = require("./c/ExportBlock");
 var SymbolTable = require("symbol-table");
 
 var sysIDtoJsID = function(id){
@@ -40,9 +41,6 @@ var comp_ast_node = {
     },
     "Identifier": function(ast, comp, ctx){
         var id = ctx.useIdentifier(ast.value, ast.loc);
-        if(!id){
-            throw new Error("Not defined: " + ast.value);
-        }
         return {
             estree: e("id", toId(ast.value), ast.loc),
             TYPE: id.TYPE,
@@ -487,11 +485,13 @@ var comp_ast_node = {
             },
         };
     },
+    "ExportBlock": function(){
+        throw new Error("`export` must be the last statement in the file");
+    },
 };
 
 module.exports = function(ast){
 
-    var undefined_symbols = {};
     var symt_stack = [SymbolTable()];
     var ctx = {
         pushScope: function(){
@@ -527,16 +527,9 @@ module.exports = function(ast){
         },
         useIdentifier: function(id, loc, js_id){
             if(!symt_stack[0].has(id)){
-                if(!_.has(undefined_symbols, id)){
-                    undefined_symbols[id] = {
-                        loc: loc,
-                        id: id,
-                        js_id: js_id || toId(id),
-                    };
-                }
-            }else{
-                return symt_stack[0].get(id);
+                throw new Error("Not defined: " + id);
             }
+            return symt_stack[0].get(id);
         },
         useSystemIdentifier: function(id, loc, ret_estree){
             var js_id = sysIDtoJsID(id);
@@ -544,7 +537,7 @@ module.exports = function(ast){
             return ret_estree
                 ? e("id", js_id, loc)
                 : js_id;
-        }
+        },
     };
 
     var compile = function compile(ast, from_caller){
@@ -556,13 +549,29 @@ module.exports = function(ast){
         return comp_ast_node[ast.type](ast, compile, ctx, from_caller);
     };
 
+
+    var TYPE;
+
+    var last_ast = _.last(ast);
+    if(last_ast && last_ast.type === "ExportBlock"){
+        ast = _.dropRight(ast);
+    }
+
+    var estree = _.compact(_.map(ast, function(ast){
+        var c = compile(ast);
+        if(c){
+            return c.estree;
+        }
+    }));
+
+    if(last_ast && last_ast.type === "ExportBlock"){
+        var exported = ExportBlock(last_ast, compile, ctx);
+        estree.push(exported.estree);
+        TYPE = exported.TYPE;
+    }
+
     return {
-        estree: _.compact(_.map(ast, function(ast){
-            var c = compile(ast);
-            if(c){
-                return c.estree;
-            }
-        })),
-        undefined_symbols: undefined_symbols
+        estree: estree,
+        TYPE: TYPE,
     };
 };
