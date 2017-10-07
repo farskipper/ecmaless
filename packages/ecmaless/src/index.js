@@ -4,7 +4,6 @@ var e = require("estree-builder");
 var parser = require("ecmaless-parser");
 var compiler = require("ecmaless-compiler");
 var path_fns = require("path");
-var escodegen = require("escodegen");
 var DependencyResolver = require("dependency-resolver");
 
 var normalizePath = function(base, path){
@@ -16,6 +15,7 @@ var normalizePath = function(base, path){
 
 module.exports = function(conf, callback){
     var base = conf.base || process.cwd();
+    var loadPath = conf.loadPath;
     var start_path = normalizePath(base, conf.start_path);
 
     var module_ast = {};
@@ -27,7 +27,7 @@ module.exports = function(conf, callback){
             return;
         }
 
-        conf.loadPath(path, function(err, src){
+        loadPath(path, function(err, src){
             if(err) return callback(err);
 
             var ast = parser(src, {filepath: path});
@@ -90,14 +90,9 @@ module.exports = function(conf, callback){
 
         body.push(e(";", e("=", e("id", "module.exports"), e("id", main_mod))));
 
-
-        var est = {
+        callback(null, {
             "type": "Program",
             "body": body,
-        };
-
-        var esout = escodegen.generate(est, conf.escodegen);
-
-        callback(null, esout);
+        });
     });
 };

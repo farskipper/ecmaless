@@ -3,6 +3,7 @@ var λ = require("contra");
 var fs = require("fs");
 var test = require("tape");
 var main = require("./");
+var escodegen = require("escodegen");
 
 var StructLoader = function(files){
     return function(path, callback){
@@ -37,8 +38,10 @@ test("it", function(t){
             base: "/test/",
             start_path: "./a",
             loadPath: StructLoader(info.files)
-        }, function(err, js){
+        }, function(err, est){
             if(err) return next(err);
+
+            var js = escodegen.generate(est);
 
             t.deepEquals(eval(js), info.out);
 
