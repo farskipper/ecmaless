@@ -25,6 +25,13 @@ test("it", function(t){
             },
             out: {a: 1},
         },
+        {
+            files: {
+                "/test/a": "import:\n    \"./b\":\n        b\ndef a = b + 1\n\nexport:\n    a",
+                "/test/b": "def b = 2\n\nexport:\n    b",
+            },
+            out: {a: 3},
+        },
     ], function(info, next){
         main({
             base: "/test/",
