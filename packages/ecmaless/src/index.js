@@ -58,9 +58,10 @@ module.exports = function(conf, callback){
 
         var paths_to_comp = resolver.sort();
 
+        var body = [];
         var modules = {};
 
-        _.each(paths_to_comp, function(path){
+        _.each(paths_to_comp, function(path, mod_index){
             var ast = module_ast[path];
 
             var c = compiler(ast, {
@@ -72,19 +73,27 @@ module.exports = function(conf, callback){
                 },
             });
 
+            c.mod_index = mod_index;
             modules[path] = c;
+
+            var args = [];
+            _.each(c.modules, function(path){
+                //TODO resolve relative to curr path
+                path = normalizePath(base, path);
+                var i = _.indexOf(paths_to_comp, path);
+                args.push(e("id", "$mod$" + i));
+            });
+            body.push(e("var", "$mod$" + mod_index, e("call", c.estree, args)));
         });
 
+        var main_mod = "$mod$" + _.indexOf(paths_to_comp, start_path);
 
-        //
-        //TODO wrap it up in module loader
-        //TODO wrap it up in module loader
-        //
+        body.push(e(";", e("=", e("id", "module.exports"), e("id", main_mod))));
+
+
         var est = {
             "type": "Program",
-            "body": _.map(modules, function(c){
-                return e("call", c.estree, [], c.estree.loc);
-            }),
+            "body": body,
         };
 
         var esout = escodegen.generate(est, conf.escodegen);
