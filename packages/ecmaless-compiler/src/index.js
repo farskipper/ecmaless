@@ -2,6 +2,7 @@ var _ = require("lodash");
 var e = require("estree-builder");
 var toId = require("to-js-identifier");
 var assertT = require("./assertT");
+var ImportBlock = require("./c/ImportBlock");
 var ExportBlock = require("./c/ExportBlock");
 var SymbolTable = require("symbol-table");
 
@@ -485,15 +486,20 @@ var comp_ast_node = {
             },
         };
     },
+    "ImportBlock": function(){
+        throw new Error("`import` must be the first statement");
+    },
     "ExportBlock": function(){
-        throw new Error("`export` must be the last statement in the file");
+        throw new Error("`export` must be the last statement");
     },
 };
 
-module.exports = function(ast){
+module.exports = function(ast, conf){
+    conf = conf || {};
 
     var symt_stack = [SymbolTable()];
     var ctx = {
+        requireModule: conf.requireModule,
         pushScope: function(){
             symt_stack.unshift(symt_stack[0].push());
         },
@@ -550,19 +556,30 @@ module.exports = function(ast){
     };
 
 
-    var TYPE;
+    var main_loc = {start: _.head(ast).loc.start, end: _.last(ast).loc.end};
+    var estree = [];
+    var TYPE;//the `export` type (the return value of the estree function)
+    var modules = {};
+
+    var first_ast = _.head(ast);
+    if(first_ast && first_ast.type === "ImportBlock"){
+        var imported = ImportBlock(first_ast, compile, ctx);
+        estree = estree.concat(imported.estree);
+        modules = imported.modules;
+        ast = _.tail(ast);
+    }
 
     var last_ast = _.last(ast);
     if(last_ast && last_ast.type === "ExportBlock"){
         ast = _.dropRight(ast);
     }
 
-    var estree = _.compact(_.map(ast, function(ast){
+    _.each(ast, function(ast){
         var c = compile(ast);
-        if(c){
-            return c.estree;
+        if(c && c.estree){
+            estree.push(c.estree);
         }
-    }));
+    });
 
     if(last_ast && last_ast.type === "ExportBlock"){
         var exported = ExportBlock(last_ast, compile, ctx);
@@ -570,10 +587,9 @@ module.exports = function(ast){
         TYPE = exported.TYPE;
     }
 
-    var main_loc = {start: _.head(estree).loc.start, end: _.last(estree).loc.end};
-
     return {
-        estree: e("function", [], estree, main_loc),
+        estree: e("function", _.keys(modules), estree, main_loc),
         TYPE: TYPE,
+        modules: modules,
     };
 };

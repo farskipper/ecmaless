@@ -196,53 +196,72 @@ test("compile", function(t){
     src += "def foo = [1, 2]\n";
     src += "foo[0] + 3";
     tc(src, "var foo=[1,2];foo[0]+3;");
-    /*
+
     tc("a[b]", "$$$ecmaless$$$get(a,b);");
     tc("a.b[c][1][\"e\"]", "$$$ecmaless$$$get($$$ecmaless$$$get($$$ecmaless$$$get($$$ecmaless$$$get(a,'b'),c),1),'e');");
 
     tc("a.b = 1", "$$$ecmaless$$$set(a,'b',1);");
     tc("a.b.c = 1", "$$$ecmaless$$$set($$$ecmaless$$$get(a,'b'),'c',1);");
-
-    //named functions
-    tc("def add = fn (a, b):\n    nil", "var add=function add(a,b){return void 0;};");
-
-    //boolean ops, preserve expected evaluation
-    tc("a or b", "a||b;");
-    tc("a and b", "a&&b;");
+    */
 
     t.end();
 });
 
-test("scope", function(t){
-    var ts = function(src, expected){
-        var ast = parser(src);
-        var syms = compiler(ast).undefined_symbols;
-        t.deepEquals(_.keys(syms), expected);
+test("import / export", function(t){
+    var requireModule = function(path){
+        if(path === "foo"){
+            return {
+                TYPE: {
+                    tag: "Struct",
+                    by_key: {
+                        foo: {tag: "Number"},
+                    },
+                },
+            };
+        }
     };
 
-    ts("1", []);
-    ts("a", ["a"]);
-    ts("def a = 1\na", []);
-    ts("fn(a):\n    a", []);
-    ts("fn(a,b,c):\n    a(b,c)", []);
+    var tc = function(src, expected){
+        var ast = parser(src);
+        var c = compiler(ast, {
+            requireModule: requireModule,
+        });
+        var js = escodegen.generate({
+            "loc": c.estree.loc,
+            "type": "Program",
+            "body": [c.estree],
+        }, {format: {compact: true}});
 
-    ts("if 1:\n    def a = 1\n    a\na", ["a"]);
+        t.equals(js, expected);
+    };
 
-    ts("a[1] = 2", ["$$$ecmaless$$$get", "a", "$$$ecmaless$$$set"]);
+    tc("def a = 1\nexport:\n    a", "function(){var a=1;return{'a':a};}");
 
-    ts("1 or 2", []);
-    ts("not a", ["a", "$$$ecmaless$$$not"]);
-    ts("a + b", ["a", "b"]);
-    ts("1 == 2", []);
+    try{
+        tc("export:\n    a", "");
+        t.fail("should throw");
+    }catch(e){
+        t.equals(e + "", "Error: Not defined: a");
+    }
 
-    t.deepEquals({
-        a: {
-            id: "a",
-            js_id: "a",
-            loc: {end: {column: 1, line: 1}, source: undefined, start: {column: 0, line: 1}}
-        }
-    }, compiler(parser("a\na\na")).undefined_symbols);
-    */
+    var src = "";
+    src += "import:\n";
+    src += "    \"foo\":\n";
+    src += "        foo\n";
+    src += "\n";
+    src += "def a = foo + 1\n";
+    src += "\n";
+    src += "export:\n";
+    src += "    a";
+    tc(src, "function($0){var foo=$0['foo'];var a=foo+1;return{'a':a};}");
+
+    src = "";
+    src += "import:\n";
+    src += "    \"foo\":\n";
+    src += "        foo as bar\n";
+    src += "\n";
+    src += "bar + 1\n";
+    tc(src, "function($0){var bar=$0['foo'];bar+1;}");
 
     t.end();
 });
