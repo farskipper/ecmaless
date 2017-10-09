@@ -531,7 +531,7 @@ module.exports = function(ast, conf){
         get: function(id){
             return symt_stack[0].get(id);
         },
-        useIdentifier: function(id, loc, js_id){
+        useIdentifier: function(id){
             if(!symt_stack[0].has(id)){
                 throw new Error("Not defined: " + id);
             }

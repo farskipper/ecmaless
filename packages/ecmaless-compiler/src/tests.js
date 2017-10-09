@@ -263,5 +263,26 @@ test("import / export", function(t){
     src += "bar + 1\n";
     tc(src, "function($0){var bar=$0['foo'];bar+1;}");
 
+    src = "";
+    src += "alias Foo = String\n";
+    src += "alias Bar = {foo: Foo}\n";
+    src += "export:\n";
+    src += "    Bar";
+    tc(src, "function(){return{'Bar':{'tag':'Struct','by_key':{'foo':{'tag':'String'}}}};}");
+
+    src = "";
+    src += "alias Foo = String\n";
+    src += "alias Bar = {foo: Foo}\n";
+    src += "alias Baz = {bar: Bar}\n";
+    src += "export:\n";
+    src += "    Baz";
+    tc(src, "function(){return{'Baz':{'tag':'Struct','by_key':{'bar':{'tag':'Struct','by_key':{'foo':{'tag':'String'}}}}}};}");
+
+    src = "";
+    src += "alias Foo = Fn(Number) Number\n";
+    src += "export:\n";
+    src += "    Foo";
+    tc(src, "function(){return{'Foo':{'tag':'Fn','params':[{'tag':'Number'}],'return':{'tag':'Number'}}};}");
+
     t.end();
 });
