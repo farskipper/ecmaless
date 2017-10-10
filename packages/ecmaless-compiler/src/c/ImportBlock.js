@@ -15,9 +15,7 @@ module.exports = function(ast, comp, ctx){
         var module = ctx.requireModule(path);
 
         _.each(m.names, function(n){
-            if(!n.name || n.name.type !== "Identifier"){
-                throw new Error("only identifiers can be imported");
-            }
+            var type = n.name.type;
             var key = n.name.value;
             var TYPE = _.get(module, ["TYPE", "by_key", key]);
             if( ! TYPE){
@@ -27,16 +25,22 @@ module.exports = function(ast, comp, ctx){
             if(n.as && n.as.type === "Identifier"){
                 id = n.as.value;
             }
-            ctx.defIdentifier(id, TYPE);
 
-            estree.push(e("var",
-                id,
-                e("get",
-                    e("id", module_id, n.loc),
-                    e("str", key, n.loc),
-                    n.loc),
-                n.loc));
+            if(type === "Identifier"){
+                ctx.defIdentifier(id, TYPE);
 
+                estree.push(e("var",
+                    id,
+                    e("get",
+                        e("id", module_id, n.loc),
+                        e("str", key, n.loc),
+                        n.loc),
+                    n.loc));
+            }else if(type === "Type"){
+                ctx.defType(id, TYPE);
+            }else{
+                throw new Error("only Identifier and Type can be imported");
+            }
         });
     });
     return {

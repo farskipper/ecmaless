@@ -45,6 +45,7 @@ module.exports = function(ast, comp, ctx){
                 ctx,
                 ctx.useIdentifier(name.value).TYPE
             );
+            TYPE.by_key[name.value] = type_json;
             est_pairs.push(e(
                 "object-property",
                 e("string", name.value, name.loc),

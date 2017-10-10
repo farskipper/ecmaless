@@ -218,6 +218,15 @@ test("import / export", function(t){
                     },
                 },
             };
+        }else if(path === "Str"){
+            return {
+                TYPE: {
+                    tag: "Struct",
+                    by_key: {
+                        Str: {tag: "String"},
+                    },
+                },
+            };
         }
     };
 
@@ -283,6 +292,16 @@ test("import / export", function(t){
     src += "export:\n";
     src += "    Foo";
     tc(src, "function(){return{'Foo':{'tag':'Fn','params':[{'tag':'Number'}],'return':{'tag':'Number'}}};}");
+
+
+    src = "";
+    src += "import:\n";
+    src += "    \"Str\":\n";
+    src += "        Str\n";
+    src += "export:\n";
+    src += "    Str";
+    tc(src, "function($0){return{'Str':{'tag':'String'}};}");
+
 
     t.end();
 });
