@@ -409,11 +409,13 @@ var comp_ast_node = {
             variants: {},
             loc: ast.loc,
         };
+        ctx.tvarScope.push();
         _.each(ast.id.params, function(param){
             if(param.type !== "TypeVariable"){
                 throw new Error("Enum params must be TypeVariable");
             }
             TYPE.params.push(param.value);
+            ctx.tvarScope.set(param.value, {TYPE: void 0});
         });
         _.each(ast.variants, function(variant){
             var tag = variant.tag.value;
@@ -423,15 +425,16 @@ var comp_ast_node = {
             }
             TYPE.variants[tag] = _.map(variant.params, function(param){
                 if(param.type === "TypeVariable"){
-                    if( ! _.includes(TYPE.params, param.value)){
+                    if( ! ctx.tvarScope.has(param.value)){
                         //TODO better error
-                        throw new Error("Undeclared TypeVariable not in scope: " + param.value);
+                        throw new Error("TypeVariable not defined: " + param.value);
                     }
                     return param.value;
                 }
                 return comp(param).TYPE;
             });
         });
+        ctx.tvarScope.pop();
         ctx.scope.set(ast.id.value, {TYPE: TYPE});
         return {
             TYPE: TYPE,
@@ -477,7 +480,7 @@ var comp_ast_node = {
             if(_.isString(pT)){
                 if( ! ctx.tvarScope.has(pT)){
                     //TODO better error
-                    throw new Error("Type variable not defined: " + pT);
+                    throw new Error("TypeVariable not defined: " + pT);
                 }
                 pT = ctx.tvarScope.get(pT).TYPE;
             }

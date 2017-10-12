@@ -10,7 +10,7 @@ var fmtErrorWithExcerpt = function(err, info){
     var msg = err + "";
 
     if(/Error: invalid syntax at/.test(msg)){
-        msg = "No possible parsings";
+        msg = "Invalid syntax";
     }
 
     msg = msg.replace(/^Error:/i, "");

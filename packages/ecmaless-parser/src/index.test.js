@@ -492,7 +492,7 @@ test("errors", function(t){
         parser("one two@three", {filepath: "some-file"});
         t.ok(false, "should fail");
     }catch(e){
-        t.equals(e.message, "No possible parsings\nsome-file:1:4\n \n"
+        t.equals(e.message, "Invalid syntax\nsome-file:1:4\n \n"
             + "one two@three\n"
             + "    ^"
         );
@@ -510,7 +510,7 @@ test("errors", function(t){
         parser("if 1:blah", {filepath: "some-file"});
         t.ok(false, "should fail");
     }catch(e){
-        t.equals(e.message, "No possible parsings\nsome-file:1:5\n \nif 1:blah\n     ^");
+        t.equals(e.message, "Invalid syntax\nsome-file:1:5\n \nif 1:blah\n     ^");
         t.deepEquals(e.where, {
             filepath: "some-file",
             line: 1,

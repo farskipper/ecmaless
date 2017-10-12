@@ -212,13 +212,21 @@ test("compile", function(t){
         tc("enum A:\n    B(c)", "");
         t.fail("should throw");
     }catch(e){
-        t.equals(e + "", "Error: Undeclared TypeVariable not in scope: c");
+        t.equals(e + "", "Error: TypeVariable not defined: c");
     }
     tc(
         "enum A<c>:\n    B(c)\ndef foo = A<String>.B(\"foo\")",
         "var foo={'tag':'B','params':['foo']};"
     );
     terr("enum A<c>:\n    B(c)\ndef foo = A<String>.B(1)", "Number", "String", {line: 3, column: 22});
+
+
+    /*
+    tc(
+        "ann a<t> = Fn(t) t\ndef a = fn(b):\n    return b\ndef c = a(\"foo\")\ndef d = a(1)",
+        "var a=function a(b){return b;};var c=a('foo');"
+    );
+    */
 
     t.end();
 });
