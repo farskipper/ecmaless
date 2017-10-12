@@ -204,6 +204,22 @@ test("compile", function(t){
     tc("a.b.c = 1", "$$$ecmaless$$$set($$$ecmaless$$$get(a,'b'),'c',1);");
     */
 
+    tc(
+        "enum A:\n    B(String)\ndef a = A.B(\"foo\")",
+        "var a={'tag':'B','params':['foo']};"
+    );
+    try{
+        tc("enum A:\n    B(c)", "");
+        t.fail("should throw");
+    }catch(e){
+        t.equals(e + "", "Error: Undeclared TypeVariable not in scope: c");
+    }
+    tc(
+        "enum A<c>:\n    B(c)\ndef foo = A<String>.B(\"foo\")",
+        "var foo={'tag':'B','params':['foo']};"
+    );
+    terr("enum A<c>:\n    B(c)\ndef foo = A<String>.B(1)", "Number", "String", {line: 3, column: 22});
+
     t.end();
 });
 

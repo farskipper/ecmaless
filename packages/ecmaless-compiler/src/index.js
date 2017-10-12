@@ -412,9 +412,16 @@ var comp_ast_node = {
     "Enum": function(ast, comp, ctx){
         var TYPE = {
             tag: "Enum",
+            params: [],
             variants: {},
             loc: ast.loc,
         };
+        _.each(ast.id.params, function(param){
+            if(param.type !== "TypeVariable"){
+                throw new Error("Enum params must be TypeVariable");
+            }
+            TYPE.params.push(param.value);
+        });
         _.each(ast.variants, function(variant){
             var tag = variant.tag.value;
             if(_.has(TYPE.variants, tag)){
@@ -422,6 +429,13 @@ var comp_ast_node = {
                 throw new Error("No duplicate variants: " + tag);
             }
             TYPE.variants[tag] = _.map(variant.params, function(param){
+                if(param.type === "TypeVariable"){
+                    if( ! _.includes(TYPE.params, param.value)){
+                        //TODO better error
+                        throw new Error("Undeclared TypeVariable not in scope: " + param.value);
+                    }
+                    return param.value;
+                }
                 return comp(param).TYPE;
             });
         });
@@ -447,6 +461,15 @@ var comp_ast_node = {
             //TODO infer enum type
             throw new Error("Sorry, cannot infer enum type");
         }
+        if(_.size(enumT.params) !== _.size(ast.enum.params)){
+            //TODO better error
+            throw new Error("Expected " + _.size(enumT.params) + " type params not " + _.size(ast.enum.params));
+        }
+        var tvarscope = {};
+        _.each(ast.enum.params, function(p, i){
+            var tvar = enumT.params[i];
+            tvarscope[tvar] = comp(p).TYPE;
+        });
         if(!_.has(enumT.variants, ast.tag.value)){
             //TODO better error
             throw new Error("Not an enum variant: " + ast.enum.value + "." + ast.tag.value);
@@ -457,8 +480,16 @@ var comp_ast_node = {
             throw new Error("Expected " + _.size(paramsT) + " params not " + _.size(ast.params) + " for " + ast.enum.value + "." + ast.tag.value);
         }
         var params = _.map(ast.params, function(p_ast, i){
+            var pT = paramsT[i];
+            if(_.isString(pT)){
+                if( ! _.has(tvarscope, pT)){
+                    //TODO better error
+                    throw new Error("Type variable not defined: " + pT);
+                }
+                pT = tvarscope[pT];
+            }
             var param = comp(p_ast);
-            assertT(param.TYPE, paramsT[i], p_ast.loc);
+            assertT(param.TYPE, pT, p_ast.loc);
             return param.estree;
         });
         return {
