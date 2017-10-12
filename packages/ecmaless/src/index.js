@@ -30,7 +30,13 @@ module.exports = function(conf, callback){
         loadPath(path, function(err, src){
             if(err) return callback(err);
 
-            var ast = parser(src, {filepath: path});
+            var ast;
+            try{
+                ast = parser(src, {filepath: path});
+            }catch(e){
+                callback(e);
+                return;
+            }
 
             module_ast[path] = ast;
             resolver.add(path);
@@ -61,30 +67,35 @@ module.exports = function(conf, callback){
         var body = [];
         var modules = {};
 
-        _.each(paths_to_comp, function(path, mod_index){
-            var ast = module_ast[path];
+        try{
+            _.each(paths_to_comp, function(path, mod_index){
+                var ast = module_ast[path];
 
-            var c = compiler(ast, {
-                requireModule: function(path){
+                var c = compiler(ast, {
+                    requireModule: function(path){
+                        //TODO resolve relative to curr path
+                        path = normalizePath(base, path);
+
+                        return modules[path];
+                    },
+                });
+
+                c.mod_index = mod_index;
+                modules[path] = c;
+
+                var args = [];
+                _.each(c.modules, function(path){
                     //TODO resolve relative to curr path
                     path = normalizePath(base, path);
-
-                    return modules[path];
-                },
+                    var i = _.indexOf(paths_to_comp, path);
+                    args.push(e("id", "$mod$" + i));
+                });
+                body.push(e("var", "$mod$" + mod_index, e("call", c.estree, args)));
             });
-
-            c.mod_index = mod_index;
-            modules[path] = c;
-
-            var args = [];
-            _.each(c.modules, function(path){
-                //TODO resolve relative to curr path
-                path = normalizePath(base, path);
-                var i = _.indexOf(paths_to_comp, path);
-                args.push(e("id", "$mod$" + i));
-            });
-            body.push(e("var", "$mod$" + mod_index, e("call", c.estree, args)));
-        });
+        }catch(e){
+            callback(e);
+            return;
+        }
 
         var main_mod = "$mod$" + _.indexOf(paths_to_comp, start_path);
 

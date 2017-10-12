@@ -10,7 +10,10 @@ main({
         fs.readFile(path, "utf-8", callback);
     },
 }, function(err, est){
-    if(err) throw err;
+    if(err){
+        console.error(err + "");
+        return;
+    }
 
     var out = escodegen.generate(est, {
         sourceMap: true,
