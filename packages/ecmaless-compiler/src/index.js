@@ -458,10 +458,10 @@ var comp_ast_node = {
             //TODO better error
             throw new Error("Expected " + _.size(enumT.params) + " type params not " + _.size(ast.enum.params));
         }
-        var tvarscope = {};
+        ctx.tvarScope.push();
         _.each(ast.enum.params, function(p, i){
             var tvar = enumT.params[i];
-            tvarscope[tvar] = comp(p).TYPE;
+            ctx.tvarScope.set(tvar, {TYPE: comp(p).TYPE});
         });
         if(!_.has(enumT.variants, ast.tag.value)){
             //TODO better error
@@ -475,16 +475,17 @@ var comp_ast_node = {
         var params = _.map(ast.params, function(p_ast, i){
             var pT = paramsT[i];
             if(_.isString(pT)){
-                if( ! _.has(tvarscope, pT)){
+                if( ! ctx.tvarScope.has(pT)){
                     //TODO better error
                     throw new Error("Type variable not defined: " + pT);
                 }
-                pT = tvarscope[pT];
+                pT = ctx.tvarScope.get(pT).TYPE;
             }
             var param = comp(p_ast);
             assertT(param.TYPE, pT, p_ast.loc);
             return param.estree;
         });
+        ctx.tvarScope.pop();
         return {
             estree: e("obj", {
                 tag: e("string", ast.tag.value, ast.tag.loc),
@@ -524,6 +525,7 @@ module.exports = function(ast, conf){
     var ctx = {
         requireModule: conf.requireModule,
         scope: SymbolTableStack(),
+        tvarScope: SymbolTableStack(),
     };
 
     var compile = function compile(ast, from_caller){
