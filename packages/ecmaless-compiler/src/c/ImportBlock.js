@@ -27,7 +27,7 @@ module.exports = function(ast, comp, ctx){
             }
 
             if(type === "Identifier"){
-                ctx.defIdentifier(id, TYPE);
+                ctx.scope.set(id, {TYPE: TYPE});
 
                 estree.push(e("var",
                     id,
@@ -37,7 +37,7 @@ module.exports = function(ast, comp, ctx){
                         n.loc),
                     n.loc));
             }else if(type === "Type"){
-                ctx.defType(id, TYPE);
+                ctx.scope.set(id, {TYPE: TYPE});
             }else{
                 throw new Error("only Identifier and Type can be imported");
             }

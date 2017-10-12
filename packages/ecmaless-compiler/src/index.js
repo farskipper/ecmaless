@@ -4,16 +4,14 @@ var toId = require("to-js-identifier");
 var assertT = require("./assertT");
 var ImportBlock = require("./c/ImportBlock");
 var ExportBlock = require("./c/ExportBlock");
-var SymbolTable = require("symbol-table");
+var SymbolTableStack = require("symbol-table/stack");
 
-var sysIDtoJsID = function(id){
-    return "$$$ecmaless$$$" + toId(id);
-};
 
 var omitTypeInstanceSpecifics = function(TYPE){
     //TODO recurse down in complex types
     return _.omit(_.omit(TYPE, "value"), "loc");
 };
+
 
 var comp_ast_node = {
     "Number": function(ast, comp){
@@ -41,10 +39,13 @@ var comp_ast_node = {
         };
     },
     "Identifier": function(ast, comp, ctx){
-        var id = ctx.useIdentifier(ast.value, ast.loc);
+        var id = ast.value;
+        if(!ctx.scope.has(id)){
+            throw new Error("Not defined: " + id);
+        }
         return {
             estree: e("id", toId(ast.value), ast.loc),
-            TYPE: id.TYPE,
+            TYPE: ctx.scope.get(id).TYPE,
         };
     },
     "Array": function(ast, comp){
@@ -117,10 +118,10 @@ var comp_ast_node = {
             throw new Error("Function should have " + _.size(expTYPE.params) + " params not " + _.size(ast.params));
         }
 
-        ctx.pushScope();
+        ctx.scope.push();
 
         var params = _.map(ast.params, function(p, i){
-            ctx.defIdentifier(p.value, expTYPE.params[i]);
+            ctx.scope.set(p.value, {TYPE: expTYPE.params[i]});
             return comp(p).estree;
         });
         var body = _.compact(_.map(ast.block.body, function(b){
@@ -131,7 +132,7 @@ var comp_ast_node = {
                 return c.estree;
             }
         }));
-        ctx.popScope();
+        ctx.scope.pop();
         var id;
         return {
             estree: e("function", params, body, id, ast.loc),
@@ -173,15 +174,8 @@ var comp_ast_node = {
                 estree: e("=", left.estree, right.estree, ast.loc),
                 TYPE: left.TYPE,
             };
-        }else if(ast.left.type === "MemberExpression"){
-            left.estree.callee.name = ctx.useSystemIdentifier("set", ast.loc);
-            left.estree["arguments"].push(right.estree);
-            return {
-                estree: left.estree,
-                TYPE: left.TYPE,
-            };
         }
-        throw new Error("Only Identifier or MemberExpression can be assigned");
+        throw new Error("Only Identifier can be assigned");
     },
     "MemberExpression": function(ast, comp, ctx){
 
@@ -251,11 +245,11 @@ var comp_ast_node = {
         };
     },
     "Block": function(ast, comp, ctx){
-        ctx.pushScope();
+        ctx.scope.push();
         var body = _.map(ast.body, function(ast){
             return comp(ast).estree;
         });
-        ctx.popScope();
+        ctx.scope.pop();
         return {
             estree: e("block", body, ast.loc),
         };
@@ -342,10 +336,7 @@ var comp_ast_node = {
         if(ast.id.type !== "Identifier"){
             throw new Error("Only Identifiers can be defined");
         }
-        var curr_val = ctx.get(ast.id.value);
-        if(curr_val && curr_val.defined){
-            throw new Error("Already defined: " + ast.id.value);
-        }
+        var curr_val = ctx.scope.get(ast.id.value);
         var annotated = curr_val && curr_val.TYPE;
 
         var init = comp(ast.init, {TYPE: annotated});
@@ -355,7 +346,7 @@ var comp_ast_node = {
             assertT(init.TYPE, annotated, ast.id.loc);
         }
 
-        ctx.defIdentifier(ast.id.value, init.TYPE);
+        ctx.scope.set(ast.id.value, {TYPE: init.TYPE});
 
         var id = comp(ast.id);
 
@@ -368,7 +359,7 @@ var comp_ast_node = {
     },
     "Annotation": function(ast, comp, ctx){
         var def = comp(ast.def);
-        ctx.annIdentifier(ast.id.value, def.TYPE);
+        ctx.scope.set(ast.id.value, {TYPE: def.TYPE});
         return void 0;//nothing to compile
     },
     "FunctionType": function(ast, comp, ctx){
@@ -396,15 +387,17 @@ var comp_ast_node = {
                 TYPE: {tag: ast.value, loc: ast.loc},
             };
         }
-        if(ctx.has(ast.value)){
-            return ctx.get(ast.value);
+        if(ctx.scope.has(ast.value)){
+            return {
+                TYPE: ctx.scope.get(ast.value).TYPE,
+            };
         }
         //TODO better error
         throw new Error("Type not supported: " + ast.value);
     },
     "TypeAlias": function(ast, comp, ctx){
         var TYPE = comp(ast.value).TYPE;
-        ctx.defType(ast.id.value, TYPE);
+        ctx.scope.set(ast.id.value, {TYPE: TYPE});
         return {
             TYPE: TYPE,
         };
@@ -439,20 +432,20 @@ var comp_ast_node = {
                 return comp(param).TYPE;
             });
         });
-        ctx.defType(ast.id.value, TYPE);
+        ctx.scope.set(ast.id.value, {TYPE: TYPE});
         return {
             TYPE: TYPE,
         };
     },
     "EnumValue": function(ast, comp, ctx){
-        if(!ast.enum || !ctx.has(ast.enum.value)){
+        if(!ast.enum || !ctx.scope.has(ast.enum.value)){
             //TODO better error
             throw new Error("Enum not defined: " + ast.enum.value);
         }
 
         var enumT;
         if(ast.enum){
-            enumT = ctx.get(ast.enum.value).TYPE;
+            enumT = ctx.scope.get(ast.enum.value).TYPE;
             if(enumT.tag !== "Enum"){
                 //TODO better error
                 throw new Error("Not an enum: " + ast.enum.value);
@@ -528,53 +521,9 @@ var comp_ast_node = {
 module.exports = function(ast, conf){
     conf = conf || {};
 
-    var symt_stack = [SymbolTable()];
     var ctx = {
         requireModule: conf.requireModule,
-        pushScope: function(){
-            symt_stack.unshift(symt_stack[0].push());
-        },
-        popScope: function(){
-            symt_stack.shift();
-        },
-        annIdentifier: function(id, TYPE){
-            symt_stack[0].set(id, {
-                id: id,
-                TYPE: TYPE,
-            });
-        },
-        defType: function(id, TYPE){
-            symt_stack[0].set(id, {
-                id: id,
-                TYPE: TYPE,
-            });
-        },
-        defIdentifier: function(id, TYPE){
-            symt_stack[0].set(id, {
-                id: id,
-                TYPE: TYPE,
-                defined: true,
-            });
-        },
-        has: function(id){
-            return symt_stack[0].has(id);
-        },
-        get: function(id){
-            return symt_stack[0].get(id);
-        },
-        useIdentifier: function(id){
-            if(!symt_stack[0].has(id)){
-                throw new Error("Not defined: " + id);
-            }
-            return symt_stack[0].get(id);
-        },
-        useSystemIdentifier: function(id, loc, ret_estree){
-            var js_id = sysIDtoJsID(id);
-            ctx.useIdentifier("$$$ecmaless$$$" + id, loc, js_id);
-            return ret_estree
-                ? e("id", js_id, loc)
-                : js_id;
-        },
+        scope: SymbolTableStack(),
     };
 
     var compile = function compile(ast, from_caller){
