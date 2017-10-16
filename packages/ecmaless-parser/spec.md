@@ -334,22 +334,26 @@ import:
                 {
                     "type": "ImportName",
                     "name": {"type": "Identifier", "value": "a"},
-                    "as": null
+                    "as": null,
+                    "is": null
                 },
                 {
                     "type": "ImportName",
                     "name": {"type": "Identifier", "value": "c"},
-                    "as": {"type": "Identifier", "value": "d"}
+                    "as": {"type": "Identifier", "value": "d"},
+                    "is": null
                 },
                 {
                     "type": "ImportName",
                     "name": {"type": "Type", "value": "Foo", "params": []},
-                    "as": null
+                    "as": null,
+                    "is": null
                 },
                 {
                     "type": "ImportName",
                     "name": {"type": "Type", "value": "Bar", "params": []},
-                    "as": {"type": "Type", "value": "Baz", "params": []}
+                    "as": {"type": "Type", "value": "Baz", "params": []},
+                    "is": null
                 }
             ]
         },
@@ -360,14 +364,17 @@ import:
                 {
                     "type": "ImportName",
                     "name": null,
-                    "as": {"type": "Identifier", "value": "b"}
+                    "as": {"type": "Identifier", "value": "b"},
+                    "is": null
                 }
             ]
         },
         {
             "type": "Import",
             "path": {"type": "String", "value": "c"},
-            "names": [{"type": "ImportName", "name": null, "as": null}]
+            "names": [
+                {"type": "ImportName", "name": null, "as": null, "is": null}
+            ]
         }
     ]
 }

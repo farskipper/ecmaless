@@ -86,6 +86,7 @@ var tok_CLOSE_CU = tok("RAW", "}");
 
 var tok_import = tok("SYMBOL", "import");
 var tok_as = tok("SYMBOL", "as");
+var tok_is = tok("SYMBOL", "is");
 var tok_export = tok("SYMBOL", "export");
 
 var tok_def = tok("SYMBOL", "def");
@@ -369,12 +370,13 @@ ImportName -> ImportName_parts NL
         type: "ImportName",
         name: name,
         as: (d[1] && d[1][1]) || null,
+        is: (d[2] && d[2][1]) || null,
     };
 } %}
 
 
 ImportName_parts ->
-      Identifier (%tok_as Identifier):?
+      Identifier (%tok_as Identifier):? (%tok_is TypeExpression):?
     | Type (%tok_as Type):?
     | %tok_TIMES (%tok_as Identifier):?
 

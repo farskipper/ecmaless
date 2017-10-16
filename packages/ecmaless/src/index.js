@@ -27,6 +27,11 @@ module.exports = function(conf, callback){
             callback();
             return;
         }
+        if(/\.js$/i.test(path)){
+            resolver.add(path);
+            callback();
+            return;
+        }
 
         loadPath(path, function(err, src){
             if(err) return callback(err);
@@ -71,6 +76,24 @@ module.exports = function(conf, callback){
 
         try{
             _.each(paths_to_comp, function(path, mod_index){
+                if(/\.js$/i.test(path)){
+
+                    modules[path] = {
+                        commonjs: {
+                            path: path,
+                            value: require(path),
+                        },
+                    };
+
+                    body.push(e("var",
+                        "$mod$" + mod_index,
+                        e("call",
+                            e("id", "require"),
+                            [e("str", path)]
+                        )
+                    ));
+                    return;
+                }
                 var src = module_src[path];
                 var ast = module_ast[path];
 

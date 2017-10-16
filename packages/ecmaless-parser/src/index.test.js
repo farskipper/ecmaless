@@ -408,21 +408,25 @@ test("module", function(t){
                         type: "ImportName",
                         name: mk.id("a"),
                         as: null,
+                        is: null,
                     },
                     {
                         type: "ImportName",
                         name: mk.id("b"),
                         as: mk.id("c"),
+                        is: null,
                     },
                     {
                         type: "ImportName",
                         name: mk.Type("Foo"),
                         as: null,
+                        is: null,
                     },
                     {
                         type: "ImportName",
                         name: mk.Type("Bar"),
                         as: mk.Type("Baz"),
+                        is: null,
                     },
                 ],
             },
@@ -434,6 +438,7 @@ test("module", function(t){
                         type: "ImportName",
                         name: null,
                         as: null,
+                        is: null,
                     },
                 ],
             },
@@ -445,11 +450,48 @@ test("module", function(t){
                         type: "ImportName",
                         name: null,
                         as: mk.id("da"),
+                        is: null,
                     },
                 ],
             },
         ],
     });
+
+
+    src = "";
+    src += "import:\n";
+    src += "    \"./a.js\":\n";
+    src += "        a is Fn(String) Number\n";
+    src += "        b as c is String\n";
+    ast = parser(src);
+    t.deepEquals(rmLoc(ast)[0], {
+        type: "ImportBlock",
+        "modules": [
+            {
+                type: "Import",
+                path: mkv("./a.js"),
+                names: [
+                    {
+                        type: "ImportName",
+                        name: mk.id("a"),
+                        as: null,
+                        is: {
+                            type: "FunctionType",
+                            params: [mk.Type("String")],
+                            "return": mk.Type("Number"),
+                        },
+                    },
+                    {
+                        type: "ImportName",
+                        name: mk.id("b"),
+                        as: mk.id("c"),
+                        is: mk.Type("String"),
+                    },
+                ],
+            },
+        ],
+    });
+
 
     src = "";
     src += "export:\n";

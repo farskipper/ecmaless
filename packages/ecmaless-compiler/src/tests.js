@@ -238,6 +238,15 @@ test("import / export", function(t){
                     },
                 },
             };
+        }else if(path === "./log.js"){
+            return {
+                commonjs: {
+                    path: "./log.js",
+                    value: {
+                        log: function(){},
+                    },
+                },
+            };
         }
     };
 
@@ -309,6 +318,14 @@ test("import / export", function(t){
     src += "export:\n";
     src += "    Str";
     tc(src, "function($0){return{'Str':{'tag':'String'}};}");
+
+    src = "";
+    src += "import:\n";
+    src += "    \"./log.js\":\n";
+    src += "        log is Fn(String) Nil\n";
+    src += "log(\"hi\")\n";
+    tc(src, "function($0){var log=$0['log'];log('hi');}");
+
 
 
     t.end();

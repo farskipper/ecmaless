@@ -90,6 +90,7 @@ var tok_CLOSE_CU = tok("RAW", "}");
 
 var tok_import = tok("SYMBOL", "import");
 var tok_as = tok("SYMBOL", "as");
+var tok_is = tok("SYMBOL", "is");
 var tok_export = tok("SYMBOL", "export");
 
 var tok_def = tok("SYMBOL", "def");
@@ -332,20 +333,24 @@ var grammar = {
                 type: "ImportName",
                 name: name,
                 as: (d[1] && d[1][1]) || null,
+                is: (d[2] && d[2][1]) || null,
             };
         } },
     {"name": "ImportName_parts$ebnf$1$subexpression$1", "symbols": [tok_as, "Identifier"]},
     {"name": "ImportName_parts$ebnf$1", "symbols": ["ImportName_parts$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "ImportName_parts$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "ImportName_parts", "symbols": ["Identifier", "ImportName_parts$ebnf$1"]},
-    {"name": "ImportName_parts$ebnf$2$subexpression$1", "symbols": [tok_as, "Type"]},
+    {"name": "ImportName_parts$ebnf$2$subexpression$1", "symbols": [tok_is, "TypeExpression"]},
     {"name": "ImportName_parts$ebnf$2", "symbols": ["ImportName_parts$ebnf$2$subexpression$1"], "postprocess": id},
     {"name": "ImportName_parts$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "ImportName_parts", "symbols": ["Type", "ImportName_parts$ebnf$2"]},
-    {"name": "ImportName_parts$ebnf$3$subexpression$1", "symbols": [tok_as, "Identifier"]},
+    {"name": "ImportName_parts", "symbols": ["Identifier", "ImportName_parts$ebnf$1", "ImportName_parts$ebnf$2"]},
+    {"name": "ImportName_parts$ebnf$3$subexpression$1", "symbols": [tok_as, "Type"]},
     {"name": "ImportName_parts$ebnf$3", "symbols": ["ImportName_parts$ebnf$3$subexpression$1"], "postprocess": id},
     {"name": "ImportName_parts$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "ImportName_parts", "symbols": [tok_TIMES, "ImportName_parts$ebnf$3"]},
+    {"name": "ImportName_parts", "symbols": ["Type", "ImportName_parts$ebnf$3"]},
+    {"name": "ImportName_parts$ebnf$4$subexpression$1", "symbols": [tok_as, "Identifier"]},
+    {"name": "ImportName_parts$ebnf$4", "symbols": ["ImportName_parts$ebnf$4$subexpression$1"], "postprocess": id},
+    {"name": "ImportName_parts$ebnf$4", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "ImportName_parts", "symbols": [tok_TIMES, "ImportName_parts$ebnf$4"]},
     {"name": "ExportBlock$ebnf$1", "symbols": ["ExportName"]},
     {"name": "ExportBlock$ebnf$1", "symbols": ["ExportBlock$ebnf$1", "ExportName"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "ExportBlock", "symbols": [tok_export, tok_COLON, "NL", "INDENT", "ExportBlock$ebnf$1", "DEDENT"], "postprocess":  function(d){
