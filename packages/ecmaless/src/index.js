@@ -18,6 +18,7 @@ module.exports = function(conf, callback){
     var loadPath = conf.loadPath;
     var start_path = normalizePath(base, conf.start_path);
 
+    var module_src = {};
     var module_ast = {};
     var resolver = new DependencyResolver();
 
@@ -38,6 +39,7 @@ module.exports = function(conf, callback){
                 return;
             }
 
+            module_src[path] = src;
             module_ast[path] = ast;
             resolver.add(path);
 
@@ -69,9 +71,12 @@ module.exports = function(conf, callback){
 
         try{
             _.each(paths_to_comp, function(path, mod_index){
+                var src = module_src[path];
                 var ast = module_ast[path];
 
                 var c = compiler(ast, {
+                    src: src,
+                    filepath: path,
                     requireModule: function(path){
                         //TODO resolve relative to curr path
                         path = normalizePath(base, path);

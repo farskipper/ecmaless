@@ -41,14 +41,14 @@ var comp_ast_node = {
     "Identifier": function(ast, comp, ctx){
         var id = ast.value;
         if(!ctx.scope.has(id)){
-            throw new Error("Not defined: " + id);
+            throw ctx.error(ast.loc, "Not defined: " + id);
         }
         return {
             estree: e("id", toId(ast.value), ast.loc),
             TYPE: ctx.scope.get(id).TYPE,
         };
     },
-    "Array": function(ast, comp){
+    "Array": function(ast, comp, ctx){
         var TYPE = {
             tag: "Array",
             type: void 0,
@@ -59,7 +59,7 @@ var comp_ast_node = {
             var v = comp(v_ast);
             if(TYPE.type){
                 //TODO better error message i.e. array elements all must have same type
-                assertT(v.TYPE, TYPE.type, v_ast.loc);
+                ctx.assertT(v.TYPE, TYPE.type, v_ast.loc);
             }else{
                 TYPE.type = v.TYPE;
             }
@@ -70,7 +70,7 @@ var comp_ast_node = {
             TYPE: TYPE,
         };
     },
-    "Struct": function(ast, comp){
+    "Struct": function(ast, comp, ctx){
         var TYPE = {
             tag: "Struct",
             by_key: {},
@@ -88,14 +88,13 @@ var comp_ast_node = {
                 key_str = key.value;
                 key_est = comp(key).estree;
             }else{
-                throw new Error("Invalid struct key.type: " + key.type);
+                throw ctx.error(key.loc, "Invalid struct key.type: " + key.type);
             }
 
             var val = comp(pair[1]);
 
             if(_.has(TYPE.by_key, key_str)){
-                //TODO better error
-                throw new Error("No duplicate keys: " + key_str);
+                throw ctx.error(key.loc, "No duplicate keys: " + key_str);
             }
 
             TYPE.by_key[key_str] = val.TYPE;
@@ -110,12 +109,10 @@ var comp_ast_node = {
     "Function": function(ast, comp, ctx, from_caller){
         var expTYPE = from_caller && from_caller.TYPE;
         if(!expTYPE || expTYPE.tag !== "Fn"){
-            //TODO better error
-            throw new Error("Sorry, function types are not infered");
+            throw ctx.error(ast.loc, "Sorry, function types are not infered");
         }
         if(_.size(expTYPE.params) !== _.size(ast.params)){
-            //TODO better error
-            throw new Error("Function should have " + _.size(expTYPE.params) + " params not " + _.size(ast.params));
+            throw ctx.error(ast.loc, "Function should have " + _.size(expTYPE.params) + " params not " + _.size(ast.params));
         }
 
         ctx.scope.push();
@@ -139,14 +136,14 @@ var comp_ast_node = {
             TYPE: expTYPE,
         };
     },
-    "Application": function(ast, comp){
+    "Application": function(ast, comp, ctx){
 
         var callee = comp(ast.callee);
         var args = _.map(ast.args, function(arg){
             return comp(arg);
         });
 
-        assertT({
+        ctx.assertT({
             tag: "Fn",
             params: _.map(args, function(arg, i){
                 return _.assign({}, arg.TYPE, {
@@ -167,7 +164,7 @@ var comp_ast_node = {
         var right = comp(ast.right);
 
         //TODO better error i.e. explain can't change types
-        assertT(right.TYPE, left.TYPE, ast.right.loc);
+        ctx.assertT(right.TYPE, left.TYPE, ast.right.loc);
 
         if(ast.left.type === "Identifier"){
             return {
@@ -175,7 +172,7 @@ var comp_ast_node = {
                 TYPE: left.TYPE,
             };
         }
-        throw new Error("Only Identifier can be assigned");
+        throw ctx.error(ast.left.loc, "Only Identifier can be assigned");
     },
     "MemberExpression": function(ast, comp, ctx){
 
@@ -186,12 +183,10 @@ var comp_ast_node = {
             var key = ast.path.value;
 
             if(obj.TYPE.tag !== "Struct"){
-                //TODO better error
-                throw new TypeError(". notation only works on Struct");
+                throw ctx.error(ast.loc, ". notation only works on Struct");
             }
             if( ! _.has(obj.TYPE.by_key, key)){
-                //TODO better error
-                throw new TypeError("Key does not exist: " + key);
+                throw ctx.error(ast.loc, "Key does not exist: " + key);
             }
 
             return {
@@ -202,8 +197,7 @@ var comp_ast_node = {
             var path = comp(ast.path);
             if(obj.TYPE.tag === "Array"){
                 if(path.TYPE.tag !== "Number"){//TODO Int
-                    //TODO better error
-                    throw new TypeError("Array subscript notation only works with Ints");
+                    throw ctx.error(ast.loc, "Array subscript notation only works with Ints");
                 }
                 return {
                     estree: e("get", obj.estree, path.estree, ast.loc),
@@ -214,11 +208,10 @@ var comp_ast_node = {
                     },
                 };
             }else{
-                //TODO better error
-                throw new TypeError("subscript notation only works on Arrays");
+                throw ctx.error(ast.loc, "subscript notation only works on Arrays");
             }
         }else{
-            throw new Error("Unsupported MemberExpression method: " + ast.method);
+            throw ctx.error(ast.loc, "Unsupported MemberExpression method: " + ast.method);
         }
     },
     "ConditionalExpression": function(ast, comp, ctx){
@@ -226,10 +219,10 @@ var comp_ast_node = {
         var consequent = comp(ast.consequent);
         var alternate = comp(ast.alternate);
 
-        assertT(test.TYPE, {tag: "Boolean"}, ast.test.loc);
+        ctx.assertT(test.TYPE, {tag: "Boolean"}, ast.test.loc);
 
         //TODO better error i.e. explain both need to match
-        assertT(alternate.TYPE, consequent.TYPE, ast.alternate.loc);
+        ctx.assertT(alternate.TYPE, consequent.TYPE, ast.alternate.loc);
 
         //remove specifics b/c it may be either branch
         var TYPE = omitTypeInstanceSpecifics(consequent.TYPE);
@@ -267,7 +260,7 @@ var comp_ast_node = {
     },
     "If": function(ast, comp, ctx){
         var test = comp(ast.test);
-        assertT(test.TYPE, {tag: "Boolean"}, ast.test.loc);
+        ctx.assertT(test.TYPE, {tag: "Boolean"}, ast.test.loc);
         var then = comp(ast.then).estree;
         var els_ = ast["else"]
             ? comp(ast["else"]).estree
@@ -306,7 +299,7 @@ var comp_ast_node = {
     },
     "While": function(ast, comp, ctx){
         var test = comp(ast.test);
-        assertT(test.TYPE, {tag: "Boolean"}, ast.test.loc);
+        ctx.assertT(test.TYPE, {tag: "Boolean"}, ast.test.loc);
         return {
             estree: e("while", test.estree, comp(ast.block).estree, ast.loc),
         };
@@ -334,7 +327,7 @@ var comp_ast_node = {
     },
     "Define": function(ast, comp, ctx){
         if(ast.id.type !== "Identifier"){
-            throw new Error("Only Identifiers can be defined");
+            throw ctx.error(ast.id.loc, "Only Identifiers can be defined");
         }
         var curr_val = ctx.scope.get(ast.id.value);
         var annotated = curr_val && curr_val.TYPE;
@@ -343,7 +336,7 @@ var comp_ast_node = {
 
         if(annotated){
             //ensure it matches the annotation
-            assertT(init.TYPE, annotated, ast.id.loc);
+            ctx.assertT(init.TYPE, annotated, ast.id.loc);
         }
 
         ctx.scope.set(ast.id.value, {TYPE: init.TYPE});
@@ -392,8 +385,7 @@ var comp_ast_node = {
                 TYPE: ctx.scope.get(ast.value).TYPE,
             };
         }
-        //TODO better error
-        throw new Error("Type not supported: " + ast.value);
+        throw ctx.error(ast.loc, "Type not defined: " + ast.value);
     },
     "TypeAlias": function(ast, comp, ctx){
         var TYPE = comp(ast.value).TYPE;
@@ -412,7 +404,7 @@ var comp_ast_node = {
         ctx.tvarScope.push();
         _.each(ast.id.params, function(param){
             if(param.type !== "TypeVariable"){
-                throw new Error("Enum params must be TypeVariable");
+                throw ctx.error(param.loc, "Enum params must be TypeVariable");
             }
             TYPE.params.push(param.value);
             ctx.tvarScope.set(param.value, {TYPE: void 0});
@@ -420,14 +412,12 @@ var comp_ast_node = {
         _.each(ast.variants, function(variant){
             var tag = variant.tag.value;
             if(_.has(TYPE.variants, tag)){
-                //TODO better error
-                throw new Error("No duplicate variants: " + tag);
+                throw ctx.error(variant.tag.loc, "No duplicate variants: " + tag);
             }
             TYPE.variants[tag] = _.map(variant.params, function(param){
                 if(param.type === "TypeVariable"){
                     if( ! ctx.tvarScope.has(param.value)){
-                        //TODO better error
-                        throw new Error("TypeVariable not defined: " + param.value);
+                        throw ctx.error(param.loc, "TypeVariable not defined: " + param.value);
                     }
                     return param.value;
                 }
@@ -442,24 +432,15 @@ var comp_ast_node = {
     },
     "EnumValue": function(ast, comp, ctx){
         if(!ast.enum || !ctx.scope.has(ast.enum.value)){
-            //TODO better error
-            throw new Error("Enum not defined: " + ast.enum.value);
+            throw ctx.error(ast.enum.loc, "Enum not defined: " + ast.enum.value);
         }
 
-        var enumT;
-        if(ast.enum){
-            enumT = ctx.scope.get(ast.enum.value).TYPE;
-            if(enumT.tag !== "Enum"){
-                //TODO better error
-                throw new Error("Not an enum: " + ast.enum.value);
-            }
-        }else{
-            //TODO infer enum type
-            throw new Error("Sorry, cannot infer enum type");
+        var enumT = ctx.scope.get(ast.enum.value).TYPE;
+        if(enumT.tag !== "Enum"){
+            throw ctx.error(ast.enum.loc, "Not an enum: " + ast.enum.value);
         }
         if(_.size(enumT.params) !== _.size(ast.enum.params)){
-            //TODO better error
-            throw new Error("Expected " + _.size(enumT.params) + " type params not " + _.size(ast.enum.params));
+            throw ctx.error(ast.enum.loc, "Expected " + _.size(enumT.params) + " type params not " + _.size(ast.enum.params));
         }
         ctx.tvarScope.push();
         _.each(ast.enum.params, function(p, i){
@@ -467,25 +448,22 @@ var comp_ast_node = {
             ctx.tvarScope.set(tvar, {TYPE: comp(p).TYPE});
         });
         if(!_.has(enumT.variants, ast.tag.value)){
-            //TODO better error
-            throw new Error("Not an enum variant: " + ast.enum.value + "." + ast.tag.value);
+            throw ctx.error(ast.tag.loc, "Not an enum variant: " + ast.enum.value + "." + ast.tag.value);
         }
         var paramsT = enumT.variants[ast.tag.value];
         if(_.size(paramsT) !== _.size(ast.params)){
-            //TODO better error
-            throw new Error("Expected " + _.size(paramsT) + " params not " + _.size(ast.params) + " for " + ast.enum.value + "." + ast.tag.value);
+            throw ctx.error(ast.tag.loc, "Expected " + _.size(paramsT) + " params not " + _.size(ast.params) + " for " + ast.enum.value + "." + ast.tag.value);
         }
         var params = _.map(ast.params, function(p_ast, i){
             var pT = paramsT[i];
             if(_.isString(pT)){
                 if( ! ctx.tvarScope.has(pT)){
-                    //TODO better error
-                    throw new Error("TypeVariable not defined: " + pT);
+                    throw ctx.error(p_ast.loc, "TypeVariable not defined: " + pT);
                 }
                 pT = ctx.tvarScope.get(pT).TYPE;
             }
             var param = comp(p_ast);
-            assertT(param.TYPE, pT, p_ast.loc);
+            ctx.assertT(param.TYPE, pT, p_ast.loc);
             return param.estree;
         });
         ctx.tvarScope.pop();
@@ -502,7 +480,7 @@ var comp_ast_node = {
             var key = p[0];
             var val = p[1];
             if(key.type !== "Symbol" || !_.isString(key.value)){
-                throw new Error("StructType keys must be Symbols");
+                throw ctx.error(key.loc, "StructType keys must be Symbols");
             }
             by_key[key.value] = comp(val).TYPE;
         });
@@ -514,11 +492,11 @@ var comp_ast_node = {
             },
         };
     },
-    "ImportBlock": function(){
-        throw new Error("`import` must be the first statement");
+    "ImportBlock": function(ast, comp, ctx){
+        throw ctx.error(ast.loc, "`import` must be the first statement");
     },
-    "ExportBlock": function(){
-        throw new Error("`export` must be the last statement");
+    "ExportBlock": function(ast, comp, ctx){
+        throw ctx.error(ast.loc, "`export` must be the last statement");
     },
 };
 
@@ -527,15 +505,27 @@ module.exports = function(ast, conf){
 
     var ctx = {
         requireModule: conf.requireModule,
+
+        error: function(loc, message){
+            var err = new Error(message);
+            err.ecmaless = {
+                loc: loc,
+            };
+            return err;
+        },
+        assertT: function(actual, expected, loc){
+            assertT(ctx, actual, expected, loc);
+        },
+
         scope: SymbolTableStack(),
         tvarScope: SymbolTableStack(),
     };
 
     var compile = function compile(ast, from_caller){
         if(!_.has(ast, "type")){
-            throw new Error("Invalid ast node: " + JSON.stringify(ast));
+            throw ctx.error(ast.loc, "Invalid ast node: " + JSON.stringify(ast));
         }else if(!_.has(comp_ast_node, ast.type)){
-            throw new Error("Unsupported ast node type: " + ast.type);
+            throw ctx.error(ast.loc, "Unsupported ast node type: " + ast.type);
         }
         return comp_ast_node[ast.type](ast, compile, ctx, from_caller);
     };

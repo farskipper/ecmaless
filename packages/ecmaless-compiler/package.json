@@ -28,12 +28,13 @@
     "ecmaless-parser": "^0.7.0",
     "escodegen": "^1.8.0",
     "eslint": "^4.8.0",
+    "faucet": "0.0.1",
     "onchange": "^3.2.1",
     "tape": "^4.8.0"
   },
   "scripts": {
     "start": "onchange src/ -i -- npm test",
     "lint": "eslint src/ && echo lint-ok",
-    "test": "npm run lint -s && node src/tests.js"
+    "test": "npm run lint -s && node src/tests.js | faucet"
   }
 }

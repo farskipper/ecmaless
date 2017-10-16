@@ -1,6 +1,5 @@
 var _ = require("lodash");
 var e = require("estree-builder");
-var assertT = require("../assertT");
 
 
 module.exports = function(ast, comp, ctx){
@@ -11,8 +10,8 @@ module.exports = function(ast, comp, ctx){
         if(typeName === "Comparable"){
             typeName = left.TYPE.tag;
         }
-        assertT(left.TYPE, {tag: typeName}, ast.left.loc);
-        assertT(right.TYPE, {tag: typeName}, ast.right.loc);
+        ctx.assertT(left.TYPE, {tag: typeName}, ast.left.loc);
+        ctx.assertT(right.TYPE, {tag: typeName}, ast.right.loc);
     };
 
     switch(ast.op){
