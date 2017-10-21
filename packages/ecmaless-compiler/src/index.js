@@ -394,37 +394,75 @@ var comp_ast_node = {
             TYPE: TYPE,
         };
     },
+    "TypeVariable": function(ast, comp, ctx){
+        var id = ast.value;
+        if(!ctx.tvarScope.has(id)){
+            throw ctx.error(ast.loc, "TypeVariable not defined: " + id);
+        }
+        return {
+            TYPE: ctx.tvarScope.get(id),
+        };
+    },
     "Enum": function(ast, comp, ctx){
-        var TYPE = {
+        var TYPE;
+        if( ! _.isEmpty(ast.id.params)){
+            var params = _.map(ast.id.params, function(param){
+                if(param.type !== "TypeVariable"){
+                    throw ctx.error(param.loc, "Enum params must be TypeVariable");
+                }
+                return param.value;
+            });
+            TYPE = {
+                tag: "Generic",
+                params: params,
+                ctor: function(types, called_loc, comp, ctx){
+                    var TYPE = {
+                        tag: "Enum",
+                        id: ast.id.value,
+                        variants: {},
+                        loc: ast.loc,
+                    };
+                    if(_.size(types) !== _.size(params)){
+                        throw ctx.error(called_loc, "Expected " + _.size(params) + " type params not " + _.size(types) + " for " + ast.id.value + "<" + params.join(",") + ">");
+                    }
+                    ctx.tvarScope.push();
+                    _.each(params, function(param_str, i){
+                        ctx.tvarScope.set(param_str, comp(types[i]).TYPE);
+                    });
+                    _.each(ast.variants, function(variant){
+                        var tag = variant.tag.value;
+                        if(_.has(TYPE.variants, tag)){
+                            throw ctx.error(variant.tag.loc, "Duplicate enum variant: " + tag);
+                        }
+                        TYPE.variants[tag] = _.map(variant.params, function(param){
+                            return comp(param).TYPE;
+                        });
+                    });
+                    ctx.tvarScope.pop();
+                    return TYPE;
+                },
+                loc: ast.loc,
+            };
+            ctx.scope.set(ast.id.value, {TYPE: TYPE});
+            return {
+                TYPE: TYPE,
+            };
+        }
+        TYPE = {
             tag: "Enum",
-            params: [],
+            id: ast.id.value,
             variants: {},
             loc: ast.loc,
         };
-        ctx.tvarScope.push();
-        _.each(ast.id.params, function(param){
-            if(param.type !== "TypeVariable"){
-                throw ctx.error(param.loc, "Enum params must be TypeVariable");
-            }
-            TYPE.params.push(param.value);
-            ctx.tvarScope.set(param.value, {TYPE: void 0});
-        });
         _.each(ast.variants, function(variant){
             var tag = variant.tag.value;
             if(_.has(TYPE.variants, tag)){
-                throw ctx.error(variant.tag.loc, "No duplicate variants: " + tag);
+                throw ctx.error(variant.tag.loc, "Duplicate enum variant: " + tag);
             }
             TYPE.variants[tag] = _.map(variant.params, function(param){
-                if(param.type === "TypeVariable"){
-                    if( ! ctx.tvarScope.has(param.value)){
-                        throw ctx.error(param.loc, "TypeVariable not defined: " + param.value);
-                    }
-                    return param.value;
-                }
                 return comp(param).TYPE;
             });
         });
-        ctx.tvarScope.pop();
         ctx.scope.set(ast.id.value, {TYPE: TYPE});
         return {
             TYPE: TYPE,
@@ -436,17 +474,12 @@ var comp_ast_node = {
         }
 
         var enumT = ctx.scope.get(ast.enum.value).TYPE;
+        if(enumT.tag === "Generic"){
+            enumT = enumT.ctor(ast.enum.params, ast.enum.loc, comp, ctx);
+        }
         if(enumT.tag !== "Enum"){
             throw ctx.error(ast.enum.loc, "Not an enum: " + ast.enum.value);
         }
-        if(_.size(enumT.params) !== _.size(ast.enum.params)){
-            throw ctx.error(ast.enum.loc, "Expected " + _.size(enumT.params) + " type params not " + _.size(ast.enum.params));
-        }
-        ctx.tvarScope.push();
-        _.each(ast.enum.params, function(p, i){
-            var tvar = enumT.params[i];
-            ctx.tvarScope.set(tvar, {TYPE: comp(p).TYPE});
-        });
         if(!_.has(enumT.variants, ast.tag.value)){
             throw ctx.error(ast.tag.loc, "Not an enum variant: " + ast.enum.value + "." + ast.tag.value);
         }
@@ -456,17 +489,10 @@ var comp_ast_node = {
         }
         var params = _.map(ast.params, function(p_ast, i){
             var pT = paramsT[i];
-            if(_.isString(pT)){
-                if( ! ctx.tvarScope.has(pT)){
-                    throw ctx.error(p_ast.loc, "TypeVariable not defined: " + pT);
-                }
-                pT = ctx.tvarScope.get(pT).TYPE;
-            }
             var param = comp(p_ast);
             ctx.assertT(param.TYPE, pT, p_ast.loc);
             return param.estree;
         });
-        ctx.tvarScope.pop();
         return {
             estree: e("obj", {
                 tag: e("string", ast.tag.value, ast.tag.loc),

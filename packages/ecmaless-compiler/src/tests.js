@@ -201,12 +201,19 @@ test("compile", function(t){
         "var a={'tag':'B','params':['foo']};"
     );
     terr("enum A:\n    B(c)", "TypeVariable not defined: c 2:6,2:7");
+
+    terr("enum A:\n    B()\n    B()", "Duplicate enum variant: B 3:4,3:5");
+
+    src = "";
+    src += "enum A<c>:\n";
+    src += "    B(c)\n";
     tc(
-        "enum A<c>:\n    B(c)\ndef foo = A<String>.B(\"foo\")",
+        src + "def foo = A<String>.B(\"foo\")",
         "var foo={'tag':'B','params':['foo']};"
     );
-    terr("enum A<c>:\n    B(c)\ndef foo = A<String>.B(1)", "e:String a:Number 3:22,3:23");
+    terr(src + "def foo = A<String>.B(1)", "e:String a:Number 3:22,3:23");
 
+    terr(src + "def foo = A.B(1)", "Expected 1 type params not 0 for A<c> 3:10,3:11");
 
     /*
     tc(
