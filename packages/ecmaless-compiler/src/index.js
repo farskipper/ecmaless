@@ -17,19 +17,19 @@ var comp_ast_node = {
     "Number": function(ast, comp){
         return {
             estree: e("number", ast.value, ast.loc),
-            TYPE: {tag: "Number", value: ast.value, loc: ast.loc},
+            TYPE: {tag: "Number", loc: ast.loc, value: ast.value},
         };
     },
     "String": function(ast, comp){
         return {
             estree: e("string", ast.value, ast.loc),
-            TYPE: {tag: "String", value: ast.value, loc: ast.loc},
+            TYPE: {tag: "String", loc: ast.loc, value: ast.value},
         };
     },
     "Boolean": function(ast, comp){
         return {
             estree: e(ast.value ? "true" : "false", ast.loc),
-            TYPE: {tag: "Boolean", value: ast.value, loc: ast.loc},
+            TYPE: {tag: "Boolean", loc: ast.loc, value: ast.value},
         };
     },
     "Nil": function(ast, comp){
@@ -41,7 +41,7 @@ var comp_ast_node = {
     "Identifier": function(ast, comp, ctx){
         var id = ast.value;
         if(!ctx.scope.has(id)){
-            throw ctx.error(ast.loc, "Not defined: " + id);
+            throw ctx.error(ast.loc, "Not defined `" + id + "`");
         }
         return {
             estree: e("id", toId(ast.value), ast.loc),
@@ -94,7 +94,7 @@ var comp_ast_node = {
             var val = comp(pair[1]);
 
             if(_.has(TYPE.by_key, key_str)){
-                throw ctx.error(key.loc, "No duplicate keys: " + key_str);
+                throw ctx.error(key.loc, "Duplicate key `" + key_str + "`");
             }
 
             TYPE.by_key[key_str] = val.TYPE;
@@ -112,7 +112,7 @@ var comp_ast_node = {
             throw ctx.error(ast.loc, "Sorry, function types are not infered");
         }
         if(_.size(expTYPE.params) !== _.size(ast.params)){
-            throw ctx.error(ast.loc, "Function should have " + _.size(expTYPE.params) + " params not " + _.size(ast.params));
+            throw ctx.error(ast.loc, "Annotation said the function should have " + _.size(expTYPE.params) + " params not " + _.size(ast.params));
         }
 
         ctx.scope.push();
@@ -186,7 +186,7 @@ var comp_ast_node = {
                 throw ctx.error(ast.loc, ". notation only works on Struct");
             }
             if( ! _.has(obj.TYPE.by_key, key)){
-                throw ctx.error(ast.loc, "Key does not exist: " + key);
+                throw ctx.error(ast.loc, "Key does not exist `" + key + "`");
             }
 
             return {
@@ -381,15 +381,12 @@ var comp_ast_node = {
             };
         }
         if( ! ctx.scope.has(ast.value)){
-            throw ctx.error(ast.loc, "Type not defined: " + ast.value);
+            throw ctx.error(ast.loc, "Type not defined `" + ast.value + "`");
         }
         var vTYPE = ctx.scope.get(ast.value).TYPE;
         if(!_.isEmpty(ast.params)){
             if(vTYPE.tag !== "Generic"){
-                throw ctx.error(ast.loc, "Type doesn't take generic params: " + ast.value);
-            }
-            if(_.size(vTYPE.params) !== _.size(ast.params)){
-                throw ctx.error(ast.loc, "Expected " + ast.value + "<" + vTYPE.params + "> but was given " + _.size(ast.params) + " params");
+                throw ctx.error(ast.loc, ast.value + " doesn't have type params");
             }
             vTYPE = vTYPE.ctor(ast.params, ast.loc, comp, ctx);
         }
@@ -407,7 +404,7 @@ var comp_ast_node = {
     "TypeVariable": function(ast, comp, ctx){
         var id = ast.value;
         if(!ctx.tvarScope.has(id)){
-            throw ctx.error(ast.loc, "TypeVariable not defined: " + id);
+            throw ctx.error(ast.loc, "TypeVariable not defined `" + id + "`");
         }
         return {
             TYPE: ctx.tvarScope.get(id),
@@ -434,7 +431,7 @@ var comp_ast_node = {
                         loc: ast.loc,
                     };
                     if(_.size(types) !== _.size(params)){
-                        throw ctx.error(called_loc, "Expected " + _.size(params) + " type params not " + _.size(types) + " for " + ast.id.value + "<" + params.join(",") + ">");
+                        throw ctx.error(called_loc, "Trying to give " + _.size(types) + " type params for " + ast.id.value + "<" + params.join(", ") + ">");
                     }
                     ctx.tvarScope.push();
                     _.each(params, function(param_str, i){
@@ -445,7 +442,7 @@ var comp_ast_node = {
                     _.each(ast.variants, function(variant){
                         var tag = variant.tag.value;
                         if(_.has(TYPE.variants, tag)){
-                            throw ctx.error(variant.tag.loc, "Duplicate enum variant: " + tag);
+                            throw ctx.error(variant.tag.loc, "Duplicate enum variant `" + tag + "`");
                         }
                         TYPE.variants[tag] = _.map(variant.params, function(param){
                             return comp(param).TYPE;
@@ -471,7 +468,7 @@ var comp_ast_node = {
         _.each(ast.variants, function(variant){
             var tag = variant.tag.value;
             if(_.has(TYPE.variants, tag)){
-                throw ctx.error(variant.tag.loc, "Duplicate enum variant: " + tag);
+                throw ctx.error(variant.tag.loc, "Duplicate enum variant `" + tag + "`");
             }
             TYPE.variants[tag] = _.map(variant.params, function(param){
                 return comp(param).TYPE;

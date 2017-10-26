@@ -66,12 +66,26 @@ test("compile", function(t){
 
     tc("\"foo\" ++ \"bar\"", "'foobar';");
 
+    terr("foo", "Not defined `foo` 1:0,1:3");
+
     tc("def a=\"foo\"\na ++ \"bar\"", "var a='foo';'foobar';");
 
     tc("[1, 2]", "[1,2];");
     tc("{a: 1, b: 2}", "({'a':1,'b':2});");
+    terr("{a: 1, b: 2, a: 3}", "Duplicate key `a` 1:13,1:14");
 
     var src = "";
+    src += "def add = fn (a, b):\n";
+    src += "    return a + b\n";
+    terr(src, "Sorry, function types are not infered 1:10,2:17");
+
+    src = "";
+    src += "ann add = Fn (Number, Number) Number\n";
+    src += "def add = fn (a):\n";
+    src += "    return a + b\n";
+    terr(src, "Annotation said the function should have 2 params not 1 2:10,3:17");
+
+    src = "";
     src += "ann add = Fn (Number, Number) Number\n";
     src += "def add = fn (a, b):\n";
     src += "    return a + b\n";
@@ -90,8 +104,14 @@ test("compile", function(t){
     src += "ann add = Fn (Number, Number) Number\n";
     src += "def add = fn (a, b):\n";
     src += "    return a + b\n";
-    src += "add()";
-    terr(src, "Expected 2 params but was 0 4:0,4:3");
+    terr(src + "add()", "Expected 2 params but was 0 4:0,4:3");
+    terr(src + "add(1, 2, 3)", "Expected 2 params but was 3 4:0,4:3");
+    terr(src + "add(1, \"str\")", "e:Number a:String 4:7,4:12");
+    terr(src + "add(\"str\", 1)", "e:Number a:String 4:4,4:9");
+    tc(
+        src + "add(1, 2)",
+        "var add=function add(a,b){return a+b;};add(1,2);"
+    );
 
     src = "";
     src += "ann foo = String\n";
@@ -143,8 +163,9 @@ test("compile", function(t){
 
     src = "";
     src += "def a = 1\n";
-    src += "a = 2";
-    tc(src, "var a=1;a=2;");
+    tc(src + "a = 2", "var a=1;a=2;");
+    terr(src + "a = \"hi\"", "e:Number a:String 2:4,2:8");
+    terr("1 = 2", "Only Identifier can be assigned 1:0,1:1");
 
     src = "";
     src += "def a = 1\n";
@@ -153,14 +174,25 @@ test("compile", function(t){
 
     src = "";
     src += "def foo = {a: 1}\n";
-    src += "foo.a + 2";
-    tc(src, "var foo={'a':1};foo.a+2;");
+    tc(src + "foo.a + 2", "var foo={'a':1};foo.a+2;");
+    terr(src + "foo.b", "Key does not exist `b` 2:0,2:5");
+    terr("def foo=1\nfoo.b", ". notation only works on Struct 2:0,2:5");
 
     src = "";
     src += "alias Foo = Number\n";
     src += "ann foo = Foo\n";
     src += "def foo = 1\n";
     tc(src, "var foo=1;");
+
+    src = "";
+    src += "alias Foo = Number\n";
+    src += "ann foo = Bar\n";
+    terr(src, "Type not defined `Bar` 2:10,2:13");
+
+    src = "";
+    src += "alias Foo = Number\n";
+    src += "ann foo = Foo<String>\n";
+    terr(src, "Foo doesn't have type params 2:10,2:20");
 
     src = "";
     src += "enum Foo:\n";
@@ -180,7 +212,7 @@ test("compile", function(t){
 
 
     tc("def a = 1\nexport:\n    a", "var a=1;return{'a':a};");
-    terr("export:\n    a", "Not defined: a 2:4,2:5");
+    terr("export:\n    a", "Not defined `a` 2:4,2:5");
 
 
     /*
@@ -200,9 +232,19 @@ test("compile", function(t){
         "enum A:\n    B(String)\ndef a = A.B(\"foo\")",
         "var a={'tag':'B','params':['foo']};"
     );
-    terr("enum A:\n    B(c)", "TypeVariable not defined: c 2:6,2:7");
+    terr("enum A:\n    B(c)", "TypeVariable not defined `c` 2:6,2:7");
 
-    terr("enum A:\n    B()\n    B()", "Duplicate enum variant: B 3:4,3:5");
+    terr("enum A:\n    B()\n    B()", "Duplicate enum variant `B` 3:4,3:5");
+    terr("enum A<t>:\n    B(t)\n    B(t)", "Duplicate enum variant `B` 3:4,3:5");
+
+
+    src = "";
+    src += "enum A<c>:\n";
+    src += "    B(c)\n";
+    terr(
+        src + "ann foo = A<String, Number>",
+        "Trying to give 2 type params for A<c> 3:10,3:26"
+    );
 
     src = "";
     src += "enum A<c>:\n";
@@ -212,7 +254,7 @@ test("compile", function(t){
         "var foo={'tag':'B','params':['foo']};"
     );
     terr(src + "def foo = A<String>.B(1)", "e:String a:Number 3:22,3:23");
-    terr(src + "def foo = A.B(1)", "Expected 1 type params not 0 for A<c> 3:10,3:11");
+    terr(src + "def foo = A.B(1)", "Trying to give 0 type params for A<c> 3:10,3:11");
     tc(
         src + "ann foo = A<String>\ndef foo = A<String>.B(\"bar\")",
         "var foo={'tag':'B','params':['bar']};"
@@ -225,14 +267,6 @@ test("compile", function(t){
         src + "ann foo = Number\ndef foo = A<String>.B(\"bar\")",
         "e:Number a:A<String> 4:4,4:7"
     );
-
-
-    /*
-    tc(
-        "ann a<t> = Fn(t) t\ndef a = fn(b):\n    return b\ndef c = a(\"foo\")\ndef d = a(1)",
-        "var a=function a(b){return b;};var c=a('foo');"
-    );
-    */
 
     t.end();
 });
@@ -287,7 +321,7 @@ test("import / export", function(t){
 
     tc("def a = 1\nexport:\n    a", "function(){var a=1;return{'a':a};}");
 
-    terr("export:\n    a", "Not defined: a 2:4,2:5");
+    terr("export:\n    a", "Not defined `a` 2:4,2:5");
 
     var src = "";
     src += "import:\n";
