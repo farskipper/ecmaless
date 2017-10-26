@@ -380,12 +380,22 @@ var comp_ast_node = {
                 TYPE: {tag: ast.value, loc: ast.loc},
             };
         }
-        if(ctx.scope.has(ast.value)){
-            return {
-                TYPE: ctx.scope.get(ast.value).TYPE,
-            };
+        if( ! ctx.scope.has(ast.value)){
+            throw ctx.error(ast.loc, "Type not defined: " + ast.value);
         }
-        throw ctx.error(ast.loc, "Type not defined: " + ast.value);
+        var vTYPE = ctx.scope.get(ast.value).TYPE;
+        if(!_.isEmpty(ast.params)){
+            if(vTYPE.tag !== "Generic"){
+                throw ctx.error(ast.loc, "Type doesn't take generic params: " + ast.value);
+            }
+            if(_.size(vTYPE.params) !== _.size(ast.params)){
+                throw ctx.error(ast.loc, "Expected " + ast.value + "<" + vTYPE.params + "> but was given " + _.size(ast.params) + " params");
+            }
+            vTYPE = vTYPE.ctor(ast.params, ast.loc, comp, ctx);
+        }
+        return {
+            TYPE: vTYPE,
+        };
     },
     "TypeAlias": function(ast, comp, ctx){
         var TYPE = comp(ast.value).TYPE;
@@ -498,6 +508,7 @@ var comp_ast_node = {
                 tag: e("string", ast.tag.value, ast.tag.loc),
                 params: e("array", params, ast.loc),
             }, ast.loc),
+            TYPE: enumT,
         };
     },
     "StructType": function(ast, comp, ctx){

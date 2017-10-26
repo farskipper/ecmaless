@@ -215,6 +215,13 @@ test("compile", function(t){
 
     terr(src + "def foo = A.B(1)", "Expected 1 type params not 0 for A<c> 3:10,3:11");
 
+
+    tc(
+        src + "ann foo = A<String>\ndef foo = A<String>.B(\"bar\")",
+        "var foo={'tag':'B','params':['bar']};"
+    );
+
+
     /*
     tc(
         "ann a<t> = Fn(t) t\ndef a = fn(b):\n    return b\ndef c = a(\"foo\")\ndef d = a(1)",
