@@ -255,6 +255,7 @@ test("compile", function(t){
     );
     terr(src + "def foo = A<String>.B(1)", "e:String a:Number 3:22,3:23");
     terr(src + "def foo = A.B(1)", "Trying to give 0 type params for A<c> 3:10,3:11");
+    terr(src + "def foo = A<String>.C()", "`C` is not a variant of A<String> 3:20,3:21");
     tc(
         src + "ann foo = A<String>\ndef foo = A<String>.B(\"bar\")",
         "var foo={'tag':'B','params':['bar']};"
@@ -267,6 +268,8 @@ test("compile", function(t){
         src + "ann foo = Number\ndef foo = A<String>.B(\"bar\")",
         "e:Number a:A<String> 4:4,4:7"
     );
+
+    terr("Blah.B()", "Enum not defined `Blah` 1:0,1:4");
 
     t.end();
 });

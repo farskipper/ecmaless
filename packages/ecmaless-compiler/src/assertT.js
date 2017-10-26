@@ -1,11 +1,6 @@
 var _ = require("lodash");
+var typeToString = require("./typeToString");
 
-var typeToString = function(type){
-    if(type.tag === "Enum"){
-        return type.id + "<" + _.map(type.args, typeToString).join(", ") + ">";
-    }
-    return type.tag;
-};
 
 module.exports = function assertT(ctx, actual, expected, loc){
     var aTag = actual && actual.tag;

@@ -4,6 +4,7 @@ var toId = require("to-js-identifier");
 var assertT = require("./assertT");
 var ImportBlock = require("./c/ImportBlock");
 var ExportBlock = require("./c/ExportBlock");
+var typeToString = require("./typeToString");
 var SymbolTableStack = require("symbol-table/stack");
 
 
@@ -410,78 +411,10 @@ var comp_ast_node = {
             TYPE: ctx.tvarScope.get(id),
         };
     },
-    "Enum": function(ast, comp, ctx){
-        var TYPE;
-        if( ! _.isEmpty(ast.id.params)){
-            var params = _.map(ast.id.params, function(param){
-                if(param.type !== "TypeVariable"){
-                    throw ctx.error(param.loc, "Enum params must be TypeVariable");
-                }
-                return param.value;
-            });
-            TYPE = {
-                tag: "Generic",
-                params: params,
-                ctor: function(types, called_loc, comp, ctx){
-                    var TYPE = {
-                        tag: "Enum",
-                        id: ast.id.value,
-                        variants: {},
-                        args: {},
-                        loc: ast.loc,
-                    };
-                    if(_.size(types) !== _.size(params)){
-                        throw ctx.error(called_loc, "Trying to give " + _.size(types) + " type params for " + ast.id.value + "<" + params.join(", ") + ">");
-                    }
-                    ctx.tvarScope.push();
-                    _.each(params, function(param_str, i){
-                        var t = comp(types[i]).TYPE;
-                        TYPE.args[param_str] = t;
-                        ctx.tvarScope.set(param_str, t);
-                    });
-                    _.each(ast.variants, function(variant){
-                        var tag = variant.tag.value;
-                        if(_.has(TYPE.variants, tag)){
-                            throw ctx.error(variant.tag.loc, "Duplicate enum variant `" + tag + "`");
-                        }
-                        TYPE.variants[tag] = _.map(variant.params, function(param){
-                            return comp(param).TYPE;
-                        });
-                    });
-                    ctx.tvarScope.pop();
-                    return TYPE;
-                },
-                loc: ast.loc,
-            };
-            ctx.scope.set(ast.id.value, {TYPE: TYPE});
-            return {
-                TYPE: TYPE,
-            };
-        }
-        TYPE = {
-            tag: "Enum",
-            id: ast.id.value,
-            variants: {},
-            args: {},
-            loc: ast.loc,
-        };
-        _.each(ast.variants, function(variant){
-            var tag = variant.tag.value;
-            if(_.has(TYPE.variants, tag)){
-                throw ctx.error(variant.tag.loc, "Duplicate enum variant `" + tag + "`");
-            }
-            TYPE.variants[tag] = _.map(variant.params, function(param){
-                return comp(param).TYPE;
-            });
-        });
-        ctx.scope.set(ast.id.value, {TYPE: TYPE});
-        return {
-            TYPE: TYPE,
-        };
-    },
+    "Enum": require("./c/Enum"),
     "EnumValue": function(ast, comp, ctx){
         if(!ast.enum || !ctx.scope.has(ast.enum.value)){
-            throw ctx.error(ast.enum.loc, "Enum not defined: " + ast.enum.value);
+            throw ctx.error(ast.enum.loc, "Enum not defined `" + ast.enum.value + "`");
         }
 
         var enumT = ctx.scope.get(ast.enum.value).TYPE;
@@ -489,10 +422,10 @@ var comp_ast_node = {
             enumT = enumT.ctor(ast.enum.params, ast.enum.loc, comp, ctx);
         }
         if(enumT.tag !== "Enum"){
-            throw ctx.error(ast.enum.loc, "Not an enum: " + ast.enum.value);
+            throw ctx.error(ast.enum.loc, "`" + ast.enum.value + "` is not an Enum");
         }
         if(!_.has(enumT.variants, ast.tag.value)){
-            throw ctx.error(ast.tag.loc, "Not an enum variant: " + ast.enum.value + "." + ast.tag.value);
+            throw ctx.error(ast.tag.loc, "`" + ast.tag.value + "` is not a variant of " + typeToString(enumT));
         }
         var paramsT = enumT.variants[ast.tag.value];
         if(_.size(paramsT) !== _.size(ast.params)){
