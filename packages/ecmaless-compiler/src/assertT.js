@@ -1,11 +1,17 @@
 var _ = require("lodash");
 
+var typeToString = function(type){
+    if(type.tag === "Enum"){
+        return type.id + "<" + _.map(type.args, typeToString).join(", ") + ">";
+    }
+    return type.tag;
+};
+
 module.exports = function assertT(ctx, actual, expected, loc){
     var aTag = actual && actual.tag;
-    var eTag = expected && expected.tag;
 
-    if(aTag !== eTag){
-        throw ctx.error(loc, "expected `" + eTag + "` but was `" + aTag + "`");
+    if(aTag !== (expected && expected.tag)){
+        throw ctx.error(loc, "expected `" + typeToString(expected) + "` but was `" + typeToString(actual) + "`");
     }
 
     if(aTag === "Fn"){

@@ -23,7 +23,7 @@ var testCompile = function(t, src, expected){
 
 
 var testError = function(t, src, expected){
-    var m = /^e:([a-z]*) a:([a-z]*) (.*)$/i.exec(expected);
+    var m = /^e:([a-z<, >]*) a:([a-z<, >]*) (.*)$/i.exec(expected);
     if(m){
         expected = "expected `" + m[1] + "` but was `" + m[2] + "` " + m[3];
     }
@@ -212,10 +212,7 @@ test("compile", function(t){
         "var foo={'tag':'B','params':['foo']};"
     );
     terr(src + "def foo = A<String>.B(1)", "e:String a:Number 3:22,3:23");
-
     terr(src + "def foo = A.B(1)", "Expected 1 type params not 0 for A<c> 3:10,3:11");
-
-
     tc(
         src + "ann foo = A<String>\ndef foo = A<String>.B(\"bar\")",
         "var foo={'tag':'B','params':['bar']};"
@@ -223,6 +220,10 @@ test("compile", function(t){
     terr(
         src + "ann foo = A<Number>\ndef foo = A<String>.B(\"bar\")",
         "e:Number a:String 4:12,4:18"
+    );
+    terr(
+        src + "ann foo = Number\ndef foo = A<String>.B(\"bar\")",
+        "e:Number a:A<String> 4:4,4:7"
     );
 
 
