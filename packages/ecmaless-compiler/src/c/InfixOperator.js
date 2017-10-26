@@ -10,8 +10,18 @@ module.exports = function(ast, comp, ctx){
         if(typeName === "Comparable"){
             typeName = left.TYPE.tag;
         }
-        ctx.assertT(left.TYPE, {tag: typeName}, ast.left.loc);
-        ctx.assertT(right.TYPE, {tag: typeName}, ast.right.loc);
+        ctx.assertT(_.assign({}, left.TYPE, {
+            loc: ast.left.loc,
+        }), {
+            tag: typeName,
+            loc: ast.left.loc,
+        });
+        ctx.assertT(_.assign({}, right.TYPE, {
+            loc: ast.right.loc,
+        }), {
+            tag: typeName,
+            loc: ast.right.loc,
+        });
     };
 
     switch(ast.op){
@@ -19,13 +29,19 @@ module.exports = function(ast, comp, ctx){
         assertLR("Boolean");
         return {
             estree: e("||", left.estree, right.estree, ast.loc),
-            TYPE: {tag: "Boolean"},
+            TYPE: {
+                tag: "Boolean",
+                loc: ast.loc,
+            },
         };
     case "and":
         assertLR("Boolean");
         return {
             estree: e("&&", left.estree, right.estree, ast.loc),
-            TYPE: {tag: "Boolean"},
+            TYPE: {
+                tag: "Boolean",
+                loc: ast.loc,
+            },
         };
     case "=="://TODO value equality
     case "!=":
@@ -36,7 +52,10 @@ module.exports = function(ast, comp, ctx){
         assertLR("Comparable");
         return {
             estree: e(ast.op, left.estree, right.estree, ast.loc),
-            TYPE: {tag: "Boolean"},
+            TYPE: {
+                tag: "Boolean",
+                loc: ast.loc,
+            },
         };
     case "+":
     case "-":
@@ -46,7 +65,10 @@ module.exports = function(ast, comp, ctx){
         assertLR("Number");
         return {
             estree: e(ast.op, left.estree, right.estree, ast.loc),
-            TYPE: {tag: "Number"},
+            TYPE: {
+                tag: "Number",
+                loc: ast.loc,
+            },
         };
     case "++":
         assertLR("String");
@@ -54,12 +76,19 @@ module.exports = function(ast, comp, ctx){
             var value = left.TYPE.value + right.TYPE.value;
             return {
                 estree: e("str", value, ast.loc),
-                TYPE: {tag: "String", value: value},
+                TYPE: {
+                    tag: "String",
+                    value: value,
+                    loc: ast.loc,
+                },
             };
         }
         return {
             estree: e("+", left.estree, right.estree, ast.loc),
-            TYPE: {tag: "String"},
+            TYPE: {
+                tag: "String",
+                loc: ast.loc,
+            },
         };
     }
     throw new Error("Unsupported infix op: " + ast.op);

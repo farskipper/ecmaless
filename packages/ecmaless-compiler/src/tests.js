@@ -208,7 +208,7 @@ test("compile", function(t){
     src += "ann foo = Foo\n";
     tc(src + "def foo = {a: 1, b: \"wat\"}", "var foo={'a':1,'b':'wat'};");
     terr(src + "def foo = {a: 1, b: 2}", "e:String a:Number 3:20,3:21");
-    terr(src + "def foo = {a: 1}", "TODO better error Bad Struct keys 3:10,3:16");
+    terr(src + "def foo = {a: 1}", "TODO better error Bad Struct keys 3:4,3:7");
 
 
     tc("def a = 1\nexport:\n    a", "var a=1;return{'a':a};");

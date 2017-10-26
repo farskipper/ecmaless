@@ -3,19 +3,20 @@ var typeToString = require("./typeToString");
 
 
 module.exports = function assertT(ctx, actual, expected, loc){
-    var aTag = actual && actual.tag;
 
-    if(aTag !== (expected && expected.tag)){
-        throw ctx.error(loc, "expected `" + typeToString(expected) + "` but was `" + typeToString(actual) + "`");
+    var aTag = actual.tag;
+
+    if(aTag !== expected.tag){
+        throw ctx.error(actual.loc, "expected `" + typeToString(expected) + "` but was `" + typeToString(actual) + "`");
     }
 
     if(aTag === "Fn"){
         if(_.size(actual.params) !== _.size(expected.params)){
-            throw ctx.error(loc, "Expected "  + _.size(expected.params) + " params but was " + _.size(actual.params));
+            throw ctx.error(actual.loc, "Expected "  + _.size(expected.params) + " params but was " + _.size(actual.params));
         }
         _.each(actual.params, function(param, i){
             var exp = expected.params[i];
-            assertT(ctx, param, exp, param.loc || exp.loc || loc);
+            assertT(ctx, param, exp);
         });
     }
 
@@ -25,7 +26,7 @@ module.exports = function assertT(ctx, actual, expected, loc){
         }
         _.each(actual.by_key, function(act, key){
             var exp = expected.by_key[key];
-            assertT(ctx, act, exp, act.loc || exp.loc || loc);
+            assertT(ctx, act, exp);
         });
     }
 
@@ -35,7 +36,7 @@ module.exports = function assertT(ctx, actual, expected, loc){
         }
         _.each(actual.args, function(act, key){
             var exp = expected.args[key];
-            assertT(ctx, act, exp, act.loc || exp.loc || loc);
+            assertT(ctx, act, exp);
         });
     }
 };

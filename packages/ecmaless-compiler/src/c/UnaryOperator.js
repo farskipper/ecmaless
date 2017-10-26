@@ -5,19 +5,34 @@ module.exports = function(ast, comp, ctx){
 
     switch(ast.op){
     case "-":
-        ctx.assertT(arg.TYPE, {tag: "Number"}, ast.arg.loc);
+        ctx.assertT(arg.TYPE, {
+            tag: "Number",
+            loc: ast.arg.loc,
+        });
         return {
             estree: e("-", arg.estree, ast.loc),
-            TYPE: {tag: "Number"},
+            TYPE: {
+                tag: "Number",
+                loc: ast.loc,
+            },
         };
     case "+":
-        ctx.assertT(arg.TYPE, {tag: "Number"}, ast.arg.loc);
+        ctx.assertT(arg.TYPE, {
+            tag: "Number",
+            loc: ast.arg.loc,
+        });
         return arg;
     case "not":
-        ctx.assertT(arg.TYPE, {tag: "Boolean"}, ast.arg.loc);
+        ctx.assertT(arg.TYPE, {
+            tag: "Boolean",
+            loc: ast.arg.loc,
+        });
         return {
             estree: e("!", arg.estree, ast.loc),
-            TYPE: {tag: "Boolean"},
+            TYPE: {
+                tag: "Boolean",
+                loc: ast.loc,
+            },
         };
     }
     throw new Error("Unsupported unary operator: " + ast.op);

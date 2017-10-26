@@ -60,7 +60,7 @@ var comp_ast_node = {
             var v = comp(v_ast);
             if(TYPE.type){
                 //TODO better error message i.e. array elements all must have same type
-                ctx.assertT(v.TYPE, TYPE.type, v_ast.loc);
+                ctx.assertT(v.TYPE, TYPE.type);
             }else{
                 TYPE.type = v.TYPE;
             }
@@ -151,7 +151,8 @@ var comp_ast_node = {
                     loc: ast.args[i].loc,
                 });
             }),
-        }, callee.TYPE, ast.callee.loc);
+            loc: ast.callee.loc,
+        }, callee.TYPE);
 
         return {
             estree: e("call", callee.estree, _.map(args, "estree"), ast.loc),
@@ -165,7 +166,7 @@ var comp_ast_node = {
         var right = comp(ast.right);
 
         //TODO better error i.e. explain can't change types
-        ctx.assertT(right.TYPE, left.TYPE, ast.right.loc);
+        ctx.assertT(right.TYPE, left.TYPE);
 
         if(ast.left.type === "Identifier"){
             return {
@@ -220,13 +221,17 @@ var comp_ast_node = {
         var consequent = comp(ast.consequent);
         var alternate = comp(ast.alternate);
 
-        ctx.assertT(test.TYPE, {tag: "Boolean"}, ast.test.loc);
+        ctx.assertT(test.TYPE, {
+            tag: "Boolean",
+            loc: ast.test.loc,
+        });
 
         //TODO better error i.e. explain both need to match
-        ctx.assertT(alternate.TYPE, consequent.TYPE, ast.alternate.loc);
+        ctx.assertT(alternate.TYPE, consequent.TYPE);
 
         //remove specifics b/c it may be either branch
         var TYPE = omitTypeInstanceSpecifics(consequent.TYPE);
+        TYPE.loc = ast.loc;
 
         return {
             estree: e("?",
@@ -261,7 +266,10 @@ var comp_ast_node = {
     },
     "If": function(ast, comp, ctx){
         var test = comp(ast.test);
-        ctx.assertT(test.TYPE, {tag: "Boolean"}, ast.test.loc);
+        ctx.assertT(test.TYPE, {
+            tag: "Boolean",
+            loc: ast.test.loc,
+        });
         var then = comp(ast.then).estree;
         var els_ = ast["else"]
             ? comp(ast["else"]).estree
@@ -300,7 +308,10 @@ var comp_ast_node = {
     },
     "While": function(ast, comp, ctx){
         var test = comp(ast.test);
-        ctx.assertT(test.TYPE, {tag: "Boolean"}, ast.test.loc);
+        ctx.assertT(test.TYPE, {
+            tag: "Boolean",
+            loc: ast.test.loc,
+        });
         return {
             estree: e("while", test.estree, comp(ast.block).estree, ast.loc),
         };
@@ -337,7 +348,9 @@ var comp_ast_node = {
 
         if(annotated){
             //ensure it matches the annotation
-            ctx.assertT(init.TYPE, annotated, ast.id.loc);
+            ctx.assertT(_.assign({}, init.TYPE, {
+                loc: ast.id.loc,
+            }), annotated);
         }
 
         ctx.scope.set(ast.id.value, {TYPE: init.TYPE});
@@ -366,6 +379,7 @@ var comp_ast_node = {
                 tag: "Fn",
                 params: params,
                 "return": ret,
+                loc: ast.loc,
             },
         };
     },
@@ -434,7 +448,7 @@ var comp_ast_node = {
         var params = _.map(ast.params, function(p_ast, i){
             var pT = paramsT[i];
             var param = comp(p_ast);
-            ctx.assertT(param.TYPE, pT, p_ast.loc);
+            ctx.assertT(param.TYPE, pT);
             return param.estree;
         });
         return {
@@ -484,8 +498,8 @@ module.exports = function(ast, conf){
             };
             return err;
         },
-        assertT: function(actual, expected, loc){
-            assertT(ctx, actual, expected, loc);
+        assertT: function(actual, expected){
+            assertT(ctx, actual, expected);
         },
 
         scope: SymbolTableStack(),
