@@ -220,6 +220,10 @@ test("compile", function(t){
         src + "ann foo = A<String>\ndef foo = A<String>.B(\"bar\")",
         "var foo={'tag':'B','params':['bar']};"
     );
+    terr(
+        src + "ann foo = A<Number>\ndef foo = A<String>.B(\"bar\")",
+        "e:Number a:String 4:12,4:18"
+    );
 
 
     /*

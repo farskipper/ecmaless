@@ -430,6 +430,7 @@ var comp_ast_node = {
                         tag: "Enum",
                         id: ast.id.value,
                         variants: {},
+                        args: {},
                         loc: ast.loc,
                     };
                     if(_.size(types) !== _.size(params)){
@@ -437,7 +438,9 @@ var comp_ast_node = {
                     }
                     ctx.tvarScope.push();
                     _.each(params, function(param_str, i){
-                        ctx.tvarScope.set(param_str, comp(types[i]).TYPE);
+                        var t = comp(types[i]).TYPE;
+                        TYPE.args[param_str] = t;
+                        ctx.tvarScope.set(param_str, t);
                     });
                     _.each(ast.variants, function(variant){
                         var tag = variant.tag.value;
@@ -462,6 +465,7 @@ var comp_ast_node = {
             tag: "Enum",
             id: ast.id.value,
             variants: {},
+            args: {},
             loc: ast.loc,
         };
         _.each(ast.variants, function(variant){

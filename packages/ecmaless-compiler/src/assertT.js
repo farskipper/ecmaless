@@ -22,9 +22,18 @@ module.exports = function assertT(ctx, actual, expected, loc){
         if(!_.isEqual(_.keys(actual.by_key), _.keys(expected.by_key))){
             throw ctx.error(actual.loc, "TODO better error Bad Struct keys");
         }
-        _.each(actual.by_key, function(v, key){
-            var act = actual.by_key[key];
+        _.each(actual.by_key, function(act, key){
             var exp = expected.by_key[key];
+            assertT(ctx, act, exp, act.loc || exp.loc || loc);
+        });
+    }
+
+    if(aTag === "Enum"){
+        if(!_.isEqual(_.keys(actual.args).sort(), _.keys(expected.args).sort())){
+            throw ctx.error(actual.loc, "TODO better error Enum arg missmatch");
+        }
+        _.each(actual.args, function(act, key){
+            var exp = expected.args[key];
             assertT(ctx, act, exp, act.loc || exp.loc || loc);
         });
     }
