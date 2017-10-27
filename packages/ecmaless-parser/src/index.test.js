@@ -530,17 +530,11 @@ test("errors", function(t){
         parser("one two@three", {filepath: "some-file"});
         t.ok(false, "should fail");
     }catch(e){
-        t.equals(e.message, "Invalid syntax\nsome-file:1:4\n \n"
-            + "one two@three\n"
-            + "    ^"
-        );
-        t.deepEquals(e.where, {
-            filepath: "some-file",
-            line: 1,
-            col: 4,
-            excerpt: ""
-                + "one two@three\n"
-                + "    ^"
+        t.equals(e + "", "Error: Invalid syntax");
+        t.deepEquals(e.ecmaless.loc, {
+            source: "some-file",
+            start: {line: 1, column: 4},
+            end: {line: 1, column: 7},
         });
     }
 
@@ -548,14 +542,11 @@ test("errors", function(t){
         parser("if 1:blah", {filepath: "some-file"});
         t.ok(false, "should fail");
     }catch(e){
-        t.equals(e.message, "Invalid syntax\nsome-file:1:5\n \nif 1:blah\n     ^");
-        t.deepEquals(e.where, {
-            filepath: "some-file",
-            line: 1,
-            col: 5,
-            excerpt: ""
-                + "if 1:blah\n"
-                + "     ^"
+        t.equals(e + "", "Error: Invalid syntax");
+        t.deepEquals(e.ecmaless.loc, {
+            source: "some-file",
+            start: {line: 1, column: 5},
+            end: {line: 1, column: 9},
         });
     }
 

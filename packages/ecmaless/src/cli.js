@@ -3,7 +3,38 @@ var fs = require("fs");
 var main = require("./");
 var path = require("path");
 var btoa = require("btoa");
+var chalk = require("chalk");
 var escodegen = require("escodegen");
+var excerptAtLineCol = require("excerpt-at-line-col");
+
+var base_path = process.cwd();
+
+var printErr = function(err){
+    if(err.ecmaless && err.ecmaless.loc && err.ecmaless.loc.source){
+        fs.readFile(err.ecmaless.loc.source, "utf-8", function(ferr, src){
+            if(ferr){
+                printErr(ferr);
+                return;
+            }
+
+            var startloc = err.ecmaless.loc.start;
+            var excerpt = excerptAtLineCol(src, startloc.line - 1, startloc.column, 0);
+            var fileinfo = path.relative(base_path, err.ecmaless.loc.source)
+                + " " + err.ecmaless.loc.start.line
+                + ":" + err.ecmaless.loc.start.column
+                + "," + err.ecmaless.loc.end.line
+                + ":" + err.ecmaless.loc.end.column
+            ;
+
+            console.error(chalk.red(err + ""));
+            console.error();
+            console.error(excerpt);
+            console.error(chalk.dim(fileinfo));
+        });
+        return;
+    }
+    console.error(chalk.red(err + ""));
+};
 
 //parse the CLI args
 var args = require("minimist")(process.argv.slice(2), {
@@ -38,29 +69,27 @@ if(args.version){
 }
 
 if(_.size(args._) === 0){
-    console.error("ERROR missing file path");
+    printErr("ERROR missing file path");
     return;
 }else if(_.size(args._) > 1){
-    console.error("ERROR too many file paths given: " + args._.join(" "));
+    printErr("ERROR too many file paths given: " + args._.join(" "));
     return;
 }
 
-var pase_path = process.cwd();
-
 main({
-    start_path: path.resolve(pase_path, args._[0]),
+    start_path: path.resolve(base_path, args._[0]),
     loadPath: function(path, callback){
         fs.readFile(path, "utf-8", callback);
     },
 }, function(err, est){
     if(err){
-        console.error(err + "");
+        printErr(err);
         return;
     }
 
     var out = escodegen.generate(est, {
         sourceMap: true,
-        sourceMapRoot: pase_path,
+        sourceMapRoot: base_path,
         sourceMapWithCode: true,
     });
 

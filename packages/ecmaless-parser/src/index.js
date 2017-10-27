@@ -3,49 +3,13 @@ var nearley = require("nearley");
 var grammar = require("./grammar.js");
 var tokenizer = require("./tokenizer");
 var EStreeLoc = require("estree-loc");
-var excerptAtLineCol = require("excerpt-at-line-col");
 
-var fmtErrorWithExcerpt = function(err, info){
-
-    var msg = err + "";
-
-    if(/Error: invalid syntax at/.test(msg)){
-        msg = "Invalid syntax";
-    }
-
-    msg = msg.replace(/^Error:/i, "");
-    msg = msg.trim();
-
-    msg += "\n" + (info.filepath  || "") + ":" + (info.line + 1) + ":" + info.col;
-
-    msg += "\n \n" + excerptAtLineCol(info.src, info.line, info.col, 0);
-
-    err.message = msg;
-    err.where = {
-        filepath: info.filepath,
-        line: info.line + 1,
-        col: info.col,
-        excerpt: excerptAtLineCol(info.src, info.line, info.col, 3)
-    };
-    return err;
-};
-
-var fmtTokenizerError = function(te, src, filepath){
-    var e = new Error(te.type + ": " + te.message);
-
-    var toLoc = EStreeLoc(src, filepath);
-    var loc = toLoc(te.loc.start, te.loc.end);
-
-    return fmtErrorWithExcerpt(e, {
-        src: src,
-        filepath: filepath,
-        line: loc.start.line - 1,
-        col: loc.start.column
-    });
-};
 
 module.exports = function(src, opts){
     opts = opts || {};
+
+    var toLoc = EStreeLoc(src, opts.filepath);
+    var err;
 
     var tokens;
     try{
@@ -58,12 +22,14 @@ module.exports = function(src, opts){
                 && (typeof e.loc.start) === "number"
                 && (typeof e.loc.end) === "number"
         ){
-            throw fmtTokenizerError(e, src, opts.filepath);
+            err = new Error(e.type + ": " + e.message);
+            err.ecmaless = {
+                loc: toLoc(e.loc.start, e.loc.end),
+            };
+            throw err;
         }
         throw e;
     }
-
-    var toLoc = EStreeLoc(src, opts.filepath);
 
     tokens = tokens
         .map(function(tok){
@@ -81,12 +47,15 @@ module.exports = function(src, opts){
         if(typeof e.offset === "number"){
             var tok = tokens[e.offset];
             if(tok && tok.loc){
-                throw fmtErrorWithExcerpt(e, {
-                    src: src,
-                    filepath: opts.filepath,
-                    line: tok.loc.start.line - 1,
-                    col: tok.loc.start.column
-                });
+                if(/Error: invalid syntax at/.test(e + "")){
+                    err = new Error("Invalid syntax");
+                }else{
+                    err = new Error(e + "");
+                }
+                err.ecmaless = {
+                    loc: tok.loc,
+                };
+                throw err;
             }
         }
         throw e;
