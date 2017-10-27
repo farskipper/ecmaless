@@ -243,8 +243,6 @@ test("parser", function(t){
     src += "        b\n";
     src += "    2:\n";
     src += "        c\n";
-    src += "    else:\n";
-    src += "        d";
     tst(src, {
         type: "Case",
         to_test: mk.id("a"),
@@ -252,7 +250,6 @@ test("parser", function(t){
             {type: "CaseBlock", value: mkv(1), block: mk.block([mk.stmt(mk.id("b"))])},
             {type: "CaseBlock", value: mkv(2), block: mk.block([mk.stmt(mk.id("c"))])}
         ],
-        "else": mk.block([mk.stmt(mk.id("d"))])
     });
 
     src = "";
@@ -376,7 +373,6 @@ test("parser", function(t){
                 mk.stmt(mk.id("b"))
             ])},
         ],
-        "else": null
     });
 
     t.end();

@@ -29,7 +29,7 @@ _.each({
     ],
     "### Control Flow": [
         "if a:\n    b\nelse:\n    c",
-        "case a:\n    1:\n        b\n    2:\n        c\n    else:\n        d",
+        "case a:\n    1:\n        b\n    2:\n        c",
         "while a:\n    b",
         "break",
         "continue",

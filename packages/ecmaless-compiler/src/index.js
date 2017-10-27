@@ -278,32 +278,82 @@ var comp_ast_node = {
             estree: e("if", test.estree, then, els_, ast.loc),
         };
     },
-    "Case": function(ast, comp){
-        var mkTest = function(val){
-            return comp({
-                loc: val.loc,
-                type: "InfixOperator",
-                op: "==",
-                left: ast.to_test,
-                right: val
-            }).estree;
+    "Case": function(ast, comp, ctx){
+        var to_test = comp(ast.to_test);
+        if(to_test.TYPE.tag !== "Enum"){
+            throw ctx.error(ast.to_test.loc, "`case` statements only work on Enums");
+        }
+        var detId = ctx.sysId("case");
+        var getDetIdProp = function(prop, loc){
+            return e(".", e("id", detId, loc), e("id", prop, loc), loc);
         };
-        var prev = ast["else"]
-            ? comp(ast["else"]).estree
-            : undefined;
-        var i = _.size(ast.blocks) - 1;
-        while(i >= 0){
-            var block = ast.blocks[i];
-            prev = e("if",
-                mkTest(block.value),
-                comp(block.block).estree,
-                prev,
-                block.loc
-            );
-            i--;
+        var variants_handled = {};
+        var cases = _.map(ast.blocks, function(cblock){
+            if(cblock.value.type !== "EnumValue"){
+                throw ctx.error(cblock.value.loc, "Not an EnumValue");
+            }
+            if(cblock.value.enum){
+                throw ctx.error(cblock.value.enum.loc, "Enum is implied");
+            }
+            if(!_.isEmpty(cblock.value.tag.params)){
+                throw ctx.error(cblock.value.tag.loc, "No params");
+            }
+            var tag = cblock.value.tag.value;
+            if(!_.has(to_test.TYPE.variants, tag)){
+                throw ctx.error(cblock.value.tag.loc, "`" + tag + "` is not a variant");
+            }
+            if(_.has(variants_handled, tag)){
+                throw ctx.error(cblock.value.tag.loc, "Duplicate variant `" + tag + "`");
+            }
+            variants_handled[tag] = true;
+            var vparamTypes = to_test.TYPE.variants[tag];
+            if(_.size(cblock.value.params) !== _.size(vparamTypes)){
+                throw ctx.error(cblock.value.loc, "Expected "
+                        + _.size(vparamTypes) + " params not "
+                        + _.size(cblock.value.params));
+            }
+            ctx.scope.push();
+            ctx.tvarScope.push();
+            var test = e("string", tag, cblock.value.tag.loc);
+            var consequent = [];
+            _.each(cblock.value.params, function(cparam, i){
+                if(cparam.type !== "Identifier"){
+                    throw ctx.error(cparam.loc, "Expected an Identifier");
+                }
+                ctx.scope.set(cparam.value, {TYPE: vparamTypes[i]});
+                consequent.push(e("var",
+                    cparam.value,
+                    e("get",
+                        getDetIdProp("params", cparam.loc),
+                        e("number", i, cparam.loc),
+                        cparam.loc
+                    ),
+                    cparam.loc
+                ));
+            });
+            _.each(cblock.block.body, function(ast, i){
+                consequent.push(comp(ast).estree);
+            });
+            consequent.push(e("break", cblock.block.loc));
+            ctx.scope.pop();
+            ctx.tvarScope.pop();
+            return e("case", test, consequent);
+        });
+        var missing = [];
+        _.each(to_test.TYPE.variants, function(a, tag){
+            if( ! _.has(variants_handled, tag)){
+                missing.push(tag);
+            }
+        });
+        if( ! _.isEmpty(missing)){
+            throw ctx.error(ast.to_test.loc, "Missing variants `" + missing.join("`, `") + "`");
         }
         return {
-            estree: prev,
+            estree: e(";", e("call", e("fn", [detId], [
+                e("switch", getDetIdProp("tag", ast.to_test.loc),
+                    cases,
+                    ast.loc),
+            ], ast.loc), [to_test.estree], ast.loc), ast.loc),
         };
     },
     "While": function(ast, comp, ctx){
@@ -490,6 +540,14 @@ module.exports = function(ast, conf){
 
     var ctx = {
         requireModule: conf.requireModule,
+
+        sysId: (function(){
+            var i = 0;
+            return function(v){
+                i += 1;
+                return "$sys$" + toId(v + i);
+            };
+        }()),
 
         error: function(loc, message){
             var err = new Error(message);

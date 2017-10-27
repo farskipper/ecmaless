@@ -147,8 +147,6 @@ case a:
         b
     2:
         c
-    else:
-        d
 {
     "type": "Case",
     "to_test": {"type": "Identifier", "value": "a"},
@@ -179,16 +177,7 @@ case a:
                 ]
             }
         }
-    ],
-    "else": {
-        "type": "Block",
-        "body": [
-            {
-                "type": "ExpressionStatement",
-                "expression": {"type": "Identifier", "value": "d"}
-            }
-        ]
-    }
+    ]
 }
 
 while a:

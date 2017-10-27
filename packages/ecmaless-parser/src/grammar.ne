@@ -288,14 +288,13 @@ Continue -> %tok_continue
     {% function(d){return {loc: d[0].loc, type: "Continue"};} %}
 
 
-Case -> %tok_case Expression %tok_COLON NL INDENT CaseBlock:* (ElseBlock NL):? DEDENT
+Case -> %tok_case Expression %tok_COLON NL INDENT CaseBlock:* DEDENT
 {% function(d){
     return {
         loc: mkLoc(d),
         type: "Case",
         to_test: d[1],
         blocks: d[5],
-        "else": d[6] && d[6][0],
     };
 } %}
 
@@ -321,8 +320,6 @@ TryCatch ->
     | %tok_try Block NL %tok_catch Identifier Block NL %tok_finally Block
       {% tryCatchMaker(4, 5, 8) %}
 
-
-ElseBlock -> %tok_else Block {% idN(1) %}
 
 
 Block -> %tok_COLON NL INDENT Statement_list DEDENT

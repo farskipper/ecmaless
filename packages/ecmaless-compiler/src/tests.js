@@ -149,11 +149,6 @@ test("compile", function(t){
 
     tc("(true ? 1 : 2) + 3", "(true?1:2)+3;");
 
-    //TODO tc(
-    //TODO     "case a:\n    1:\n        b\n    2:\n        c\n    else:\n        d",
-    //TODO     "if(a==1){b;}else if(a==2){c;}else{d;}"
-    //TODO );
-
     tc("while true:\n    1", "while(true){1;}");
     terr("while 1:\n    1", "e:Boolean a:Number 1:6,1:7");
     tc("break", "break;");
@@ -270,6 +265,87 @@ test("compile", function(t){
     );
 
     terr("Blah.B()", "Enum not defined `Blah` 1:0,1:4");
+
+    src = "";
+    src += "enum A:\n";
+    src += "    B()\n";
+    src += "    C()\n";
+    src += "\n";
+    terr(
+        src + "case 1:\n    2:\n        3\n",
+        "`case` statements only work on Enums 5:5,5:6"
+    );
+    terr(
+        src + "case A.B():\n    1:\n        2\n",
+        "Not an EnumValue 6:4,6:5"
+    );
+    terr(
+        src + "case A.B():\n    A.B():\n        2\n",
+        "Enum is implied 6:4,6:5"
+    );
+    terr(
+        src + "case A.B():\n    A<String>():\n        2\n",
+        "No params 6:4,6:12"
+    );
+    terr(
+        src + "case A.B():\n    Foo():\n        2\n",
+        "`Foo` is not a variant 6:4,6:7"
+    );
+    terr(
+        src + "case A.B():\n    B():\n        2\n    B():\n        3\n",
+        "Duplicate variant `B` 8:4,8:5"
+    );
+    terr(
+        src + "case A.B():\n    B(1, 2):\n        2\n",
+        "Expected 0 params not 2 6:4,6:11"
+    );
+    terr(
+        src + "case A.B():\n    B():\n        2",
+        "Missing variants `C` 5:5,5:10"
+    );
+    src += "def a = A.B()\n";
+    src += "case a:\n";
+    src += "    B():\n";
+    src += "        1\n";
+    src += "    C():\n";
+    src += "        2\n";
+    tc(
+        src,
+        "var a={'tag':'B','params':[]};"
+        + "(function($sys$case1){"
+        + "switch($sys$case1.tag){"
+        + "case'B':1;break;"
+        + "case'C':2;break;"
+        + "}}(a));"
+    );
+
+    src = "";
+    src += "enum A:\n";
+    src += "    B(Number)\n";
+    src += "\n";
+    src += "case A.B(1):\n";
+    src += "    B(1):\n";
+    src += "        2\n";
+    terr(src, "Expected an Identifier 5:6,5:7");
+
+    src = "";
+    src += "enum A:\n";
+    src += "    B(Number)\n";
+    src += "    C(String, Boolean)\n";
+    src += "\n";
+    src += "case A.B(1):\n";
+    src += "    B(n):\n";
+    src += "        n\n";
+    src += "    C(s, b):\n";
+    src += "        s\n";
+    tc(
+        src,
+        "(function($sys$case1){"
+        + "switch($sys$case1.tag){"
+        + "case'B':var n=$sys$case1.params[0];n;break;"
+        + "case'C':var s=$sys$case1.params[0];var b=$sys$case1.params[1];s;break;"
+        + "}}({'tag':'B','params':[1]}));"
+    );
 
     t.end();
 });

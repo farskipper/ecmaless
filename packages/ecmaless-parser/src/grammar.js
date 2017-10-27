@@ -272,16 +272,12 @@ var grammar = {
     {"name": "Continue", "symbols": [tok_continue], "postprocess": function(d){return {loc: d[0].loc, type: "Continue"};}},
     {"name": "Case$ebnf$1", "symbols": []},
     {"name": "Case$ebnf$1", "symbols": ["Case$ebnf$1", "CaseBlock"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "Case$ebnf$2$subexpression$1", "symbols": ["ElseBlock", "NL"]},
-    {"name": "Case$ebnf$2", "symbols": ["Case$ebnf$2$subexpression$1"], "postprocess": id},
-    {"name": "Case$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "Case", "symbols": [tok_case, "Expression", tok_COLON, "NL", "INDENT", "Case$ebnf$1", "Case$ebnf$2", "DEDENT"], "postprocess":  function(d){
+    {"name": "Case", "symbols": [tok_case, "Expression", tok_COLON, "NL", "INDENT", "Case$ebnf$1", "DEDENT"], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
                 type: "Case",
                 to_test: d[1],
                 blocks: d[5],
-                "else": d[6] && d[6][0],
             };
         } },
     {"name": "CaseBlock", "symbols": ["Expression", "Block", "NL"], "postprocess":  function(d){
@@ -295,7 +291,6 @@ var grammar = {
     {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block"], "postprocess": tryCatchMaker(4, 5, -1)},
     {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(-1, -1, 4)},
     {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(4, 5, 8)},
-    {"name": "ElseBlock", "symbols": [tok_else, "Block"], "postprocess": idN(1)},
     {"name": "Block", "symbols": [tok_COLON, "NL", "INDENT", "Statement_list", "DEDENT"], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
