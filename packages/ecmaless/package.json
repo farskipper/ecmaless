@@ -32,6 +32,7 @@
   "homepage": "https://github.com/farskipper/ecmaless#readme",
   "dependencies": {
     "btoa": "^1.1.2",
+    "contra": "^1.9.4",
     "dependency-resolver": "^2.0.1",
     "ecmaless-compiler": "^0.4.0",
     "ecmaless-parser": "^0.7.0",
@@ -39,10 +40,10 @@
     "escodegen": "^1.8.0",
     "esprima": "^2.7.3",
     "estree-builder": "^1.10.0",
-    "lodash": "^4.17.4"
+    "lodash": "^4.17.4",
+    "minimist": "^1.2.0"
   },
   "devDependencies": {
-    "contra": "^1.9.4",
     "eslint": "^4.8.0",
     "onchange": "^3.2.1",
     "tape": "^4.8.0"
