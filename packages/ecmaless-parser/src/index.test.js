@@ -143,15 +143,14 @@ test("parser", function(t){
     tstFail("[,1, 2, 3]");
 
     tst("{}", mkv({}));
-    tst("{\"a\": 1}", mkv({a: mkv(1)}));
-    tstFail("{\"a\": 1,}");
     tst("{a: 1}", mk.struct([mk.sym("a"), mkv(1)]));
+    tstFail("{a: 1,}");
     tst("{def: 1}", mk.struct([mk.sym("def"), mkv(1)]));
-    tst("{1: \"a\"}", mk.struct([mkv(1), mkv("a")]));
-    tst("{\n    1: \"a\",\n}", mk.struct([mkv(1), mkv("a")]));
-    tst("{\n    1: \"a\",\n    2: \"b\",\n}", mk.struct([
-        mkv(1), mkv("a"),
-        mkv(2), mkv("b")
+    tstFail("{1: 1}");
+    tst("{\n    a: \"a\",\n}", mk.struct([mk.sym("a"), mkv("a")]));
+    tst("{\n    a: \"a\",\n    b: \"b\",\n}", mk.struct([
+        mk.sym("a"), mkv("a"),
+        mk.sym("b"), mkv("b")
     ]));
 
     var fn_body_a = [mk.stmt(mk.id("a"))];
@@ -199,7 +198,7 @@ test("parser", function(t){
 
     tst("(1)", mkv(1));
 
-    tst("a.b.c", mk.mem("dot", mk.mem("dot", mk.id("a"), mk.id("b")), mk.id("c")));
+    tst("a.b.c", mk.mem("dot", mk.mem("dot", mk.id("a"), mk.sym("b")), mk.sym("c")));
     tst("a[b][0]", mk.mem("index", mk.mem("index", mk.id("a"), mk.id("b")), mkv(0)));
 
     tst("a?1:2", mk.ternary(mk.id("a"), mkv(1), mkv(2)));

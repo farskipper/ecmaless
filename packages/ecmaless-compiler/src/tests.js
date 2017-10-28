@@ -70,7 +70,6 @@ test("compile", function(t){
 
     tc("def a=\"foo\"\na ++ \"bar\"", "var a='foo';'foobar';");
 
-    tc("[1, 2]", "[1,2];");
     tc("{a: 1, b: 2}", "({'a':1,'b':2});");
     terr("{a: 1, b: 2, a: 3}", "Duplicate key `a` 1:13,1:14");
 
@@ -241,19 +240,6 @@ test("compile", function(t){
     terr("export:\n    a", "Not defined `a` 2:4,2:5");
 
 
-    /*
-    src = "";
-    src += "def foo = [1, 2]\n";
-    src += "foo[0] + 3";
-    tc(src, "var foo=[1,2];foo[0]+3;");
-
-    tc("a[b]", "$$$ecmaless$$$get(a,b);");
-    tc("a.b[c][1][\"e\"]", "$$$ecmaless$$$get($$$ecmaless$$$get($$$ecmaless$$$get($$$ecmaless$$$get(a,'b'),c),1),'e');");
-
-    tc("a.b = 1", "$$$ecmaless$$$set(a,'b',1);");
-    tc("a.b.c = 1", "$$$ecmaless$$$set($$$ecmaless$$$get(a,'b'),'c',1);");
-    */
-
     tc(
         "enum A:\n    B(String)\ndef a = A.B(\"foo\")",
         "var a={'tag':'B','params':['foo']};"
@@ -377,6 +363,17 @@ test("compile", function(t){
         + "case'C':var s=$sys$case1.params[0];var b=$sys$case1.params[1];s;break;"
         + "}}({'tag':'B','params':[1]}));"
     );
+
+
+    tc("[1, 2]", "[1,2];");
+    /*
+    src = "";
+    src += "ann foo = Array<Number>\n";
+    src += "def foo = [1, 2]\n";
+    src += "ann bar = Maybe<Number>\n";
+    src += "def bar = foo[0]\n";
+    tc(src, "var foo=[1,2];var bar=foo[0];");
+    */
 
     t.end();
 });

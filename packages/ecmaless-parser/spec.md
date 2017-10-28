@@ -32,11 +32,11 @@ false
     ]
 }
 
-{"a": 1, b: 2}
+{a: 1, b: 2}
 {
     "type": "Struct",
     "value": [
-        {"type": "String", "value": "a"},
+        {"type": "Symbol", "value": "a"},
         {"type": "Number", "value": 1},
         {"type": "Symbol", "value": "b"},
         {"type": "Number", "value": 2}
@@ -269,10 +269,10 @@ a.b.c
     "object": {
         "type": "MemberExpression",
         "object": {"type": "Identifier", "value": "a"},
-        "path": {"type": "Identifier", "value": "b"},
+        "path": {"type": "Symbol", "value": "b"},
         "method": "dot"
     },
-    "path": {"type": "Identifier", "value": "c"},
+    "path": {"type": "Symbol", "value": "c"},
     "method": "dot"
 }
 

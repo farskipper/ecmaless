@@ -14,7 +14,7 @@ _.each({
         "true",
         "false",
         "[1, 2, 3]",
-        "{\"a\": 1, b: 2}",
+        "{a: 1, b: 2}",
     ],
     "### Functions": [
         "fn (a, b) :\n    nil",

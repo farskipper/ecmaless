@@ -604,7 +604,7 @@ UnaryOperator -> MemberExpression {% id %}
 
 
 MemberExpression -> PrimaryExpression {% id %}
-    | MemberExpression %tok_DOT Identifier
+    | MemberExpression %tok_DOT Symbol
       {% function(d){
           return mkMemberExpression(mkLoc(d), "dot", d[0], d[2]);
       } %}
@@ -667,9 +667,9 @@ KeyValPairs_body_nl ->
     | KeyValPairs_body_nl KeyValPair COMMA NL {% concatArr(1, true) %}
 
 
-KeyValPair -> (String|Number|Symbol) %tok_COLON Expression
+KeyValPair -> Symbol %tok_COLON Expression
 {% function(d){
-    return [d[0][0], d[2]];
+    return [d[0], d[2]];
 } %}
 
 

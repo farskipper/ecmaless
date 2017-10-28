@@ -80,23 +80,17 @@ var comp_ast_node = {
         var est_pairs = [];
         _.each(_.chunk(ast.value, 2), function(pair){
             var key = pair[0];
-            var key_str;
-            var key_est;
-            if(key.type === "Symbol"){
-                key_str = key.value;
-                key_est = e("string", key.value, key.loc);
-            }else if(key.type === "String"){
-                key_str = key.value;
-                key_est = comp(key).estree;
-            }else{
+            if(key.type !== "Symbol"){
                 throw ctx.error(key.loc, "Invalid struct key.type: " + key.type);
             }
-
-            var val = comp(pair[1]);
+            var key_str = key.value;
+            var key_est = e("string", key.value, key.loc);
 
             if(_.has(TYPE.by_key, key_str)){
                 throw ctx.error(key.loc, "Duplicate key `" + key_str + "`");
             }
+
+            var val = comp(pair[1]);
 
             TYPE.by_key[key_str] = val.TYPE;
 
@@ -180,7 +174,7 @@ var comp_ast_node = {
 
         var obj = comp(ast.object);
 
-        if(ast.method === "dot" && ast.path && ast.path.type === "Identifier"){
+        if(ast.method === "dot" && ast.path && ast.path.type === "Symbol"){
 
             var key = ast.path.value;
 
@@ -196,22 +190,21 @@ var comp_ast_node = {
                 TYPE: obj.TYPE.by_key[key],
             };
         }else if(ast.method === "index"){
-            var path = comp(ast.path);
-            if(obj.TYPE.tag === "Array"){
-                if(path.TYPE.tag !== "Number"){//TODO Int
-                    throw ctx.error(ast.loc, "Array subscript notation only works with Ints");
-                }
-                return {
-                    estree: e("get", obj.estree, path.estree, ast.loc),
-                    TYPE: {
-                        tag: "Maybe",
-                        params: [obj.TYPE.type],
-                        loc: ast.loc,
-                    },
-                };
-            }else{
+            if(obj.TYPE.tag !== "Array"){
                 throw ctx.error(ast.loc, "subscript notation only works on Arrays");
             }
+            var path = comp(ast.path);
+            if(path.TYPE.tag !== "Number"){//TODO Int
+                throw ctx.error(ast.loc, "Array subscript notation only works with Ints");
+            }
+            return {
+                estree: e("get", obj.estree, path.estree, ast.loc),
+                TYPE: {
+                    tag: "Maybe",
+                    params: [obj.TYPE.type],
+                    loc: ast.loc,
+                },
+            };
         }else{
             throw ctx.error(ast.loc, "Unsupported MemberExpression method: " + ast.method);
         }

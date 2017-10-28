@@ -498,7 +498,7 @@ var grammar = {
     {"name": "UnaryOperator", "symbols": [tok_MINUS, "UnaryOperator"], "postprocess": unaryOp},
     {"name": "UnaryOperator", "symbols": [tok_not, "UnaryOperator"], "postprocess": unaryOp},
     {"name": "MemberExpression", "symbols": ["PrimaryExpression"], "postprocess": id},
-    {"name": "MemberExpression", "symbols": ["MemberExpression", tok_DOT, "Identifier"], "postprocess":  function(d){
+    {"name": "MemberExpression", "symbols": ["MemberExpression", tok_DOT, "Symbol"], "postprocess":  function(d){
             return mkMemberExpression(mkLoc(d), "dot", d[0], d[2]);
         } },
     {"name": "MemberExpression", "symbols": ["MemberExpression", tok_OPEN_SQ, "Expression", tok_CLOSE_SQ], "postprocess":  function(d){
@@ -538,11 +538,8 @@ var grammar = {
     {"name": "KeyValPairs_body", "symbols": ["KeyValPairs_body", "COMMA", "KeyValPair"], "postprocess": concatArr(2, true)},
     {"name": "KeyValPairs_body_nl", "symbols": ["KeyValPair", "COMMA", "NL"], "postprocess": id},
     {"name": "KeyValPairs_body_nl", "symbols": ["KeyValPairs_body_nl", "KeyValPair", "COMMA", "NL"], "postprocess": concatArr(1, true)},
-    {"name": "KeyValPair$subexpression$1", "symbols": ["String"]},
-    {"name": "KeyValPair$subexpression$1", "symbols": ["Number"]},
-    {"name": "KeyValPair$subexpression$1", "symbols": ["Symbol"]},
-    {"name": "KeyValPair", "symbols": ["KeyValPair$subexpression$1", tok_COLON, "Expression"], "postprocess":  function(d){
-            return [d[0][0], d[2]];
+    {"name": "KeyValPair", "symbols": ["Symbol", tok_COLON, "Expression"], "postprocess":  function(d){
+            return [d[0], d[2]];
         } },
     {"name": "Array", "symbols": [tok_OPEN_SQ, "Expression_list", tok_CLOSE_SQ], "postprocess":  function(d){
             return {
