@@ -426,7 +426,7 @@ test("import / export", function(t){
     src += "alias Bar = {foo: Foo}\n";
     src += "export:\n";
     src += "    Bar";
-    tc(src, "function(){return{'Bar':{'tag':'Struct','by_key':{'foo':{'tag':'String'}}}};}");
+    tc(src, "function(){return{};}");
 
     src = "";
     src += "alias Foo = String\n";
@@ -434,13 +434,13 @@ test("import / export", function(t){
     src += "alias Baz = {bar: Bar}\n";
     src += "export:\n";
     src += "    Baz";
-    tc(src, "function(){return{'Baz':{'tag':'Struct','by_key':{'bar':{'tag':'Struct','by_key':{'foo':{'tag':'String'}}}}}};}");
+    tc(src, "function(){return{};}");
 
     src = "";
     src += "alias Foo = Fn(Number) Number\n";
     src += "export:\n";
     src += "    Foo";
-    tc(src, "function(){return{'Foo':{'tag':'Fn','params':[{'tag':'Number'}],'return':{'tag':'Number'}}};}");
+    tc(src, "function(){return{};}");
 
 
     src = "";
@@ -449,7 +449,7 @@ test("import / export", function(t){
     src += "        Str\n";
     src += "export:\n";
     src += "    Str";
-    tc(src, "function($0){return{'Str':{'tag':'String'}};}");
+    tc(src, "function($0){return{};}");
 
     src = "";
     src += "import:\n";
