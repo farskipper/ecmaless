@@ -80,6 +80,16 @@ test("compile", function(t){
     terr(src, "Sorry, function types are not infered 1:10,2:17");
 
     src = "";
+    src += "def add = 1\n";
+    src += "ann add = Number\n";
+    terr(src, "Annotation needs to come before the definition 2:4,2:7");
+
+    src = "";
+    src += "ann add = Number\n";
+    src += "ann add = Number\n";
+    terr(src, "`add` is already annotated 2:4,2:7");
+
+    src = "";
     src += "ann add = Fn (Number, Number) Number\n";
     src += "def add = fn (a):\n";
     src += "    return a + b\n";
@@ -94,6 +104,27 @@ test("compile", function(t){
     tc(src + "add(1, 2)", "var add=function add(a,b){return a+b;};add(1,2);");
     terr(src + "add(\"a\", 2)", "e:Number a:String 5:4,5:7");
     terr(src + "\"a\" ++ add(1, 2)", "e:String a:Number 5:7,5:16");
+
+    terr("def a=1\ndef a=2", "`a` is already defined 2:4,2:5");
+    src = "";
+    src += "def a = 1\n";
+    src += "ann foo = Fn (Number) Number\n";
+    src += "def foo = fn (a):\n";
+    src += "    return a\n";
+    tc(src, "var a=1;var foo=function foo(a){return a;};");
+    src = "";
+    src += "def a = 1\n";
+    src += "ann foo = Fn () Number\n";
+    src += "def foo = fn ():\n";
+    src += "    def a = 2\n";
+    src += "    return a\n";
+    tc(src, "var a=1;var foo=function foo(){var a=2;return a;};");
+    src = "";
+    src += "ann foo = Fn (Number) Number\n";
+    src += "def foo = fn (a):\n";
+    src += "    def a = 2\n";
+    src += "    return a\n";
+    terr(src, "`a` is already defined 3:8,3:9");
 
     src = "";
     src += "def add = \"foo\"\n";

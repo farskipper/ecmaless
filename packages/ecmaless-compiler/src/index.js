@@ -391,6 +391,13 @@ var comp_ast_node = {
         if(ast.id.type !== "Identifier"){
             throw ctx.error(ast.id.loc, "Only Identifiers can be defined");
         }
+        if(ctx.scope.has(ast.id.value)
+            && (ctx.scope.height(ast.id.value) === ctx.scope.getItsHeight(ast.id.value))
+        ){
+            if( ! ctx.scope.get(ast.id.value).annotation){
+                throw ctx.error(ast.id.loc, "`" + ast.id.value + "` is already defined");
+            }
+        }
         var curr_val = ctx.scope.get(ast.id.value);
         var annotated = curr_val && curr_val.TYPE;
 
@@ -416,7 +423,14 @@ var comp_ast_node = {
     },
     "Annotation": function(ast, comp, ctx){
         var def = comp(ast.def);
-        ctx.scope.set(ast.id.value, {TYPE: def.TYPE});
+        if(ctx.scope.has(ast.id.value)){
+            if(ctx.scope.get(ast.id.value).annotation){
+                throw ctx.error(ast.id.loc, "`" + ast.id.value + "` is already annotated");
+            }else{
+                throw ctx.error(ast.id.loc, "Annotation needs to come before the definition");
+            }
+        }
+        ctx.scope.set(ast.id.value, {TYPE: def.TYPE, annotation: true});
         return void 0;//nothing to compile
     },
     "FunctionType": function(ast, comp, ctx){
