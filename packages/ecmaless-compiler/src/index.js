@@ -102,7 +102,7 @@ var comp_ast_node = {
         };
     },
     "Function": function(ast, comp, ctx, from_caller){
-        var expTYPE = from_caller && from_caller.TYPE;
+        var expTYPE = from_caller && from_caller.annotatedTYPE;
         if(!expTYPE || expTYPE.tag !== "Fn"){
             throw ctx.error(ast.loc, "Sorry, function types are not infered");
         }
@@ -116,18 +116,14 @@ var comp_ast_node = {
             ctx.scope.set(p.value, {TYPE: expTYPE.params[i]});
             return comp(p).estree;
         });
-        var body = _.compact(_.map(ast.block.body, function(b){
-            var c = comp(b);
-            if(c){
-                //TODO check return type matches expTYPE
-                //TODO check return type matches expTYPE
-                return c.estree;
-            }
-        }));
+
+        var body = comp(ast.block, {no_scope_push: true});
+        ctx.assertT(body.returns || {tag: "Nil", loc: ast.loc}, expTYPE["return"]);
+
         ctx.scope.pop();
         var id;
         return {
-            estree: e("function", params, body, id, ast.loc),
+            estree: e("function", params, body.estree, id, ast.loc),
             TYPE: expTYPE,
         };
     },
@@ -236,14 +232,30 @@ var comp_ast_node = {
             TYPE: TYPE,
         };
     },
-    "Block": function(ast, comp, ctx){
-        ctx.scope.push();
-        var body = _.map(ast.body, function(ast){
-            return comp(ast).estree;
-        });
-        ctx.scope.pop();
+    "Block": function(ast, comp, ctx, from_caller){
+        var should_push_scope = !(from_caller && from_caller.no_scope_push);
+        if(should_push_scope){
+            ctx.scope.push();
+        }
+
+        var returns;
+        var body = _.compact(_.map(ast.body, function(ast){
+            if(returns){
+                throw ctx.error(ast.loc, "Dead code");
+            }
+            var c = comp(ast);
+            if(c.returns){
+                returns = c.returns;
+            }
+            return c.estree;
+        }));
+
+        if(should_push_scope){
+            ctx.scope.pop();
+        }
         return {
             estree: e("block", body, ast.loc),
+            returns: returns,
         };
     },
     "ExpressionStatement": function(ast, comp){
@@ -253,8 +265,10 @@ var comp_ast_node = {
         };
     },
     "Return": function(ast, comp){
+        var c = comp(ast.expression);
         return {
-            estree: e("return", comp(ast.expression).estree, ast.loc),
+            estree: e("return", c.estree, ast.loc),
+            returns: c.TYPE,
         };
     },
     "If": function(ast, comp, ctx){
@@ -263,12 +277,22 @@ var comp_ast_node = {
             tag: "Boolean",
             loc: ast.test.loc,
         });
-        var then = comp(ast.then).estree;
+        var then = comp(ast.then);
         var els_ = ast["else"]
-            ? comp(ast["else"]).estree
+            ? comp(ast["else"])
             : void 0;
+        var returns = then.returns;
+        if(els_ && els_.returns){
+            if(returns){
+                //TODO better message about branches need to match
+                ctx.assertT(els_.returns, then.returns);
+            }else{
+                returns = els_.returns;
+            }
+        }
         return {
-            estree: e("if", test.estree, then, els_, ast.loc),
+            estree: e("if", test.estree, then.estree, els_ ? els_.estree : void 0, ast.loc),
+            returns: returns,
         };
     },
     "Case": function(ast, comp, ctx){
@@ -394,7 +418,7 @@ var comp_ast_node = {
         var curr_val = ctx.scope.get(ast.id.value);
         var annotated = curr_val && curr_val.TYPE;
 
-        var init = comp(ast.init, {TYPE: annotated});
+        var init = comp(ast.init, {annotatedTYPE: annotated});
 
         if(annotated){
             //ensure it matches the annotation

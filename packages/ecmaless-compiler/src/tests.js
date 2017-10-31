@@ -29,7 +29,7 @@ var testError = function(t, src, expected){
     }
     try{
         compToStr(src);
-        t.fail("should throw");
+        t.fail("should throw: " + expected);
     }catch(e){
         var estr = (e + "").replace(/^Error: /, "");
         estr = estr
@@ -374,6 +374,53 @@ test("compile", function(t){
     src += "def bar = foo[0]\n";
     tc(src, "var foo=[1,2];var bar=foo[0];");
     */
+
+
+    src = "";
+    src += "ann foo = Fn () Number\n";
+    src += "def foo = fn ():\n";
+    src += "    return \"hi\"\n";
+    terr(src, "e:Number a:String 3:11,3:15");
+
+    src = "";
+    src += "ann foo = Fn () Number\n";
+    src += "def foo = fn ():\n";
+    src += "    def a = \"hi\"\n";
+    terr(src, "e:Number a:Nil 2:10,3:17");
+
+    src = "";
+    src += "ann foo = Fn () Number\n";
+    src += "def foo = fn ():\n";
+    src += "    if true:\n";
+    src += "        return \"hi\"\n";
+    terr(src, "e:Number a:String 4:15,4:19");
+
+    src = "";
+    src += "ann foo = Fn () Number\n";
+    src += "def foo = fn ():\n";
+    src += "    return 1\n";
+    src += "    return 2\n";
+    terr(src, "Dead code 4:4,4:12");//or "Already returned" error
+
+    src = "";
+    src += "ann foo = Fn () Number\n";
+    src += "def foo = fn ():\n";
+    src += "    return 1\n";
+    src += "    def a = 2\n";
+    terr(src, "Dead code 4:4,4:13");
+
+    src = "";
+    src += "ann foo = Fn () Number\n";
+    src += "def foo = fn ():\n";
+    src += "    if true:\n";
+    src += "        return 1\n";
+    src += "    else:\n";
+    src += "        return \"hi\"\n";
+    terr(src, "e:Number a:String 6:15,6:19");
+
+    //TODO returns in while
+    //TODO returns in case
+    //TODO no `return` outside a function
 
     t.end();
 });
