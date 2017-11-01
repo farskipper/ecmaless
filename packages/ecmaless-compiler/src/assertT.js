@@ -2,7 +2,7 @@ var _ = require("lodash");
 var typeToString = require("./typeToString");
 
 
-module.exports = function assertT(ctx, actual, expected, loc){
+module.exports = function assertT(ctx, actual, expected){
 
     var aTag = actual.tag;
 

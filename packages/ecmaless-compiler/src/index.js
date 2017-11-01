@@ -46,7 +46,9 @@ var comp_ast_node = {
         }
         return {
             estree: e("id", toId(ast.value), ast.loc),
-            TYPE: ctx.scope.get(id).TYPE,
+            TYPE: _.assign({}, ctx.scope.get(id).TYPE, {
+                loc: ast.loc,
+            }),
         };
     },
     "Array": function(ast, comp, ctx){
@@ -118,6 +120,9 @@ var comp_ast_node = {
         });
 
         var body = comp(ast.block, {no_scope_push: true});
+        if(body.may_return && expTYPE["return"].tag !== "Nil"){
+            throw ctx.error(body.may_return.loc, "There is a branch that is not returning");
+        }
         ctx.assertT(body.returns || {tag: "Nil", loc: ast.loc}, expTYPE["return"]);
 
         ctx.scope.pop();
@@ -234,11 +239,13 @@ var comp_ast_node = {
     },
     "Block": function(ast, comp, ctx, from_caller){
         var should_push_scope = !(from_caller && from_caller.no_scope_push);
+        var should_wrap_in_eblock = !(from_caller && from_caller.wrap_in_eblock);
         if(should_push_scope){
             ctx.scope.push();
         }
 
         var returns;
+        var may_return;
         var body = _.compact(_.map(ast.body, function(ast){
             if(returns){
                 throw ctx.error(ast.loc, "Dead code");
@@ -246,6 +253,12 @@ var comp_ast_node = {
             var c = comp(ast);
             if(c.returns){
                 returns = c.returns;
+                if(may_return){
+                    //TODO better message about branches matching
+                    ctx.assertT(may_return, returns);
+                }
+            }else if(c.may_return){
+                may_return = c.may_return;
             }
             return c.estree;
         }));
@@ -254,8 +267,11 @@ var comp_ast_node = {
             ctx.scope.pop();
         }
         return {
-            estree: e("block", body, ast.loc),
+            estree: should_wrap_in_eblock
+                ? e("block", body, ast.loc)
+                : body,
             returns: returns,
+            may_return: may_return,
         };
     },
     "ExpressionStatement": function(ast, comp){
@@ -282,17 +298,24 @@ var comp_ast_node = {
             ? comp(ast["else"])
             : void 0;
         var returns = then.returns;
-        if(els_ && els_.returns){
-            if(returns){
-                //TODO better message about branches need to match
-                ctx.assertT(els_.returns, then.returns);
+        var may_return;
+        if(els_){
+            if(els_.returns){
+                if(returns){
+                    //TODO better message about branches need to match
+                    ctx.assertT(els_.returns, then.returns);
+                }else{
+                    returns = els_.returns;
+                }
             }else{
-                returns = els_.returns;
+                may_return = returns;
+                returns = void 0;
             }
         }
         return {
             estree: e("if", test.estree, then.estree, els_ ? els_.estree : void 0, ast.loc),
             returns: returns,
+            may_return: may_return,
         };
     },
     "Case": function(ast, comp, ctx){
@@ -304,6 +327,8 @@ var comp_ast_node = {
         var getDetIdProp = function(prop, loc){
             return e(".", e("id", detId, loc), e("id", prop, loc), loc);
         };
+        var n_branches_with_returns = 0;
+        var returns;
         var variants_handled = {};
         var cases = _.map(ast.blocks, function(cblock){
             if(cblock.value.type !== "EnumValue"){
@@ -348,9 +373,20 @@ var comp_ast_node = {
                     cparam.loc
                 ));
             });
-            _.each(cblock.block.body, function(ast, i){
-                consequent.push(comp(ast).estree);
+            var block = comp(cblock.block, {
+                no_scope_push: true,
+                wrap_in_eblock: true,
             });
+            if(block.returns){
+                n_branches_with_returns += 1;
+                if(returns){
+                    //TODO better message about branches need to match
+                    ctx.assertT(block.returns, returns);
+                }else{
+                    returns = block.returns;
+                }
+            }
+            consequent = consequent.concat(block.estree);
             consequent.push(e("break", cblock.block.loc));
             ctx.scope.pop();
             ctx.tvarScope.pop();
@@ -371,6 +407,12 @@ var comp_ast_node = {
                     cases,
                     ast.loc),
             ], ast.loc), [to_test.estree], ast.loc), ast.loc),
+            returns: n_branches_with_returns === _.size(ast.blocks)
+                ? returns
+                : null,
+            may_return: n_branches_with_returns === _.size(ast.blocks)
+                ? null
+                : returns,
         };
     },
     "While": function(ast, comp, ctx){
@@ -379,8 +421,11 @@ var comp_ast_node = {
             tag: "Boolean",
             loc: ast.test.loc,
         });
+        var b = comp(ast.block);
         return {
-            estree: e("while", test.estree, comp(ast.block).estree, ast.loc),
+            estree: e("while", test.estree, b.estree, ast.loc),
+            returns: b.returns,
+            may_return: b.may_return,
         };
     },
     "Break": function(ast, comp){

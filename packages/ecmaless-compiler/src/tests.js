@@ -418,8 +418,72 @@ test("compile", function(t){
     src += "        return \"hi\"\n";
     terr(src, "e:Number a:String 6:15,6:19");
 
-    //TODO returns in while
-    //TODO returns in case
+    src = "";
+    src += "ann foo = Fn () Number\n";
+    src += "def foo = fn ():\n";
+    src += "    while true:\n";
+    src += "        return \"hi\"\n";
+    terr(src, "e:Number a:String 4:15,4:19");
+
+    src = "";
+    src += "enum A:\n";
+    src += "    B(Number)\n";
+    src += "    C(String)\n";
+    src += "\n";
+    src += "ann foo = Fn () Number\n";
+    src += "def foo = fn ():\n";
+    var src2 = src;
+    src2 += "    case A.B(1):\n";
+    src2 += "        B(n):\n";
+    src2 += "            return \"hi\"\n";
+    src2 += "        C(s):\n";
+    src2 += "            return s\n";
+    terr(src2, "e:Number a:String 9:19,9:23");
+    src2 = src;
+    src2 += "    case A.B(1):\n";
+    src2 += "        B(n):\n";
+    src2 += "            def a = 1\n";
+    src2 += "        C(s):\n";
+    src2 += "            def b = 2\n";
+    src2 += "    return \"hi\"\n";
+    terr(src2, "e:Number a:String 12:11,12:15");
+    src2 = src;
+    src2 += "    case A.B(1):\n";
+    src2 += "        B(n):\n";
+    src2 += "            return n\n";
+    src2 += "        C(s):\n";
+    src2 += "            def b = 2\n";
+    src2 += "    return \"hi\"\n";
+    terr(src2, "e:String a:Number 9:19,9:20");
+    src2 = src;
+    src2 += "    case A.B(1):\n";
+    src2 += "        B(n):\n";
+    src2 += "            return n\n";
+    src2 += "        C(s):\n";
+    src2 += "            return s\n";
+    terr(src2, "e:Number a:String 11:19,11:20");
+    src2 = src;
+    src2 += "    case A.B(1):\n";
+    src2 += "        B(n):\n";
+    src2 += "            return n\n";
+    src2 += "        C(s):\n";
+    src2 += "            def b = 2\n";
+    src2 += "    def c = 3\n";
+    terr(src2, "There is a branch that is not returning 9:19,9:20");
+    src2 = src;
+    src2 += "    if true:\n";
+    src2 += "        return 1\n";
+    src2 += "    else:\n";
+    src2 += "        def b = 2\n";
+    terr(src2, "There is a branch that is not returning 8:15,8:16");
+    src2 = src;
+    src2 += "    while true:\n";
+    src2 += "        if true:\n";
+    src2 += "            return 1\n";
+    src2 += "        else:\n";
+    src2 += "            def b = 2\n";
+    terr(src2, "There is a branch that is not returning 9:19,9:20");
+
     //TODO no `return` outside a function
 
     t.end();
