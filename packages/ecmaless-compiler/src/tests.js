@@ -484,7 +484,16 @@ test("compile", function(t){
     src2 += "            def b = 2\n";
     terr(src2, "There is a branch that is not returning 9:19,9:20");
 
-    //TODO no `return` outside a function
+    src = "";
+    src += "return 1";
+    terr(src, "You cannot return outside a function body. Did you mean `export`? 1:0,1:8");
+
+    src = "";
+    src += "if true:\n";
+    src += "    return 1\n";
+    src += "else:\n";
+    src += "    def b = 2\n";
+    terr(src, "You cannot return outside a function body. Did you mean `export`? 1:0,4:14");
 
     t.end();
 });

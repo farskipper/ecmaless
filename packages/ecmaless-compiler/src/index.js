@@ -670,7 +670,13 @@ module.exports = function(ast, conf){
 
     _.each(ast, function(ast){
         var c = compile(ast);
-        if(c && c.estree){
+        if(!c){
+            return;
+        }
+        if(c.returns || c.may_return){
+            throw ctx.error(c.estree.loc, "You cannot return outside a function body. Did you mean `export`?");
+        }
+        if(c.estree){
             estree.push(c.estree);
         }
     });
