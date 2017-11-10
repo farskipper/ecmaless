@@ -99,6 +99,7 @@ var tok_else = tok("SYMBOL", "else");
 
 var tok_case = tok("SYMBOL", "case");
 
+var tok_throw = tok("SYMBOL", "throw");
 var tok_try = tok("SYMBOL", "try");
 var tok_catch = tok("SYMBOL", "catch");
 var tok_finally = tok("SYMBOL", "finally");
@@ -209,6 +210,7 @@ Statement ->
       Define {% id %}
     | ExpressionStatement {% id %}
     | Return {% id %}
+    | Throw {% id %}
     | If {% id %}
     | While {% id %}
     | Break {% id %}
@@ -237,6 +239,16 @@ Return -> %tok_return Expression:?
     return {
         loc: mkLoc(d),
         type: "Return",
+        expression: d[1],
+    };
+} %}
+
+
+Throw -> %tok_throw Expression
+{% function(d){
+    return {
+        loc: mkLoc(d),
+        type: "Throw",
         expression: d[1],
     };
 } %}

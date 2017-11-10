@@ -103,6 +103,7 @@ var tok_else = tok("SYMBOL", "else");
 
 var tok_case = tok("SYMBOL", "case");
 
+var tok_throw = tok("SYMBOL", "throw");
 var tok_try = tok("SYMBOL", "try");
 var tok_catch = tok("SYMBOL", "catch");
 var tok_finally = tok("SYMBOL", "finally");
@@ -207,6 +208,7 @@ var grammar = {
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
     {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
     {"name": "Statement", "symbols": ["Return"], "postprocess": id},
+    {"name": "Statement", "symbols": ["Throw"], "postprocess": id},
     {"name": "Statement", "symbols": ["If"], "postprocess": id},
     {"name": "Statement", "symbols": ["While"], "postprocess": id},
     {"name": "Statement", "symbols": ["Break"], "postprocess": id},
@@ -231,6 +233,13 @@ var grammar = {
             return {
                 loc: mkLoc(d),
                 type: "Return",
+                expression: d[1],
+            };
+        } },
+    {"name": "Throw", "symbols": [tok_throw, "Expression"], "postprocess":  function(d){
+            return {
+                loc: mkLoc(d),
+                type: "Throw",
                 expression: d[1],
             };
         } },

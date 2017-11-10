@@ -290,6 +290,16 @@ test("parser", function(t){
         }
     });
 
+    tstFail("throw");
+    tst("throw a", {
+        type: "Throw",
+        expression: mk.id("a"),
+    });
+    tst("throw 1", {
+        type: "Throw",
+        expression: mkv(1),
+    });
+
     src = "";
     src += "try:\n";
     src += "    a\n";
