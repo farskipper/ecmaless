@@ -240,18 +240,25 @@ var comp_ast_node = {
     "Block": function(ast, comp, ctx, from_caller){
         var should_push_scope = !(from_caller && from_caller.no_scope_push);
         var should_wrap_in_eblock = !(from_caller && from_caller.wrap_in_eblock);
+        var can_throw = !!(from_caller && from_caller.can_throw);
         if(should_push_scope){
             ctx.scope.push();
         }
 
         var returns;
         var may_return;
+        var throwup;
         var body = _.compact(_.map(ast.body, function(ast){
-            if(returns){
+            if(returns || throwup){
                 throw ctx.error(ast.loc, "Dead code");
             }
             var c = comp(ast);
-            if(c.returns){
+            if(c.throwup){
+                if( ! can_throw){
+                    throw ctx.error(c.throwup.loc, "Unhandled throw");
+                }
+                throwup = c.throwup;
+            }else if(c.returns){
                 returns = c.returns;
                 if(may_return){
                     //TODO better message about branches matching
@@ -272,6 +279,7 @@ var comp_ast_node = {
                 : body,
             returns: returns,
             may_return: may_return,
+            throwup: throwup,
         };
     },
     "ExpressionStatement": function(ast, comp){
@@ -429,24 +437,47 @@ var comp_ast_node = {
         };
     },
     "Break": function(ast, comp){
+        //TODO only inside while
         return {
             estree: e("break", ast.loc),
         };
     },
     "Continue": function(ast, comp){
+        //TODO only inside while
         return {
             estree: e("continue", ast.loc),
         };
     },
-    "TryCatch": function(ast, comp){
+    "Throw": function(ast, comp){
+        var c = comp(ast.expression);
+        return {
+            estree: e("throw", c.estree, ast.loc),
+            throwup: c.TYPE,
+        };
+    },
+    "TryCatch": function(ast, comp, ctx){
+        var try_block = comp(ast.try_block, {can_throw: true});
+        if( ! try_block.throwup){
+            throw ctx.error(ast.try_block.loc, "There is nothing to try-catch");
+        }
+
+        ctx.scope.push();
+        ctx.scope.set(ast.catch_id.value, {TYPE: try_block.throwup});
+        var catch_id = comp(ast.catch_id);
+        var catch_block = comp(ast.catch_block, {no_scope_push: true});
+        ctx.scope.pop();
+
+        var finally_block = comp(ast.finally_block);
+
         return {
             estree: e("try",
-                comp(ast.try_block).estree,
-                comp(ast.catch_id).estree,
-                comp(ast.catch_block).estree,
-                comp(ast.finally_block).estree,
+                try_block.estree,
+                catch_id.estree,
+                catch_block.estree,
+                finally_block.estree,
                 ast.loc
             ),
+            //TODO returns branches
         };
     },
     "Define": function(ast, comp, ctx){

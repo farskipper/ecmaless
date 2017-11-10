@@ -32,6 +32,10 @@ var testError = function(t, src, expected){
         t.fail("should throw: " + expected);
     }catch(e){
         var estr = (e + "").replace(/^Error: /, "");
+        if(!e.ecmaless){
+            t.fail("Not an ecmaless error: " + estr);
+            return;
+        }
         estr = estr
             + " " + e.ecmaless.loc.start.line
             + ":" + e.ecmaless.loc.start.column
@@ -183,8 +187,6 @@ test("compile", function(t){
     terr("while 1:\n    1", "e:Boolean a:Number 1:6,1:7");
     tc("break", "break;");
     tc("continue", "continue;");
-
-    //TODO tc("try:\n    a\ncatch b:\n    c\nfinally:\n    d", "try{a;}catch(b){c;}finally{d;}");
 
     src = "";
     src += "def a = 1\n";
@@ -494,6 +496,51 @@ test("compile", function(t){
     src += "else:\n";
     src += "    def b = 2\n";
     terr(src, "You cannot return outside a function body. Did you mean `export`? 1:0,4:14");
+
+
+    src = "";
+    src += "try:\n";
+    src += "    def a = 1\n";
+    src += "catch e:\n";
+    src += "    def a = 2\n";
+    terr(src, "There is nothing to try-catch 1:3,3:0");
+
+    src = "";
+    src += "try:\n";
+    src += "    throw 222\n";
+    src += "    def a = 1\n";
+    src += "catch e:\n";
+    src += "    def a = e\n";
+    terr(src, "Dead code 3:4,3:13");
+
+    src = "";
+    src += "def a = 111\n";
+    src += "try:\n";
+    src += "    throw \"hello\"\n";
+    src += "catch e:\n";
+    src += "    a = e\n";
+    terr(src, "e:Number a:String 5:8,5:9");
+
+    src = "";
+    src += "if true:\n";
+    src += "    throw \"hello\"\n";
+    terr(src, "Unhandled throw 2:10,2:17");
+
+    src = "";
+    src += "def a = 111\n";
+    src += "try:\n";
+    src += "    throw 222\n";
+    src += "catch e:\n";
+    src += "    a = e\n";
+    src += "finally:\n";
+    src += "    a = 333\n";
+    tc(src, "var a=111;try{throw 222;}catch(e){a=e;}finally{a=333;}");
+
+    //TODO error if more than one error type thrown
+    //TODO functions inherit the errors thrown in it's body
+    //TODO may_throwup
+    //TODO throw in catch
+    //TODO throw in finally
 
     t.end();
 });
