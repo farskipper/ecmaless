@@ -442,7 +442,7 @@ test("compile", function(t){
     src2 += "            return \"hi\"\n";
     src2 += "        C(s):\n";
     src2 += "            return s\n";
-    terr(src2, "e:Number a:String 9:19,9:23");
+    terr(src2, "e:Number a:String 11:19,11:20");
     src2 = src;
     src2 += "    case A.B(1):\n";
     src2 += "        B(n):\n";
@@ -474,6 +474,14 @@ test("compile", function(t){
     src2 += "            def b = 2\n";
     src2 += "    def c = 3\n";
     terr(src2, "There is a branch that is not returning 9:19,9:20");
+    src2 = src;
+    src2 += "    case A.B(1):\n";
+    src2 += "        B(n):\n";
+    src2 += "            return n\n";
+    src2 += "        C(s):\n";
+    src2 += "            if s == \"\":\n";
+    src2 += "                return 2\n";
+    terr(src2, "There is a branch that is not returning 12:23,12:24");
     src2 = src;
     src2 += "    if true:\n";
     src2 += "        return 1\n";
@@ -665,6 +673,38 @@ test("compile", function(t){
     src += "catch e:\n";
     src += "    def a = 1\n";
     terr(src, "e:Number a:String 5:14,5:18");
+
+    src = "";
+    src += "enum Foo:\n";
+    src += "    Bar(Boolean)\n";
+    src += "    Baz(Number)\n";
+    src += "\n";
+    src += "def a = Foo.Bar(true)\n";
+    src += "try:\n";
+    src += "    case a:\n";
+    src += "        Bar(b):\n";
+    src2 = src;
+    src2 += "            def noop = 1\n";
+    src2 += "        Baz(n):\n";
+    src2 += "            def noop = 1\n";
+    src2 += "catch e:\n";
+    src2 += "    def noop = 1\n";
+    terr(src2, "There is nothing to try-catch 6:3,12:0");
+    src2 = src;
+    src2 += "            throw b\n";
+    src2 += "        Baz(n):\n";
+    src2 += "            throw n\n";
+    src2 += "catch e:\n";
+    src2 += "    def noop = 1\n";
+    terr(src2, "e:Boolean a:Number 11:18,11:19");
+    src2 = src;
+    src2 += "            throw 111\n";
+    src2 += "        Baz(n):\n";
+    src2 += "            throw n\n";
+    src2 += "catch e:\n";
+    src2 += "    def noop = 1\n";
+    t.ok(compToStr(src2).length > 0);
+
 
     //TODO functions inherit the errors thrown in it's body
 

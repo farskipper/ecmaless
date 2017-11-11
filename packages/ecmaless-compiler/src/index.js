@@ -370,7 +370,9 @@ var comp_ast_node = {
             return e(".", e("id", detId, loc), e("id", prop, loc), loc);
         };
         var n_branches_with_returns = 0;
-        var returns;
+        var n_branches_with_throwup = 0;
+        var may_return;
+        var may_throwup;
         var variants_handled = {};
         var cases = _.map(ast.blocks, function(cblock){
             if(cblock.value.type !== "EnumValue"){
@@ -421,12 +423,25 @@ var comp_ast_node = {
             });
             if(block.returns){
                 n_branches_with_returns += 1;
-                if(returns){
+            }
+            var block_may_return = block.returns || block.may_return;
+            if(block_may_return){
+                if(may_return){
                     //TODO better message about branches need to match
-                    ctx.assertT(block.returns, returns);
-                }else{
-                    returns = block.returns;
+                    ctx.assertT(block_may_return, may_return);
                 }
+                may_return = block_may_return;
+            }
+            if(block.throwup){
+                n_branches_with_throwup += 1;
+            }
+            var block_may_throwup = block.throwup || block.may_throwup;
+            if(block_may_throwup){
+                if(may_throwup){
+                    //TODO better message about branches need to match
+                    ctx.assertT(block_may_throwup, may_throwup);
+                }
+                may_throwup = block_may_throwup;
             }
             consequent = consequent.concat(block.estree);
             consequent.push(e("break", cblock.block.loc));
@@ -450,11 +465,18 @@ var comp_ast_node = {
                     ast.loc),
             ], ast.loc), [to_test.estree], ast.loc), ast.loc),
             returns: n_branches_with_returns === _.size(ast.blocks)
-                ? returns
+                ? may_return
                 : null,
             may_return: n_branches_with_returns === _.size(ast.blocks)
                 ? null
-                : returns,
+                : may_return,
+
+            throwup: n_branches_with_throwup === _.size(ast.blocks)
+                ? may_throwup
+                : null,
+            may_throwup: n_branches_with_throwup === _.size(ast.blocks)
+                ? null
+                : may_throwup,
         };
     },
     "While": function(ast, comp, ctx){
