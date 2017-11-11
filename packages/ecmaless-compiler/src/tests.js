@@ -395,6 +395,7 @@ test("compile", function(t){
     src += "def foo = fn ():\n";
     src += "    if true:\n";
     src += "        return \"hi\"\n";
+    src += "    return 1\n";
     terr(src, "e:Number a:String 4:15,4:19");
 
     src = "";
@@ -421,10 +422,11 @@ test("compile", function(t){
     terr(src, "e:Number a:String 6:15,6:19");
 
     src = "";
-    src += "ann foo = Fn () Number\n";
-    src += "def foo = fn ():\n";
-    src += "    while true:\n";
+    src += "ann foo = Fn (Boolean) Number\n";
+    src += "def foo = fn (b):\n";
+    src += "    while b:\n";
     src += "        return \"hi\"\n";
+    src += "    return 1\n";
     terr(src, "e:Number a:String 4:15,4:19");
 
     src = "";
@@ -485,6 +487,60 @@ test("compile", function(t){
     src2 += "        else:\n";
     src2 += "            def b = 2\n";
     terr(src2, "There is a branch that is not returning 9:19,9:20");
+    src2 = src;
+    src2 += "    if true:\n";
+    src2 += "        return 1\n";
+    terr(src2, "There is a branch that is not returning 8:15,8:16");
+    src2 = src;
+    src2 += "    while true:\n";
+    src2 += "        return 1\n";
+    terr(src2, "There is a branch that is not returning 8:15,8:16");
+    src2 = src;
+    src2 += "    if true:\n";
+    src2 += "        return 1\n";
+    src2 += "    else:\n";
+    src2 += "        if true:\n";
+    src2 += "            return 2\n";
+    terr(src2, "There is a branch that is not returning 8:15,8:16");
+    src2 = src;
+    src2 += "    if true:\n";
+    src2 += "        return 1\n";
+    src2 += "    else:\n";
+    src2 += "        if true:\n";
+    src2 += "            return 2\n";
+    src2 += "        else:\n";
+    src2 += "            return 3\n";
+    tc(src2, "var foo=function foo(){if(true){return 1;}else{if(true){return 2;}else{return 3;}}};");
+
+    src = "";
+    src += "ann foo = Fn(Boolean) Number\n";
+    src += "def foo = fn(b):\n";
+    src += "    try:\n";
+    src += "        if b:\n";
+    src += "            return 1\n";
+    src += "        throw \"no\"\n";
+    src += "    catch e:\n";
+    terr(src + "        def a = 1\n", "There is a branch that is not returning 5:19,5:20");
+    terr(src + "        return e\n", "e:Number a:String 8:15,8:16");
+    src += "        if b:\n";
+    src += "            return b\n";
+    terr(src, "e:Number a:Boolean 9:19,9:20");
+
+    src = "";
+    src += "ann foo = Fn(Boolean) Number\n";
+    src += "def foo = fn(b):\n";
+    src += "    try:\n";
+    src += "        if b:\n";
+    src += "            return 1\n";
+    src += "        throw \"no\"\n";
+    src += "    catch e:\n";
+    src += "        return 1\n";
+    src += "    finally:\n";
+    terr(src + "        def a = 1\n", "There is a branch that is not returning 8:15,8:16");
+    terr(src + "        return \"hi\"\n", "e:Number a:String 10:15,10:19");
+    src += "        if b:\n";
+    src += "            return b\n";
+    terr(src, "e:Number a:Boolean 11:19,11:20");
 
     src = "";
     src += "return 1";

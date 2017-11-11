@@ -304,24 +304,22 @@ var comp_ast_node = {
         var then = comp(ast.then);
         var els_ = ast["else"]
             ? comp(ast["else"])
-            : void 0;
-        var returns = then.returns;
-        var may_return;
-        if(els_){
-            if(els_.returns){
-                if(returns){
-                    //TODO better message about branches need to match
-                    ctx.assertT(els_.returns, then.returns);
-                }else{
-                    returns = els_.returns;
-                }
-            }else{
-                may_return = returns;
-                returns = void 0;
+            : {};
+
+        var returns;
+        var may_return = then.returns || then.may_return;
+        if(els_.returns || els_.may_return){
+            if(may_return){
+                //TODO better message about branches need to match
+                ctx.assertT(els_.returns || els_.may_return, may_return);
             }
         }
+        if(then.returns && els_.returns){
+            returns = els_.returns;
+            may_return = void 0;
+        }
         return {
-            estree: e("if", test.estree, then.estree, els_ ? els_.estree : void 0, ast.loc),
+            estree: e("if", test.estree, then.estree, els_.estree, ast.loc),
             returns: returns,
             may_return: may_return,
         };
@@ -432,8 +430,8 @@ var comp_ast_node = {
         var b = comp(ast.block);
         return {
             estree: e("while", test.estree, b.estree, ast.loc),
-            returns: b.returns,
-            may_return: b.may_return,
+            //no absolute returns b/c it's conditional
+            may_return: b.returns || b.may_return,
         };
     },
     "Break": function(ast, comp){
@@ -467,17 +465,48 @@ var comp_ast_node = {
         var catch_block = comp(ast.catch_block, {no_scope_push: true});
         ctx.scope.pop();
 
-        var finally_block = comp(ast.finally_block);
+        var finally_block = ast.finally_block
+            ? comp(ast.finally_block)
+            : void 0;
+
+
+        if(try_block.returns){
+            //sanity check
+            throw ctx.error(ast.try_block.loc, "try block can't have a known returns, only may_return");
+        }
+        var may_return = try_block.may_return;
+
+        var catch_may_return = catch_block.returns || catch_block.may_return;
+        if(catch_may_return){
+            if(may_return){
+                //TODO better message about branches needing to match
+                ctx.assertT(catch_may_return, may_return);
+            }
+            may_return = catch_may_return;
+        }
+
+        var finally_may_return = finally_block
+            ? finally_block.returns || finally_block.may_return
+            : void 0;
+        if(finally_may_return){
+            if(may_return){
+                //TODO better message about branches needing to match
+                ctx.assertT(finally_may_return, may_return);
+            }
+            may_return = finally_may_return;
+        }
 
         return {
             estree: e("try",
                 try_block.estree,
                 catch_id.estree,
                 catch_block.estree,
-                finally_block.estree,
+                finally_block ? finally_block.estree : void 0,
                 ast.loc
             ),
-            //TODO returns branches
+            //cannot say for sure the try_block will either throw or return
+            may_return: may_return,
+            //TODO catch or finally can throw
         };
     },
     "Define": function(ast, comp, ctx){
@@ -677,7 +706,11 @@ module.exports = function(ast, conf){
         }else if(!_.has(comp_ast_node, ast.type)){
             throw ctx.error(ast.loc, "Unsupported ast node type: " + ast.type);
         }
-        return comp_ast_node[ast.type](ast, compile, ctx, from_caller);
+        var out = comp_ast_node[ast.type](ast, compile, ctx, from_caller);
+        if(out && out.returns && out.may_return){
+            throw ctx.error(ast.loc, "Cannot both return and may_return");
+        }
+        return out;
     };
 
 
