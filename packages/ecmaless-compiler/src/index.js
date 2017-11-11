@@ -240,7 +240,6 @@ var comp_ast_node = {
     "Block": function(ast, comp, ctx, from_caller){
         var should_push_scope = !(from_caller && from_caller.no_scope_push);
         var should_wrap_in_eblock = !(from_caller && from_caller.wrap_in_eblock);
-        var can_throw = !!(from_caller && from_caller.can_throw);
         if(should_push_scope){
             ctx.scope.push();
         }
@@ -248,24 +247,41 @@ var comp_ast_node = {
         var returns;
         var may_return;
         var throwup;
+        var may_throwup;
         var body = _.compact(_.map(ast.body, function(ast){
             if(returns || throwup){
                 throw ctx.error(ast.loc, "Dead code");
             }
             var c = comp(ast);
-            if(c.throwup){
-                if( ! can_throw){
-                    throw ctx.error(c.throwup.loc, "Unhandled throw");
-                }
-                throwup = c.throwup;
-            }else if(c.returns){
+            if(c.returns){
                 returns = c.returns;
                 if(may_return){
                     //TODO better message about branches matching
                     ctx.assertT(may_return, returns);
+                    may_return = void 0;
                 }
-            }else if(c.may_return){
+            }
+            if(c.may_return){
+                if(may_return){
+                    //TODO better message about branches matching
+                    ctx.assertT(may_return, c.may_return);
+                }
                 may_return = c.may_return;
+            }
+            if(c.throwup){
+                throwup = c.throwup;
+                if(may_throwup){
+                    //TODO better message about branches matching
+                    ctx.assertT(may_throwup, throwup);
+                    may_throwup = void 0;
+                }
+            }
+            if(c.may_throwup){
+                if(may_throwup){
+                    //TODO better message about branches matching
+                    ctx.assertT(c.may_throwup, may_throwup);
+                }
+                may_throwup = c.may_throwup;
             }
             return c.estree;
         }));
@@ -280,6 +296,7 @@ var comp_ast_node = {
             returns: returns,
             may_return: may_return,
             throwup: throwup,
+            may_throwup: may_throwup,
         };
     },
     "ExpressionStatement": function(ast, comp){
@@ -318,10 +335,29 @@ var comp_ast_node = {
             returns = els_.returns;
             may_return = void 0;
         }
+
+
+        var throwup;
+        var may_throwup = then.throwup || then.may_throwup;
+        if(els_.throwup || els_.may_throwup){
+            if(may_throwup){
+                //TODO better message about branches need to match
+                ctx.assertT(els_.throwup || els_.may_throwup, may_throwup);
+            }
+        }
+        if(then.throwup && els_.throwup){
+            throwup = els_.throwup;
+            may_throwup = void 0;
+        }
+
+
         return {
             estree: e("if", test.estree, then.estree, els_.estree, ast.loc),
             returns: returns,
             may_return: may_return,
+
+            throwup: throwup,
+            may_throwup: may_throwup,
         };
     },
     "Case": function(ast, comp, ctx){
@@ -432,6 +468,8 @@ var comp_ast_node = {
             estree: e("while", test.estree, b.estree, ast.loc),
             //no absolute returns b/c it's conditional
             may_return: b.returns || b.may_return,
+            //no absolute throwup b/c it's conditional
+            may_throwup: b.throwup || b.may_throwup,
         };
     },
     "Break": function(ast, comp){
@@ -454,13 +492,14 @@ var comp_ast_node = {
         };
     },
     "TryCatch": function(ast, comp, ctx){
-        var try_block = comp(ast.try_block, {can_throw: true});
-        if( ! try_block.throwup){
+        var try_block = comp(ast.try_block);
+        var try_may_throw = try_block.throwup || try_block.may_throwup;
+        if( ! try_may_throw){
             throw ctx.error(ast.try_block.loc, "There is nothing to try-catch");
         }
 
         ctx.scope.push();
-        ctx.scope.set(ast.catch_id.value, {TYPE: try_block.throwup});
+        ctx.scope.set(ast.catch_id.value, {TYPE: try_may_throw});
         var catch_id = comp(ast.catch_id);
         var catch_block = comp(ast.catch_block, {no_scope_push: true});
         ctx.scope.pop();
@@ -496,17 +535,37 @@ var comp_ast_node = {
             may_return = finally_may_return;
         }
 
+
+        var may_throwup = catch_block.throwup || catch_block.may_throwup;
+
+        var finally_may_throwup = finally_block
+            ? finally_block.throwup || finally_block.may_throwup
+            : void 0;
+        if(finally_may_throwup){
+            if(may_throwup){
+                //TODO better message about branches needing to match
+                ctx.assertT(finally_may_throwup, may_throwup);
+            }
+            may_throwup = finally_may_throwup;
+        }
+
         return {
-            estree: e("try",
-                try_block.estree,
-                catch_id.estree,
-                catch_block.estree,
-                finally_block ? finally_block.estree : void 0,
-                ast.loc
-            ),
+            estree: {
+                loc: ast.loc,
+                type: "TryStatement",
+                block: try_block.estree,
+                handler: {
+                    loc: ast.catch_block.loc,
+                    type: "CatchClause",
+                    param: catch_id.estree,
+                    body: catch_block.estree
+                },
+                finalizer: finally_block ? finally_block.estree : void 0,
+            },
             //cannot say for sure the try_block will either throw or return
             may_return: may_return,
-            //TODO catch or finally can throw
+            //cannot say for sure if catch or finally may throw something else
+            may_throwup: may_throwup,
         };
     },
     "Define": function(ast, comp, ctx){
@@ -710,6 +769,9 @@ module.exports = function(ast, conf){
         if(out && out.returns && out.may_return){
             throw ctx.error(ast.loc, "Cannot both return and may_return");
         }
+        if(out && out.throwup && out.may_throwup){
+            throw ctx.error(ast.loc, "Cannot both throwup and may_throwup");
+        }
         return out;
     };
 
@@ -739,6 +801,9 @@ module.exports = function(ast, conf){
         }
         if(c.returns || c.may_return){
             throw ctx.error(c.estree.loc, "You cannot return outside a function body. Did you mean `export`?");
+        }
+        if(c.throwup || c.may_throwup){
+            throw ctx.error((c.throwup || c.may_throwup).loc, "Unhandled exception");
         }
         if(c.estree){
             estree.push(c.estree);

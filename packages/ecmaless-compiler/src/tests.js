@@ -511,6 +511,19 @@ test("compile", function(t){
     src2 += "        else:\n";
     src2 += "            return 3\n";
     tc(src2, "var foo=function foo(){if(true){return 1;}else{if(true){return 2;}else{return 3;}}};");
+    src2 = src;
+    src2 += "    if true:\n";
+    src2 += "        return 1\n";
+    src2 += "    if true:\n";
+    src2 += "        return 2\n";
+    terr(src2, "There is a branch that is not returning 10:15,10:16");
+    src2 = src;
+    src2 += "    if true:\n";
+    src2 += "        return true\n";
+    src2 += "    if true:\n";
+    src2 += "        return 2\n";
+    src2 += "    return 3\n";
+    terr(src2, "e:Number a:Boolean 8:15,8:19");
 
     src = "";
     src += "ann foo = Fn(Boolean) Number\n";
@@ -553,6 +566,15 @@ test("compile", function(t){
     src += "    def b = 2\n";
     terr(src, "You cannot return outside a function body. Did you mean `export`? 1:0,4:14");
 
+    src = "";
+    src += "ann foo = Fn(Boolean) Number\n";
+    src += "def foo = fn(b):\n";
+    src += "    if b:\n";
+    src += "        return 1\n";
+    src += "    return 2\n";
+    //this ensures we dont get : Cannot both return and may_return
+    tc(src, "var foo=function foo(b){if(b){return 1;}return 2;};");
+
 
     src = "";
     src += "try:\n";
@@ -577,10 +599,11 @@ test("compile", function(t){
     src += "    a = e\n";
     terr(src, "e:Number a:String 5:8,5:9");
 
+    terr("throw \"hello\"", "Unhandled exception 1:6,1:13");
     src = "";
     src += "if true:\n";
     src += "    throw \"hello\"\n";
-    terr(src, "Unhandled throw 2:10,2:17");
+    terr(src, "Unhandled exception 2:10,2:17");
 
     src = "";
     src += "def a = 111\n";
@@ -592,11 +615,58 @@ test("compile", function(t){
     src += "    a = 333\n";
     tc(src, "var a=111;try{throw 222;}catch(e){a=e;}finally{a=333;}");
 
-    //TODO error if more than one error type thrown
+    src = "";
+    src += "try:\n";
+    src += "    if true:\n";
+    src += "        throw 111\n";
+    src += "catch e:\n";
+    src += "    def a = e\n";
+    tc(src, "try{if(true){throw 111;}}catch(e){var a=e;}");
+
+    src = "";
+    src += "try:\n";
+    src += "    while true:\n";
+    src += "        throw 111\n";
+    src += "catch e:\n";
+    src += "    def a = e\n";
+    tc(src, "try{while(true){throw 111;}}catch(e){var a=e;}");
+
+    src = "";
+    src += "try:\n";
+    src += "    throw 111\n";
+    src += "catch e:\n";
+    src += "    throw \"hi\"\n";
+    terr(src, "Unhandled exception 4:10,4:14");
+
+    src = "";
+    src += "try:\n";
+    src += "    throw 111\n";
+    src += "catch e:\n";
+    src += "    def a = e\n";
+    src += "finally:\n";
+    src += "    throw \"hi\"\n";
+    terr(src, "Unhandled exception 6:10,6:14");
+
+    src = "";
+    src += "try:\n";
+    src += "    throw 111\n";
+    src += "catch e:\n";
+    src += "    throw true\n";
+    src += "finally:\n";
+    src += "    throw \"hi\"\n";
+    terr(src, "e:Boolean a:String 6:10,6:14");
+
+    src = "";
+    src += "try:\n";
+    src += "    if true:\n";
+    src += "        throw 111\n";
+    src += "    if true:\n";
+    src += "        throw \"hi\"\n";
+    src += "catch e:\n";
+    src += "    def a = 1\n";
+    terr(src, "e:Number a:String 5:14,5:18");
+
     //TODO functions inherit the errors thrown in it's body
-    //TODO may_throwup
-    //TODO throw in catch
-    //TODO throw in finally
 
     t.end();
 });
