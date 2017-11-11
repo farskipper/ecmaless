@@ -484,6 +484,7 @@ test("module", function(t){
                             type: "FunctionType",
                             params: [mk.Type("String")],
                             "return": mk.Type("Number"),
+                            "throws": null,
                         },
                     },
                     {
@@ -607,6 +608,17 @@ test("TypeExpression", function(t){
             mk.Type("Number"),
         ],
         "return": mk.Type("String"),
+        "throws": null,
+    });
+
+    tst("Fn (String, Number) String throws Number", {
+        type: "FunctionType",
+        params: [
+            mk.Type("String"),
+            mk.Type("Number"),
+        ],
+        "return": mk.Type("String"),
+        "throws": mk.Type("Number"),
     });
 
     tst("{one: String}", {
@@ -699,6 +711,7 @@ test("TypeAlias", function(t){
             type: "FunctionType",
             params: [{type: "TypeVariable", value: "a"}],
             "return": {type: "TypeVariable", value: "b"},
+            "throws": null,
         },
     });
 

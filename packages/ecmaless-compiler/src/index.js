@@ -125,6 +125,16 @@ var comp_ast_node = {
         }
         ctx.assertT(body.returns || {tag: "Nil", loc: ast.loc}, expTYPE["return"]);
 
+        var may_throwup = body.throwup || body.may_throwup;
+        if(may_throwup){
+            if(!expTYPE["throws"]){
+                throw ctx.error(may_throwup.loc, "This function type needs `throws`");
+            }
+            ctx.assertT(may_throwup, expTYPE["throws"]);
+        }else if(expTYPE["throws"]){
+            throw ctx.error(expTYPE["throws"].loc, "This function doesn't actually throw");
+        }
+
         ctx.scope.pop();
         var id;
         return {
@@ -152,6 +162,11 @@ var comp_ast_node = {
         return {
             estree: e("call", callee.estree, _.map(args, "estree"), ast.loc),
             TYPE: callee.TYPE["return"],
+            may_throwup: callee.TYPE["throws"]
+                ? _.assign({}, callee.TYPE["throws"], {
+                    loc: ast.callee.loc,
+                })
+                : void 0,
         };
     },
     "UnaryOperator": require("./c/UnaryOperator"),
@@ -301,9 +316,9 @@ var comp_ast_node = {
     },
     "ExpressionStatement": function(ast, comp){
         var expr = comp(ast.expression);
-        return {
+        return _.assign({}, expr, {
             estree: e(";", expr.estree, ast.loc),
-        };
+        });
     },
     "Return": function(ast, comp){
         var c = comp(ast.expression);
@@ -641,11 +656,15 @@ var comp_ast_node = {
             return comp(p).TYPE;
         });
         var ret = comp(ast["return"]).TYPE;
+        var throwsup = ast["throws"]
+            ? comp(ast["throws"]).TYPE
+            : void 0;
         return {
             TYPE: {
                 tag: "Fn",
                 params: params,
                 "return": ret,
+                "throws": throwsup,
                 loc: ast.loc,
             },
         };

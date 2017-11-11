@@ -706,7 +706,42 @@ test("compile", function(t){
     t.ok(compToStr(src2).length > 0);
 
 
-    //TODO functions inherit the errors thrown in it's body
+
+    src = "";
+    src += "ann foo = Fn(Boolean) Nil\n";
+    src += "def foo = fn(b):\n";
+    src += "    throw 111\n";
+    terr(src, "This function type needs `throws` 3:10,3:13");
+
+    src = "";
+    src += "ann foo = Fn(Boolean) Nil throws String\n";
+    src += "def foo = fn(b):\n";
+    src += "    throw 111\n";
+    terr(src, "e:String a:Number 3:10,3:13");
+
+    src = "";
+    src += "ann foo = Fn(Boolean) Nil throws Number\n";
+    src += "def foo = fn(b):\n";
+    src += "    throw 111\n";
+    src += "\n";
+    src += "foo(true)\n";
+    terr(src, "Unhandled exception 5:0,5:3");
+    src = "";
+    src += "ann foo = Fn(Boolean) Nil throws Number\n";
+    src += "def foo = fn(b):\n";
+    src += "    throw 111\n";
+    src += "\n";
+    src += "try:\n";
+    src += "    foo(true)\n";
+    src += "catch e:\n";
+    src += "    def a = 1\n";
+    tc(src, "var foo=function foo(b){throw 111;};try{foo(true);}catch(e){var a=1;}");
+
+    src = "";
+    src += "ann foo = Fn() Boolean throws Number\n";
+    src += "def foo = fn():\n";
+    src += "    return true\n";
+    terr(src, "This function doesn't actually throw 1:30,1:36");
 
     t.end();
 });

@@ -100,6 +100,7 @@ var tok_else = tok("SYMBOL", "else");
 var tok_case = tok("SYMBOL", "case");
 
 var tok_throw = tok("SYMBOL", "throw");
+var tok_throws = tok("SYMBOL", "throws");
 var tok_try = tok("SYMBOL", "try");
 var tok_catch = tok("SYMBOL", "catch");
 var tok_finally = tok("SYMBOL", "finally");
@@ -537,13 +538,16 @@ KeyValPairType -> Symbol %tok_COLON TypeExpression
 } %}
 
 
-FunctionType -> %tok_Fn %tok_OPEN_PN  TypeExpression_list %tok_CLOSE_PN TypeExpression
+FunctionType -> %tok_Fn %tok_OPEN_PN  TypeExpression_list %tok_CLOSE_PN
+    TypeExpression
+    (%tok_throws TypeExpression):?
 {% function(d){
     return {
         loc: mkLoc(d),
         type: "FunctionType",
         params: d[2],
         "return": d[4],
+        "throws": d[5] && d[5][1],
     };
 } %}
 

@@ -104,6 +104,7 @@ var tok_else = tok("SYMBOL", "else");
 var tok_case = tok("SYMBOL", "case");
 
 var tok_throw = tok("SYMBOL", "throw");
+var tok_throws = tok("SYMBOL", "throws");
 var tok_try = tok("SYMBOL", "try");
 var tok_catch = tok("SYMBOL", "catch");
 var tok_finally = tok("SYMBOL", "finally");
@@ -454,12 +455,16 @@ var grammar = {
     {"name": "KeyValPairType", "symbols": ["Symbol", tok_COLON, "TypeExpression"], "postprocess":  function(d){
             return [d[0], d[2]];
         } },
-    {"name": "FunctionType", "symbols": [tok_Fn, tok_OPEN_PN, "TypeExpression_list", tok_CLOSE_PN, "TypeExpression"], "postprocess":  function(d){
+    {"name": "FunctionType$ebnf$1$subexpression$1", "symbols": [tok_throws, "TypeExpression"]},
+    {"name": "FunctionType$ebnf$1", "symbols": ["FunctionType$ebnf$1$subexpression$1"], "postprocess": id},
+    {"name": "FunctionType$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "FunctionType", "symbols": [tok_Fn, tok_OPEN_PN, "TypeExpression_list", tok_CLOSE_PN, "TypeExpression", "FunctionType$ebnf$1"], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
                 type: "FunctionType",
                 params: d[2],
                 "return": d[4],
+                "throws": d[5] && d[5][1],
             };
         } },
     {"name": "Expression", "symbols": ["AssignmentExpression"], "postprocess": id},
