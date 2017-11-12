@@ -744,23 +744,69 @@ test("compile", function(t){
     terr(src, "This function doesn't actually throw 1:30,1:36");
 
     src = "";
-    src += "ann foo = Fn() Nil throws Number\n";
-    src += "def foo = fn():\n";
-    src += "    throw 1\n";
+    src += "ann add = Fn(Number, Number) Number\n";
+    src += "def add = fn(a, b):\n";
+    src += "    return a + b\n";
     src += "\n";
-    src += "[foo()]\n";
-    //terr(src, "todo");
-
-    //throw in struct
-    //throw in infix
-    //throw in unary
-    //throw in assignment
-    //throw in conditional expression
-    //throw in return
-    //throw in if <expr>
-    //throw in while <expr>
-    //throw in case <expr>
-    //throw in `def`
+    src += "ann foo = Fn(Boolean) Number throws Number\n";
+    src += "def foo = fn(b):\n";
+    src += "    if b:\n";
+    src += "        throw 333\n";
+    src += "    return 1\n";
+    src += "\n";
+    src += "ann bar = Fn(Boolean) Number throws String\n";
+    src += "def bar = fn(b):\n";
+    src += "    if b:\n";
+    src += "        throw \"hi\"\n";
+    src += "    return 1\n";
+    src += "\n";
+    //Application
+    terr(src + "add(foo(true), 2)", "Unhandled exception 17:4,17:7");
+    terr(src + "add(foo(true), bar(true))", "e:Number a:String 17:15,17:18");//two different throws types
+    //Struct
+    terr(src + "[foo(true), 2]", "Unhandled exception 17:1,17:4");
+    terr(src + "[foo(true), bar(true)]", "e:Number a:String 17:12,17:15");
+    //Array
+    terr(src + "{a: foo(true), b: 2}", "Unhandled exception 17:4,17:7");
+    terr(src + "{a: foo(true), b: bar(true)}", "e:Number a:String 17:18,17:21");
+    //UnaryOperator
+    terr(src + "-foo(true)", "Unhandled exception 17:1,17:4");
+    //InfixOperator
+    terr(src + "foo(true) == 1", "Unhandled exception 17:0,17:3");
+    terr(src + "foo(true) == bar(true)", "e:Number a:String 17:13,17:16");
+    //ConditionalExpression
+    terr(src + "foo(true) == 1 ? 1 : 2", "Unhandled exception 17:0,17:3");
+    terr(src + "true ? foo(true) : 2", "Unhandled exception 17:7,17:10");
+    terr(src + "true ? 1 : foo(true)", "Unhandled exception 17:11,17:14");
+    terr(src + "foo(true) == 1 ? 1 : bar(true)", "e:Number a:String 17:21,17:24");
+    //If
+    terr(src + "if foo(true) == 1:\n    def a = 1", "Unhandled exception 17:3,17:6");
+    //While
+    terr(src + "while foo(true) == 1:\n    def a = 1", "Unhandled exception 17:6,17:9");
+    terr(src + "while foo(true) == 1:\n    bar(true)", "e:Number a:String 18:4,18:7");
+    //Return
+    terr(src + "ann a=Fn() Number\ndef a=fn():\n    return foo(true)", "This function type needs `throws` 19:11,19:14");
+    //Define
+    terr(src + "def a = foo(true)", "Unhandled exception 17:8,17:11");
+    //Assignment
+    terr(src + "def a = 1\na = foo(true)", "Unhandled exception 18:4,18:7");
+    //Case
+    src += "enum Color:\n";
+    src += "    Red()\n";
+    src += "    Blue()\n";
+    src += "\n";
+    src += "ann cool = Fn(Boolean) Color throws Number\n";
+    src += "def cool = fn(b):\n";
+    src += "    if b:\n";
+    src += "        throw 1\n";
+    src += "    return Color.Blue()\n";
+    src += "\n";
+    src += "case cool(true):\n";
+    src += "    Red():\n";
+    src += "        def a = 1\n";
+    src += "    Blue():\n";
+    src += "        def a = 2\n";
+    terr(src, "Unhandled exception 27:5,27:9");
 
     t.end();
 });

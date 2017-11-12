@@ -21,16 +21,24 @@ var Tracker = function(ctx, opts){
             if(!c){
                 return;
             }
-            if(c.returns){
+            if(add_opts && add_opts.not_a_return_branch){
                 n_with_returns += 1;
-            }
-            var block_may_return = c.returns || c.may_return;
-            if(block_may_return){
-                if(may_return){
-                    //TODO better message about branches need to match
-                    ctx.assertT(block_may_return, may_return);
+                if(c.returns || c.may_return){
+                    //sanity check
+                    throw ctx.error(c.loc, "Can't return here");
                 }
-                may_return = block_may_return;
+            }else{
+                if(c.returns){
+                    n_with_returns += 1;
+                }
+                var block_may_return = c.returns || c.may_return;
+                if(block_may_return){
+                    if(may_return){
+                        //TODO better message about branches need to match
+                        ctx.assertT(block_may_return, may_return);
+                    }
+                    may_return = block_may_return;
+                }
             }
             if(add_opts && add_opts.no_throw){
                 return;
@@ -113,6 +121,7 @@ var comp_ast_node = {
             type: void 0,
             loc: ast.loc,
         };
+        var tracker = Tracker(ctx);
         var est_vals = [];
         _.each(ast.value, function(v_ast, i){
             var v = comp(v_ast);
@@ -122,12 +131,13 @@ var comp_ast_node = {
             }else{
                 TYPE.type = v.TYPE;
             }
+            tracker.add(v);
             est_vals.push(v.estree);
         });
-        return {
+        return tracker.build({
             estree: e("array", est_vals, ast.loc),
             TYPE: TYPE,
-        };
+        });
     },
     "Struct": function(ast, comp, ctx){
         var TYPE = {
@@ -135,6 +145,7 @@ var comp_ast_node = {
             by_key: {},
             loc: ast.loc,
         };
+        var tracker = Tracker(ctx);
         var est_pairs = [];
         _.each(_.chunk(ast.value, 2), function(pair){
             var key = pair[0];
@@ -151,13 +162,14 @@ var comp_ast_node = {
             var val = comp(pair[1]);
 
             TYPE.by_key[key_str] = val.TYPE;
+            tracker.add(val);
 
             est_pairs.push(e("object-property", key_est, val.estree, {start: pair[0].loc.start, end: pair[1].loc.end}));
         });
-        return {
+        return tracker.build({
             estree: e("object-raw", est_pairs, ast.loc),
             TYPE: TYPE,
-        };
+        });
     },
     "Function": function(ast, comp, ctx, from_caller){
         var expTYPE = from_caller && from_caller.annotatedTYPE;
@@ -200,9 +212,13 @@ var comp_ast_node = {
     },
     "Application": function(ast, comp, ctx){
 
+        var tracker = Tracker(ctx);
+
         var callee = comp(ast.callee);
         var args = _.map(ast.args, function(arg){
-            return comp(arg);
+            var c = comp(arg);
+            tracker.add(c);
+            return c;
         });
 
         ctx.assertT({
@@ -215,18 +231,160 @@ var comp_ast_node = {
             loc: ast.callee.loc,
         }, callee.TYPE);
 
-        return {
-            estree: e("call", callee.estree, _.map(args, "estree"), ast.loc),
-            TYPE: callee.TYPE["return"],
+        tracker.add({
             may_throwup: callee.TYPE["throws"]
                 ? _.assign({}, callee.TYPE["throws"], {
                     loc: ast.callee.loc,
                 })
                 : void 0,
-        };
+        });
+
+        return tracker.build({
+            estree: e("call", callee.estree, _.map(args, "estree"), ast.loc),
+            TYPE: callee.TYPE["return"],
+        });
     },
-    "UnaryOperator": require("./c/UnaryOperator"),
-    "InfixOperator": require("./c/InfixOperator"),
+    "UnaryOperator": function(ast, comp, ctx){
+        var arg = comp(ast.arg);
+
+        var out = (function(){
+            switch(ast.op){
+            case "-":
+                ctx.assertT(arg.TYPE, {
+                    tag: "Number",
+                    loc: ast.arg.loc,
+                });
+                return {
+                    estree: e("-", arg.estree, ast.loc),
+                    TYPE: {
+                        tag: "Number",
+                        loc: ast.loc,
+                    },
+                };
+            case "+":
+                ctx.assertT(arg.TYPE, {
+                    tag: "Number",
+                    loc: ast.arg.loc,
+                });
+                return arg;
+            case "not":
+                ctx.assertT(arg.TYPE, {
+                    tag: "Boolean",
+                    loc: ast.arg.loc,
+                });
+                return {
+                    estree: e("!", arg.estree, ast.loc),
+                    TYPE: {
+                        tag: "Boolean",
+                        loc: ast.loc,
+                    },
+                };
+            }
+            throw new Error("Unsupported unary operator: " + ast.op);
+        }());
+
+        var tracker = Tracker(ctx);
+        tracker.add(arg);
+        return tracker.build(out);
+    },
+    "InfixOperator": function(ast, comp, ctx){
+        var left = comp(ast.left);
+        var right = comp(ast.right);
+
+        var assertLR = function(typeName){
+            if(typeName === "Comparable"){
+                typeName = left.TYPE.tag;
+            }
+            ctx.assertT(_.assign({}, left.TYPE, {
+                loc: ast.left.loc,
+            }), {
+                tag: typeName,
+                loc: ast.left.loc,
+            });
+            ctx.assertT(_.assign({}, right.TYPE, {
+                loc: ast.right.loc,
+            }), {
+                tag: typeName,
+                loc: ast.right.loc,
+            });
+        };
+
+        var out = (function(){
+            switch(ast.op){
+            case "or":
+                assertLR("Boolean");
+                return {
+                    estree: e("||", left.estree, right.estree, ast.loc),
+                    TYPE: {
+                        tag: "Boolean",
+                        loc: ast.loc,
+                    },
+                };
+            case "and":
+                assertLR("Boolean");
+                return {
+                    estree: e("&&", left.estree, right.estree, ast.loc),
+                    TYPE: {
+                        tag: "Boolean",
+                        loc: ast.loc,
+                    },
+                };
+            case "=="://TODO value equality
+            case "!=":
+            case "<":
+            case "<=":
+            case ">":
+            case ">=":
+                assertLR("Comparable");
+                return {
+                    estree: e(ast.op, left.estree, right.estree, ast.loc),
+                    TYPE: {
+                        tag: "Boolean",
+                        loc: ast.loc,
+                    },
+                };
+            case "+":
+            case "-":
+            case "*":
+            case "/":
+            case "%":
+                assertLR("Number");
+                return {
+                    estree: e(ast.op, left.estree, right.estree, ast.loc),
+                    TYPE: {
+                        tag: "Number",
+                        loc: ast.loc,
+                    },
+                };
+            case "++":
+                assertLR("String");
+                if(_.isString(left.TYPE.value) && _.isString(right.TYPE.value)){
+                    var value = left.TYPE.value + right.TYPE.value;
+                    return {
+                        estree: e("str", value, ast.loc),
+                        TYPE: {
+                            tag: "String",
+                            value: value,
+                            loc: ast.loc,
+                        },
+                    };
+                }
+                return {
+                    estree: e("+", left.estree, right.estree, ast.loc),
+                    TYPE: {
+                        tag: "String",
+                        loc: ast.loc,
+                    },
+                };
+            }
+            throw new Error("Unsupported infix op: " + ast.op);
+        }());
+
+        var tracker = Tracker(ctx);
+        tracker.add(left);
+        tracker.add(right);
+        return tracker.build(out);
+    },
     "AssignmentExpression": function(ast, comp, ctx){
         var left = comp(ast.left);
         var right = comp(ast.right);
@@ -238,6 +396,8 @@ var comp_ast_node = {
             return {
                 estree: e("=", left.estree, right.estree, ast.loc),
                 TYPE: left.TYPE,
+                throwup: right.throwup,
+                may_throwup: right.may_throwup,
             };
         }
         throw ctx.error(ast.left.loc, "Only Identifier can be assigned");
@@ -298,7 +458,12 @@ var comp_ast_node = {
         var TYPE = omitTypeInstanceSpecifics(consequent.TYPE);
         TYPE.loc = ast.loc;
 
-        return {
+        var tracker = Tracker(ctx);
+        tracker.add(test);
+        tracker.add(consequent);
+        tracker.add(alternate);
+
+        return tracker.build({
             estree: e("?",
                 test.estree,
                 consequent.estree,
@@ -306,7 +471,7 @@ var comp_ast_node = {
                 ast.loc
             ),
             TYPE: TYPE,
-        };
+        });
     },
     "Block": function(ast, comp, ctx, from_caller){
         var should_push_scope = !(from_caller && from_caller.no_scope_push);
@@ -381,6 +546,8 @@ var comp_ast_node = {
         return {
             estree: e("return", c.estree, ast.loc),
             returns: c.TYPE,
+            throwup: c.throwup,
+            may_throwup: c.may_throwup,
         };
     },
     "If": function(ast, comp, ctx){
@@ -389,15 +556,15 @@ var comp_ast_node = {
             tag: "Boolean",
             loc: ast.test.loc,
         });
-        var tracker = Tracker(ctx);
         var then = comp(ast.then);
         var els_ = ast["else"]
             ? comp(ast["else"])
             : {};
 
+        var tracker = Tracker(ctx);
+        tracker.add(test, {not_a_return_branch: true});
         tracker.add(then);
         tracker.add(els_);
-
         return tracker.build({
             estree: e("if", test.estree, then.estree, els_.estree, ast.loc),
         });
@@ -411,7 +578,10 @@ var comp_ast_node = {
         var getDetIdProp = function(prop, loc){
             return e(".", e("id", detId, loc), e("id", prop, loc), loc);
         };
+
         var tracker = Tracker(ctx);
+        tracker.add(to_test, {not_a_return_branch: true});
+
         var variants_handled = {};
         var cases = _.map(ast.blocks, function(cblock){
             if(cblock.value.type !== "EnumValue"){
@@ -490,8 +660,10 @@ var comp_ast_node = {
             tag: "Boolean",
             loc: ast.test.loc,
         });
-        var tracker = Tracker(ctx, {only_maybe: true});
         var b = comp(ast.block);
+
+        var tracker = Tracker(ctx, {only_maybe: true});
+        tracker.add(test, {not_a_return_branch: true});
         tracker.add(b);
         return tracker.build({
             estree: e("while", test.estree, b.estree, ast.loc),
@@ -593,6 +765,8 @@ var comp_ast_node = {
         }
         return {
             estree: e("var", id.estree, init.estree, ast.loc),
+            throwup: init.throwup,
+            may_throwup: init.may_throwup,
         };
     },
     "Annotation": function(ast, comp, ctx){
