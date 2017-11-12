@@ -779,7 +779,7 @@ var comp_ast_node = {
             }
         }
         ctx.scope.set(ast.id.value, {TYPE: def.TYPE, annotation: true});
-        return void 0;//nothing to compile
+        return {};
     },
     "FunctionType": function(ast, comp, ctx){
         var params = _.map(ast.params, function(p){
@@ -937,10 +937,13 @@ module.exports = function(ast, conf){
             throw ctx.error(ast.loc, "Unsupported ast node type: " + ast.type);
         }
         var out = comp_ast_node[ast.type](ast, compile, ctx, from_caller);
-        if(out && out.returns && out.may_return){
+        if(!out){
+            throw ctx.error(ast.loc, ast.type + " should at least return {}");
+        }
+        if(out.returns && out.may_return){
             throw ctx.error(ast.loc, "Cannot both return and may_return");
         }
-        if(out && out.throwup && out.may_throwup){
+        if(out.throwup && out.may_throwup){
             throw ctx.error(ast.loc, "Cannot both throwup and may_throwup");
         }
         return out;
@@ -967,9 +970,6 @@ module.exports = function(ast, conf){
 
     _.each(ast, function(ast){
         var c = compile(ast);
-        if(!c){
-            return;
-        }
         if(c.returns || c.may_return){
             throw ctx.error(c.estree.loc, "You cannot return outside a function body. Did you mean `export`?");
         }

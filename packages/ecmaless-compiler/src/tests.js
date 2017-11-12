@@ -808,6 +808,13 @@ test("compile", function(t){
     src += "        def a = 2\n";
     terr(src, "Unhandled exception 27:5,27:9");
 
+    src = "";
+    src += "ann foo = Fn() Nil\n";
+    src += "def foo = fn():\n";
+    src += "    ann a = Number\n";
+    src += "    def a = 1\n";
+    tc(src, "var foo=function foo(){var a=1;};");
+
     t.end();
 });
 
