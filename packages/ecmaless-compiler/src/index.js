@@ -7,6 +7,62 @@ var ExportBlock = require("./c/ExportBlock");
 var typeToString = require("./typeToString");
 var SymbolTableStack = require("symbol-table/stack");
 
+var Tracker = function(ctx, opts){
+    opts = opts || {};
+    var n = opts.only_maybe ? 1 : 0;
+    var n_with_returns = 0;
+    var n_with_throwup = 0;
+    var may_return;
+    var may_throwup;
+
+    return {
+        add: function(c, add_opts){
+            n += 1;
+            if(!c){
+                return;
+            }
+            if(c.returns){
+                n_with_returns += 1;
+            }
+            var block_may_return = c.returns || c.may_return;
+            if(block_may_return){
+                if(may_return){
+                    //TODO better message about branches need to match
+                    ctx.assertT(block_may_return, may_return);
+                }
+                may_return = block_may_return;
+            }
+            if(add_opts && add_opts.no_throw){
+                return;
+            }
+            if(c.throwup){
+                n_with_throwup += 1;
+            }
+            var block_may_throwup = c.throwup || c.may_throwup;
+            if(block_may_throwup){
+                if(may_throwup){
+                    //TODO better message about branches need to match
+                    ctx.assertT(block_may_throwup, may_throwup);
+                }
+                may_throwup = block_may_throwup;
+            }
+        },
+        build: function(out){
+            if(n === n_with_returns){
+                out.returns = may_return;
+            }else{
+                out.may_return = may_return;
+            }
+            if(n === n_with_throwup){
+                out.throwup = may_throwup;
+            }else{
+                out.may_throwup = may_throwup;
+            }
+            return out;
+        },
+    };
+};
+
 
 var omitTypeInstanceSpecifics = function(TYPE){
     //TODO recurse down in complex types
@@ -333,47 +389,18 @@ var comp_ast_node = {
             tag: "Boolean",
             loc: ast.test.loc,
         });
+        var tracker = Tracker(ctx);
         var then = comp(ast.then);
         var els_ = ast["else"]
             ? comp(ast["else"])
             : {};
 
-        var returns;
-        var may_return = then.returns || then.may_return;
-        if(els_.returns || els_.may_return){
-            if(may_return){
-                //TODO better message about branches need to match
-                ctx.assertT(els_.returns || els_.may_return, may_return);
-            }
-        }
-        if(then.returns && els_.returns){
-            returns = els_.returns;
-            may_return = void 0;
-        }
+        tracker.add(then);
+        tracker.add(els_);
 
-
-        var throwup;
-        var may_throwup = then.throwup || then.may_throwup;
-        if(els_.throwup || els_.may_throwup){
-            if(may_throwup){
-                //TODO better message about branches need to match
-                ctx.assertT(els_.throwup || els_.may_throwup, may_throwup);
-            }
-        }
-        if(then.throwup && els_.throwup){
-            throwup = els_.throwup;
-            may_throwup = void 0;
-        }
-
-
-        return {
+        return tracker.build({
             estree: e("if", test.estree, then.estree, els_.estree, ast.loc),
-            returns: returns,
-            may_return: may_return,
-
-            throwup: throwup,
-            may_throwup: may_throwup,
-        };
+        });
     },
     "Case": function(ast, comp, ctx){
         var to_test = comp(ast.to_test);
@@ -384,10 +411,7 @@ var comp_ast_node = {
         var getDetIdProp = function(prop, loc){
             return e(".", e("id", detId, loc), e("id", prop, loc), loc);
         };
-        var n_branches_with_returns = 0;
-        var n_branches_with_throwup = 0;
-        var may_return;
-        var may_throwup;
+        var tracker = Tracker(ctx);
         var variants_handled = {};
         var cases = _.map(ast.blocks, function(cblock){
             if(cblock.value.type !== "EnumValue"){
@@ -436,28 +460,7 @@ var comp_ast_node = {
                 no_scope_push: true,
                 wrap_in_eblock: true,
             });
-            if(block.returns){
-                n_branches_with_returns += 1;
-            }
-            var block_may_return = block.returns || block.may_return;
-            if(block_may_return){
-                if(may_return){
-                    //TODO better message about branches need to match
-                    ctx.assertT(block_may_return, may_return);
-                }
-                may_return = block_may_return;
-            }
-            if(block.throwup){
-                n_branches_with_throwup += 1;
-            }
-            var block_may_throwup = block.throwup || block.may_throwup;
-            if(block_may_throwup){
-                if(may_throwup){
-                    //TODO better message about branches need to match
-                    ctx.assertT(block_may_throwup, may_throwup);
-                }
-                may_throwup = block_may_throwup;
-            }
+            tracker.add(block);
             consequent = consequent.concat(block.estree);
             consequent.push(e("break", cblock.block.loc));
             ctx.scope.pop();
@@ -473,26 +476,13 @@ var comp_ast_node = {
         if( ! _.isEmpty(missing)){
             throw ctx.error(ast.to_test.loc, "Missing variants `" + missing.join("`, `") + "`");
         }
-        return {
+        return tracker.build({
             estree: e(";", e("call", e("fn", [detId], [
                 e("switch", getDetIdProp("tag", ast.to_test.loc),
                     cases,
                     ast.loc),
             ], ast.loc), [to_test.estree], ast.loc), ast.loc),
-            returns: n_branches_with_returns === _.size(ast.blocks)
-                ? may_return
-                : null,
-            may_return: n_branches_with_returns === _.size(ast.blocks)
-                ? null
-                : may_return,
-
-            throwup: n_branches_with_throwup === _.size(ast.blocks)
-                ? may_throwup
-                : null,
-            may_throwup: n_branches_with_throwup === _.size(ast.blocks)
-                ? null
-                : may_throwup,
-        };
+        });
     },
     "While": function(ast, comp, ctx){
         var test = comp(ast.test);
@@ -500,14 +490,12 @@ var comp_ast_node = {
             tag: "Boolean",
             loc: ast.test.loc,
         });
+        var tracker = Tracker(ctx, {only_maybe: true});
         var b = comp(ast.block);
-        return {
+        tracker.add(b);
+        return tracker.build({
             estree: e("while", test.estree, b.estree, ast.loc),
-            //no absolute returns b/c it's conditional
-            may_return: b.returns || b.may_return,
-            //no absolute throwup b/c it's conditional
-            may_throwup: b.throwup || b.may_throwup,
-        };
+        });
     },
     "Break": function(ast, comp){
         //TODO only inside while
@@ -534,6 +522,10 @@ var comp_ast_node = {
         if( ! try_may_throw){
             throw ctx.error(ast.try_block.loc, "There is nothing to try-catch");
         }
+        if(try_block.returns){
+            //sanity check
+            throw ctx.error(ast.try_block.loc, "try block can't have a known returns, only may_return");
+        }
 
         ctx.scope.push();
         ctx.scope.set(ast.catch_id.value, {TYPE: try_may_throw});
@@ -545,48 +537,16 @@ var comp_ast_node = {
             ? comp(ast.finally_block)
             : void 0;
 
+        var tracker = Tracker(ctx, {
+            //cannot say for sure the try_block will either throw or return
+            //cannot say for sure if catch or finally may throw something else
+            only_maybe: true,
+        });
+        tracker.add(try_block, {no_throw: true});
+        tracker.add(catch_block);
+        tracker.add(finally_block);
 
-        if(try_block.returns){
-            //sanity check
-            throw ctx.error(ast.try_block.loc, "try block can't have a known returns, only may_return");
-        }
-        var may_return = try_block.may_return;
-
-        var catch_may_return = catch_block.returns || catch_block.may_return;
-        if(catch_may_return){
-            if(may_return){
-                //TODO better message about branches needing to match
-                ctx.assertT(catch_may_return, may_return);
-            }
-            may_return = catch_may_return;
-        }
-
-        var finally_may_return = finally_block
-            ? finally_block.returns || finally_block.may_return
-            : void 0;
-        if(finally_may_return){
-            if(may_return){
-                //TODO better message about branches needing to match
-                ctx.assertT(finally_may_return, may_return);
-            }
-            may_return = finally_may_return;
-        }
-
-
-        var may_throwup = catch_block.throwup || catch_block.may_throwup;
-
-        var finally_may_throwup = finally_block
-            ? finally_block.throwup || finally_block.may_throwup
-            : void 0;
-        if(finally_may_throwup){
-            if(may_throwup){
-                //TODO better message about branches needing to match
-                ctx.assertT(finally_may_throwup, may_throwup);
-            }
-            may_throwup = finally_may_throwup;
-        }
-
-        return {
+        return tracker.build({
             estree: {
                 loc: ast.loc,
                 type: "TryStatement",
@@ -599,11 +559,7 @@ var comp_ast_node = {
                 },
                 finalizer: finally_block ? finally_block.estree : void 0,
             },
-            //cannot say for sure the try_block will either throw or return
-            may_return: may_return,
-            //cannot say for sure if catch or finally may throw something else
-            may_throwup: may_throwup,
-        };
+        });
     },
     "Define": function(ast, comp, ctx){
         if(ast.id.type !== "Identifier"){

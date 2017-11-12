@@ -509,7 +509,7 @@ test("compile", function(t){
     src2 += "    else:\n";
     src2 += "        if true:\n";
     src2 += "            return 2\n";
-    terr(src2, "There is a branch that is not returning 8:15,8:16");
+    terr(src2, "There is a branch that is not returning 11:19,11:20");
     src2 = src;
     src2 += "    if true:\n";
     src2 += "        return 1\n";
@@ -742,6 +742,25 @@ test("compile", function(t){
     src += "def foo = fn():\n";
     src += "    return true\n";
     terr(src, "This function doesn't actually throw 1:30,1:36");
+
+    src = "";
+    src += "ann foo = Fn() Nil throws Number\n";
+    src += "def foo = fn():\n";
+    src += "    throw 1\n";
+    src += "\n";
+    src += "[foo()]\n";
+    //terr(src, "todo");
+
+    //throw in struct
+    //throw in infix
+    //throw in unary
+    //throw in assignment
+    //throw in conditional expression
+    //throw in return
+    //throw in if <expr>
+    //throw in while <expr>
+    //throw in case <expr>
+    //throw in `def`
 
     t.end();
 });
