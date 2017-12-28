@@ -759,7 +759,12 @@ Number -> %tok_NUMBER
 
 String -> %tok_STRING
 {% function(d){
-    var value = d[0].src.replace(/(^")|("$)/g, "").replace(/\\"/g, "\"");
+    var value = d[0].src
+        .replace(/(^")|("$)/g, "")
+        .replace(/\\"/g, "\"")
+        .replace(/\\n/g, "\n")
+        .replace(/\\t/g, "\t")
+        ;
     return mkType(d, "String", value);
 } %}
 

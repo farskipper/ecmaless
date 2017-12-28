@@ -129,6 +129,8 @@ test("parser", function(t){
 
     tst("123", mk.num(123));
     tst("\"ok\"", mk.str("ok"));
+    tst("\"one\\ntwo\"", mk.str("one\ntwo"));
+    tst("\"one\\ttwo\"", mk.str("one\ttwo"));
     tstFail("\"\\\"that\\\"\n\"");
     tst("\"\"\"\nsome \"docstring\"\n\"\"\"", mk.docstr("\nsome \"docstring\"\n"));
 

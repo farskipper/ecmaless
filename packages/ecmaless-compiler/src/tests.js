@@ -74,6 +74,8 @@ test("compile", function(t){
 
     tc("def a=\"foo\"\na ++ \"bar\"", "var a='foo';'foobar';");
 
+    tc("def a=\"\"\"\nfoo\nbar\n\"\"\"", "var a='\\nfoo\\nbar\\n';");
+
     tc("{a: 1, b: 2}", "({'a':1,'b':2});");
     terr("{a: 1, b: 2, a: 3}", "Duplicate key `a` 1:13,1:14");
 

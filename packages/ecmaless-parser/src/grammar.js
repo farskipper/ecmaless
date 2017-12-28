@@ -604,7 +604,12 @@ var grammar = {
             return mkType(d, "Number", parseFloat(d[0].src) || 0);
         } },
     {"name": "String", "symbols": [tok_STRING], "postprocess":  function(d){
-            var value = d[0].src.replace(/(^")|("$)/g, "").replace(/\\"/g, "\"");
+            var value = d[0].src
+                .replace(/(^")|("$)/g, "")
+                .replace(/\\"/g, "\"")
+                .replace(/\\n/g, "\n")
+                .replace(/\\t/g, "\t")
+                ;
             return mkType(d, "String", value);
         } },
     {"name": "Docstring", "symbols": [tok_DOCSTRING], "postprocess":  function(d){

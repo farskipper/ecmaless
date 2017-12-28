@@ -91,6 +91,12 @@ var comp_ast_node = {
             TYPE: {tag: "String", loc: ast.loc, value: ast.value},
         };
     },
+    "Docstring": function(ast, comp){
+        return {
+            estree: e("string", ast.value, ast.loc),
+            TYPE: {tag: "String", loc: ast.loc, value: ast.value},
+        };
+    },
     "Boolean": function(ast, comp){
         return {
             estree: e(ast.value ? "true" : "false", ast.loc),
