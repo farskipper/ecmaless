@@ -237,6 +237,10 @@ test("compile", function(t){
     terr(src + "def foo = {a: 1, b: 2}", "e:String a:Number 3:20,3:21");
     terr(src + "def foo = {a: 1}", "TODO better error Bad Struct keys 3:4,3:7");
 
+    tc("alias Foo = {next: Fn() Foo}", "");
+
+    tc("alias Foo<t> = {a: t}\nann foo = Foo<String>\ndef foo = {a: \"hi\"}", "var foo={'a':'hi'};");
+
 
     tc("def a = 1\nexport:\n    a", "var a=1;return{'a':a};");
     terr("export:\n    a", "Not defined `a` 2:4,2:5");

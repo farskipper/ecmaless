@@ -826,7 +826,38 @@ var comp_ast_node = {
         };
     },
     "TypeAlias": function(ast, comp, ctx){
-        var TYPE = comp(ast.value).TYPE;
+
+        var params = _.map(ast.id.params, function(param){
+            if(param.type !== "TypeVariable"){
+                throw ctx.error(param.loc, "TypeAlias params must be TypeVariable");
+            }
+            return param.value;
+        });
+
+        ctx.scope.set(ast.id.value, {});//to allow recursive alias
+        var TYPE;
+        if(_.isEmpty(params)){
+            TYPE = comp(ast.value).TYPE;
+        }else{
+            TYPE = {
+                tag: "Generic",
+                params: params,
+                ctor: function(types, called_loc, comp, ctx){
+                    if(_.size(types) !== _.size(params)){
+                        throw ctx.error(called_loc, "Trying to give " + _.size(types) + " type params for " + ast.id.value + "<" + params.join(", ") + ">");
+                    }
+                    ctx.tvarScope.push();
+                    _.each(params, function(param_str, i){
+                        var t = comp(types[i]).TYPE;
+                        ctx.tvarScope.set(param_str, t);
+                    });
+                    var TYPE = comp(ast.value).TYPE;
+                    ctx.tvarScope.pop();
+                    return TYPE;
+                },
+                loc: ast.loc,
+            };
+        }
         ctx.scope.set(ast.id.value, {TYPE: TYPE});
         return {
             TYPE: TYPE,
