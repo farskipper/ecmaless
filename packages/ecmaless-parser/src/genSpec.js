@@ -33,7 +33,6 @@ _.each({
         "while a:\n    b",
         "break",
         "continue",
-        "try:\n    a\ncatch err:\n    b\nfinally:\n    c",
     ],
     "### Variables": [
         "def a = 1",

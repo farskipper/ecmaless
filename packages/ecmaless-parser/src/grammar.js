@@ -103,12 +103,6 @@ var tok_else = tok("SYMBOL", "else");
 
 var tok_case = tok("SYMBOL", "case");
 
-var tok_throw = tok("SYMBOL", "throw");
-var tok_throws = tok("SYMBOL", "throws");
-var tok_try = tok("SYMBOL", "try");
-var tok_catch = tok("SYMBOL", "catch");
-var tok_finally = tok("SYMBOL", "finally");
-
 var tok_while = tok("SYMBOL", "while");
 var tok_break = tok("SYMBOL", "break");
 var tok_continue = tok("SYMBOL", "continue");
@@ -181,19 +175,6 @@ var infixOp = function(d){
 };
 
 
-var tryCatchMaker = function(i_id, i_catch, i_finally){
-    return function(d){
-        return {
-            loc: mkLoc(d),
-            type: "TryCatch",
-            try_block: d[1],
-            catch_id: i_id > 0 ? d[i_id] : null,
-            catch_block: i_catch > 0 ? d[i_catch] : null,
-            finally_block: i_finally > 0 ? d[i_finally] : null,
-        };
-    };
-};
-
 var grammar = {
     Lexer: undefined,
     ParserRules: [
@@ -209,13 +190,11 @@ var grammar = {
     {"name": "Statement", "symbols": ["Define"], "postprocess": id},
     {"name": "Statement", "symbols": ["ExpressionStatement"], "postprocess": id},
     {"name": "Statement", "symbols": ["Return"], "postprocess": id},
-    {"name": "Statement", "symbols": ["Throw"], "postprocess": id},
     {"name": "Statement", "symbols": ["If"], "postprocess": id},
     {"name": "Statement", "symbols": ["While"], "postprocess": id},
     {"name": "Statement", "symbols": ["Break"], "postprocess": id},
     {"name": "Statement", "symbols": ["Continue"], "postprocess": id},
     {"name": "Statement", "symbols": ["Case"], "postprocess": id},
-    {"name": "Statement", "symbols": ["TryCatch"], "postprocess": id},
     {"name": "Statement", "symbols": ["Annotation"], "postprocess": id},
     {"name": "Statement", "symbols": ["TypeAlias"], "postprocess": id},
     {"name": "Statement", "symbols": ["Enum"], "postprocess": id},
@@ -234,13 +213,6 @@ var grammar = {
             return {
                 loc: mkLoc(d),
                 type: "Return",
-                expression: d[1],
-            };
-        } },
-    {"name": "Throw", "symbols": [tok_throw, "Expression"], "postprocess":  function(d){
-            return {
-                loc: mkLoc(d),
-                type: "Throw",
                 expression: d[1],
             };
         } },
@@ -298,9 +270,6 @@ var grammar = {
                 block: d[1],
             };
         } },
-    {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block"], "postprocess": tryCatchMaker(4, 5, -1)},
-    {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(-1, -1, 4)},
-    {"name": "TryCatch", "symbols": [tok_try, "Block", "NL", tok_catch, "Identifier", "Block", "NL", tok_finally, "Block"], "postprocess": tryCatchMaker(4, 5, 8)},
     {"name": "Block", "symbols": [tok_COLON, "NL", "INDENT", "Statement_list", "DEDENT"], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
@@ -455,16 +424,12 @@ var grammar = {
     {"name": "KeyValPairType", "symbols": ["Symbol", tok_COLON, "TypeExpression"], "postprocess":  function(d){
             return [d[0], d[2]];
         } },
-    {"name": "FunctionType$ebnf$1$subexpression$1", "symbols": [tok_throws, "TypeExpression"]},
-    {"name": "FunctionType$ebnf$1", "symbols": ["FunctionType$ebnf$1$subexpression$1"], "postprocess": id},
-    {"name": "FunctionType$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "FunctionType", "symbols": [tok_Fn, tok_OPEN_PN, "TypeExpression_list", tok_CLOSE_PN, "TypeExpression", "FunctionType$ebnf$1"], "postprocess":  function(d){
+    {"name": "FunctionType", "symbols": [tok_Fn, tok_OPEN_PN, "TypeExpression_list", tok_CLOSE_PN, "TypeExpression"], "postprocess":  function(d){
             return {
                 loc: mkLoc(d),
                 type: "FunctionType",
                 params: d[2],
                 "return": d[4],
-                "throws": d[5] && d[5][1],
             };
         } },
     {"name": "Expression", "symbols": ["AssignmentExpression"], "postprocess": id},

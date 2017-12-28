@@ -99,12 +99,6 @@ var tok_else = tok("SYMBOL", "else");
 
 var tok_case = tok("SYMBOL", "case");
 
-var tok_throw = tok("SYMBOL", "throw");
-var tok_throws = tok("SYMBOL", "throws");
-var tok_try = tok("SYMBOL", "try");
-var tok_catch = tok("SYMBOL", "catch");
-var tok_finally = tok("SYMBOL", "finally");
-
 var tok_while = tok("SYMBOL", "while");
 var tok_break = tok("SYMBOL", "break");
 var tok_continue = tok("SYMBOL", "continue");
@@ -177,19 +171,6 @@ var infixOp = function(d){
 };
 
 
-var tryCatchMaker = function(i_id, i_catch, i_finally){
-    return function(d){
-        return {
-            loc: mkLoc(d),
-            type: "TryCatch",
-            try_block: d[1],
-            catch_id: i_id > 0 ? d[i_id] : null,
-            catch_block: i_catch > 0 ? d[i_catch] : null,
-            finally_block: i_finally > 0 ? d[i_finally] : null,
-        };
-    };
-};
-
 %}
 
 
@@ -211,13 +192,11 @@ Statement ->
       Define {% id %}
     | ExpressionStatement {% id %}
     | Return {% id %}
-    | Throw {% id %}
     | If {% id %}
     | While {% id %}
     | Break {% id %}
     | Continue {% id %}
     | Case {% id %}
-    | TryCatch {% id %}
     | Annotation {% id %}
     | TypeAlias {% id %}
     | Enum {% id %}
@@ -244,15 +223,6 @@ Return -> %tok_return Expression:?
     };
 } %}
 
-
-Throw -> %tok_throw Expression
-{% function(d){
-    return {
-        loc: mkLoc(d),
-        type: "Throw",
-        expression: d[1],
-    };
-} %}
 
 
 Define -> %tok_def Identifier %tok_EQ Expression
@@ -322,16 +292,6 @@ CaseBlock -> Expression Block NL
     };
 } %}
 
-
-TryCatch ->
-      %tok_try Block NL %tok_catch Identifier Block
-      {% tryCatchMaker(4, 5, -1) %}
-
-    | %tok_try Block NL %tok_finally Block
-      {% tryCatchMaker(-1, -1, 4) %}
-
-    | %tok_try Block NL %tok_catch Identifier Block NL %tok_finally Block
-      {% tryCatchMaker(4, 5, 8) %}
 
 
 
@@ -540,14 +500,12 @@ KeyValPairType -> Symbol %tok_COLON TypeExpression
 
 FunctionType -> %tok_Fn %tok_OPEN_PN  TypeExpression_list %tok_CLOSE_PN
     TypeExpression
-    (%tok_throws TypeExpression):?
 {% function(d){
     return {
         loc: mkLoc(d),
         type: "FunctionType",
         params: d[2],
         "return": d[4],
-        "throws": d[5] && d[5][1],
     };
 } %}
 

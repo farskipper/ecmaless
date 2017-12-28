@@ -201,44 +201,6 @@ break
 
 continue
 {"type": "Continue"}
-
-try:
-    a
-catch err:
-    b
-finally:
-    c
-{
-    "type": "TryCatch",
-    "try_block": {
-        "type": "Block",
-        "body": [
-            {
-                "type": "ExpressionStatement",
-                "expression": {"type": "Identifier", "value": "a"}
-            }
-        ]
-    },
-    "catch_id": {"type": "Identifier", "value": "err"},
-    "catch_block": {
-        "type": "Block",
-        "body": [
-            {
-                "type": "ExpressionStatement",
-                "expression": {"type": "Identifier", "value": "b"}
-            }
-        ]
-    },
-    "finally_block": {
-        "type": "Block",
-        "body": [
-            {
-                "type": "ExpressionStatement",
-                "expression": {"type": "Identifier", "value": "c"}
-            }
-        ]
-    }
-}
 ```
 
 ### Variables

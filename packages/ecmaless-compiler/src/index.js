@@ -11,9 +11,7 @@ var Tracker = function(ctx, opts){
     opts = opts || {};
     var n = opts.only_maybe ? 1 : 0;
     var n_with_returns = 0;
-    var n_with_throwup = 0;
     var may_return;
-    var may_throwup;
 
     return {
         add: function(c, add_opts){
@@ -43,28 +41,12 @@ var Tracker = function(ctx, opts){
             if(add_opts && add_opts.no_throw){
                 return;
             }
-            if(c.throwup){
-                n_with_throwup += 1;
-            }
-            var block_may_throwup = c.throwup || c.may_throwup;
-            if(block_may_throwup){
-                if(may_throwup){
-                    //TODO better message about branches need to match
-                    ctx.assertT(block_may_throwup, may_throwup);
-                }
-                may_throwup = block_may_throwup;
-            }
         },
         build: function(out){
             if(n === n_with_returns){
                 out.returns = may_return;
             }else{
                 out.may_return = may_return;
-            }
-            if(n === n_with_throwup){
-                out.throwup = may_throwup;
-            }else{
-                out.may_throwup = may_throwup;
             }
             return out;
         },
@@ -199,16 +181,6 @@ var comp_ast_node = {
         }
         ctx.assertT(body.returns || {tag: "Nil", loc: ast.loc}, expTYPE["return"]);
 
-        var may_throwup = body.throwup || body.may_throwup;
-        if(may_throwup){
-            if(!expTYPE["throws"]){
-                throw ctx.error(may_throwup.loc, "This function type needs `throws`");
-            }
-            ctx.assertT(may_throwup, expTYPE["throws"]);
-        }else if(expTYPE["throws"]){
-            throw ctx.error(expTYPE["throws"].loc, "This function doesn't actually throw");
-        }
-
         ctx.scope.pop();
         var id;
         return {
@@ -236,14 +208,6 @@ var comp_ast_node = {
             }),
             loc: ast.callee.loc,
         }, callee.TYPE);
-
-        tracker.add({
-            may_throwup: callee.TYPE["throws"]
-                ? _.assign({}, callee.TYPE["throws"], {
-                    loc: ast.callee.loc,
-                })
-                : void 0,
-        });
 
         return tracker.build({
             estree: e("call", callee.estree, _.map(args, "estree"), ast.loc),
@@ -402,8 +366,6 @@ var comp_ast_node = {
             return {
                 estree: e("=", left.estree, right.estree, ast.loc),
                 TYPE: left.TYPE,
-                throwup: right.throwup,
-                may_throwup: right.may_throwup,
             };
         }
         throw ctx.error(ast.left.loc, "Only Identifier can be assigned");
@@ -488,10 +450,8 @@ var comp_ast_node = {
 
         var returns;
         var may_return;
-        var throwup;
-        var may_throwup;
         var body = _.compact(_.map(ast.body, function(ast){
-            if(returns || throwup){
+            if(returns){
                 throw ctx.error(ast.loc, "Dead code");
             }
             var c = comp(ast);
@@ -510,21 +470,6 @@ var comp_ast_node = {
                 }
                 may_return = c.may_return;
             }
-            if(c.throwup){
-                throwup = c.throwup;
-                if(may_throwup){
-                    //TODO better message about branches matching
-                    ctx.assertT(may_throwup, throwup);
-                    may_throwup = void 0;
-                }
-            }
-            if(c.may_throwup){
-                if(may_throwup){
-                    //TODO better message about branches matching
-                    ctx.assertT(c.may_throwup, may_throwup);
-                }
-                may_throwup = c.may_throwup;
-            }
             return c.estree;
         }));
 
@@ -537,8 +482,6 @@ var comp_ast_node = {
                 : body,
             returns: returns,
             may_return: may_return,
-            throwup: throwup,
-            may_throwup: may_throwup,
         };
     },
     "ExpressionStatement": function(ast, comp){
@@ -552,8 +495,6 @@ var comp_ast_node = {
         return {
             estree: e("return", c.estree, ast.loc),
             returns: c.TYPE,
-            throwup: c.throwup,
-            may_throwup: c.may_throwup,
         };
     },
     "If": function(ast, comp, ctx){
@@ -687,58 +628,6 @@ var comp_ast_node = {
             estree: e("continue", ast.loc),
         };
     },
-    "Throw": function(ast, comp){
-        var c = comp(ast.expression);
-        return {
-            estree: e("throw", c.estree, ast.loc),
-            throwup: c.TYPE,
-        };
-    },
-    "TryCatch": function(ast, comp, ctx){
-        var try_block = comp(ast.try_block);
-        var try_may_throw = try_block.throwup || try_block.may_throwup;
-        if( ! try_may_throw){
-            throw ctx.error(ast.try_block.loc, "There is nothing to try-catch");
-        }
-        if(try_block.returns){
-            //sanity check
-            throw ctx.error(ast.try_block.loc, "try block can't have a known returns, only may_return");
-        }
-
-        ctx.scope.push();
-        ctx.scope.set(ast.catch_id.value, {TYPE: try_may_throw});
-        var catch_id = comp(ast.catch_id);
-        var catch_block = comp(ast.catch_block, {no_scope_push: true});
-        ctx.scope.pop();
-
-        var finally_block = ast.finally_block
-            ? comp(ast.finally_block)
-            : void 0;
-
-        var tracker = Tracker(ctx, {
-            //cannot say for sure the try_block will either throw or return
-            //cannot say for sure if catch or finally may throw something else
-            only_maybe: true,
-        });
-        tracker.add(try_block, {no_throw: true});
-        tracker.add(catch_block);
-        tracker.add(finally_block);
-
-        return tracker.build({
-            estree: {
-                loc: ast.loc,
-                type: "TryStatement",
-                block: try_block.estree,
-                handler: {
-                    loc: ast.catch_block.loc,
-                    type: "CatchClause",
-                    param: catch_id.estree,
-                    body: catch_block.estree
-                },
-                finalizer: finally_block ? finally_block.estree : void 0,
-            },
-        });
-    },
     "Define": function(ast, comp, ctx){
         if(ast.id.type !== "Identifier"){
             throw ctx.error(ast.id.loc, "Only Identifiers can be defined");
@@ -771,8 +660,6 @@ var comp_ast_node = {
         }
         return {
             estree: e("var", id.estree, init.estree, ast.loc),
-            throwup: init.throwup,
-            may_throwup: init.may_throwup,
         };
     },
     "Annotation": function(ast, comp, ctx){
@@ -792,15 +679,11 @@ var comp_ast_node = {
             return comp(p).TYPE;
         });
         var ret = comp(ast["return"]).TYPE;
-        var throwsup = ast["throws"]
-            ? comp(ast["throws"]).TYPE
-            : void 0;
         return {
             TYPE: {
                 tag: "Fn",
                 params: params,
                 "return": ret,
-                "throws": throwsup,
                 loc: ast.loc,
             },
         };
@@ -980,9 +863,6 @@ module.exports = function(ast, conf){
         if(out.returns && out.may_return){
             throw ctx.error(ast.loc, "Cannot both return and may_return");
         }
-        if(out.throwup && out.may_throwup){
-            throw ctx.error(ast.loc, "Cannot both throwup and may_throwup");
-        }
         return out;
     };
 
@@ -1009,9 +889,6 @@ module.exports = function(ast, conf){
         var c = compile(ast);
         if(c.returns || c.may_return){
             throw ctx.error(c.estree.loc, "You cannot return outside a function body. Did you mean `export`?");
-        }
-        if(c.throwup || c.may_throwup){
-            throw ctx.error((c.throwup || c.may_throwup).loc, "Unhandled exception");
         }
         if(c.estree){
             estree.push(c.estree);

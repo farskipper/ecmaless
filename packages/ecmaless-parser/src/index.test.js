@@ -292,56 +292,6 @@ test("parser", function(t){
         }
     });
 
-    tstFail("throw");
-    tst("throw a", {
-        type: "Throw",
-        expression: mk.id("a"),
-    });
-    tst("throw 1", {
-        type: "Throw",
-        expression: mkv(1),
-    });
-
-    src = "";
-    src += "try:\n";
-    src += "    a\n";
-    src += "catch b:\n";
-    src += "    c";
-    tst(src, {
-        type: "TryCatch",
-        try_block: mk.block([mk.stmt(mk.id("a"))]),
-        catch_id: mk.id("b"),
-        catch_block: mk.block([mk.stmt(mk.id("c"))]),
-        finally_block: null
-    });
-    src = "";
-    src += "try:\n";
-    src += "    a\n";
-    src += "catch b:\n";
-    src += "    c\n";
-    src += "finally:\n";
-    src += "    d";
-    tst(src, {
-        type: "TryCatch",
-        try_block: mk.block([mk.stmt(mk.id("a"))]),
-        catch_id: mk.id("b"),
-        catch_block: mk.block([mk.stmt(mk.id("c"))]),
-        finally_block: mk.block([mk.stmt(mk.id("d"))])
-    });
-    src = "";
-    src += "try:\n";
-    src += "    a\n";
-    src += "finally:\n";
-    src += "    b";
-    tst(src, {
-        type: "TryCatch",
-        try_block: mk.block([mk.stmt(mk.id("a"))]),
-        catch_id: null,
-        catch_block: null,
-        finally_block: mk.block([mk.stmt(mk.id("b"))])
-    });
-    //throw("something", {opts}) ... handled by compiler, not a keyword
-
     tst("-1", mk.unary("-", mkv(1)));
     tst("+1", mk.unary("+", mkv(1)));
     tst("not a", mk.unary("not", mk.id("a")));
@@ -486,7 +436,6 @@ test("module", function(t){
                             type: "FunctionType",
                             params: [mk.Type("String")],
                             "return": mk.Type("Number"),
-                            "throws": null,
                         },
                     },
                     {
@@ -610,17 +559,6 @@ test("TypeExpression", function(t){
             mk.Type("Number"),
         ],
         "return": mk.Type("String"),
-        "throws": null,
-    });
-
-    tst("Fn (String, Number) String throws Number", {
-        type: "FunctionType",
-        params: [
-            mk.Type("String"),
-            mk.Type("Number"),
-        ],
-        "return": mk.Type("String"),
-        "throws": mk.Type("Number"),
     });
 
     tst("{one: String}", {
@@ -713,7 +651,6 @@ test("TypeAlias", function(t){
             type: "FunctionType",
             params: [{type: "TypeVariable", value: "a"}],
             "return": {type: "TypeVariable", value: "b"},
-            "throws": null,
         },
     });
 
