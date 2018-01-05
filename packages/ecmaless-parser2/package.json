@@ -1,0 +1,40 @@
+{
+  "name": "ecmaless-parser2",
+  "version": "0.7.0",
+  "description": "Parser for the ecmaless language",
+  "main": "src/index.js",
+  "files": [
+    "src/"
+  ],
+  "scripts": {
+    "start": "onchange 'src/' -i -- npm test",
+    "lint": "eslint src/ && echo lint-ok",
+    "test": "npm run lint -s && node src/tests.js | faucet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/farskipper/ecmaless.git"
+  },
+  "keywords": [
+    "ecmaless",
+    "parser",
+    "lang"
+  ],
+  "author": "farskipper",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/farskipper/ecmaless/issues"
+  },
+  "homepage": "https://github.com/farskipper/ecmaless#readme",
+  "devDependencies": {
+    "eslint": "^4.8.0",
+    "faucet": "0.0.1",
+    "json-stringify-pretty-compact": "^1.0.4",
+    "lodash": "^4.17.4",
+    "onchange": "^3.2.1",
+    "tape": "^4.8.0"
+  },
+  "dependencies": {
+    "estree-loc": "^2.0.0"
+  }
+}
