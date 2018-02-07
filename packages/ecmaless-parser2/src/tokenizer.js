@@ -2,7 +2,6 @@ var raw_toks = {
     ":": true,
     ",": true,
     ".": true,
-    "?": true,
     "(": true,
     ")": true,
     "[": true,
@@ -26,18 +25,34 @@ var raw_toks = {
 };
 
 var keywords = {
+    "type": true,
     "ann": true,
     "def": true,
-    "end": true,
+
     "fn": true,
+    "do": true,
+    "end": true,
+
+    "not": true,
+    "and": true,
+    "or": true,
+    "xor": true,
+
     "if": true,
     "then": true,
     "else": true,
+
+    "while": true,
+    "break": true,
+    "continue": true,
+
+    "case": true,
+
+    "import": true,
+    "export": true,
 };
 
-module.exports = function(src, opts){
-    opts = opts || {};
-
+module.exports = function(src){
     var tokens = [];
 
     var next_is_escaped;
