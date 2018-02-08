@@ -5,8 +5,10 @@ var ast = require("./ast");
 var Ok = function(loc, ast){
     return {
         type: "Ok",
-        loc: loc,
-        ast: ast,
+        tree: {
+            loc: loc,
+            ast: ast,
+        },
     };
 };
 
@@ -69,7 +71,7 @@ var expression = function(state, rbp){
     var prev = state.curr;
     advance(state);
     if(!prev.rule.nud){
-        return Error(prev.token.loc, "Rule `" + prev.rule.id + "` does not have a nud");
+        return Error(prev.token.loc, "Expected an expression");
     }
     var left = prev.rule.nud(state, prev.token);
     if(notOk(left)){
@@ -78,7 +80,7 @@ var expression = function(state, rbp){
     while(rbp < state.curr.rule.lbp){
         prev = state.curr;
         advance(state);
-        left = prev.rule.led(state, prev.token, left);
+        left = prev.rule.led(state, prev.token, left.tree);
         if(notOk(left)){
             return left;
         }
@@ -89,29 +91,50 @@ var expression = function(state, rbp){
 ////////////////////////////////////////////////////////////////////////////////
 
 var defRule = function(id, rule){
-    rules[id] = {
-        id: id,
+    if(!rules.hasOwnProperty(id)){
+        rules[id] = {
+            id: id,
 
-        nud: rule.nud || void 0,// fn(state, token)
+            nud: void 0,// Maybe< Fn(State, Token) >
 
-        lbp: rule.lbp || 0,
-        led: rule.led || void 0,// fn(state, token, left)
-
-    };
+            lbp: 0,
+            led: void 0,// Maybe< Fn(State, Token, left: Tree) >
+        };
+    }
+    if(rule.nud){
+        rules[id].nud = rule.nud;
+    }
+    if(rule.led && rule.lbp > 0){
+        rules[id].lbp = rule.lbp;
+        rules[id].led = rule.led;
+    }
 };
 
-var infix = function(id, bp){
-    defRule(id, {
+var infix = function(op, bp){
+    defRule(op, {
         lbp: bp,
         led: function(state, token, left){
             var right = expression(state, bp);
             if(notOk(right)){
                 return right;
             }
-            return Ok(token.loc, ast.Infix(id, left, right));
+            return Ok(token.loc, ast.Infix(op, left, right.tree));
         }
     });
 };
+
+var prefix = function(op, rbp){
+    defRule(op, {
+        nud: function(state, token){
+            var v = expression(state, rbp);
+            if(notOk(v)){
+                return v;
+            }
+            return Ok(token.loc, ast.Prefix(op, v.tree));
+        },
+    });
+};
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Rules
@@ -159,6 +182,9 @@ infix("++", 50);
 
 infix("*", 60);
 infix("/", 60);
+
+prefix("not", 70);
+prefix("-", 70);
 
 
 

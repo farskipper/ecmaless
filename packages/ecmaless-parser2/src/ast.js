@@ -16,4 +16,11 @@ module.exports = {
             right: right
         };
     },
+    Prefix: function(op, value){
+        return {
+            type: "Prefix",
+            op: op,
+            value: value
+        };
+    },
 };

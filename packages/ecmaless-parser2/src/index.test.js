@@ -5,6 +5,9 @@ var parser = require("./");
 
 var rmLoc = function(ast){
     if(_.isPlainObject(ast)){
+        if(!_.isEqual(_.keys(ast), ["loc", "ast"])){
+            throw "AST tree should only have {loc, ast} properties";
+        }
         return _.mapValues(ast.ast, rmLoc);
     }
     if(_.isArray(ast)){
@@ -22,7 +25,7 @@ test("expression", function(t){
             t.fail(JSON.stringify(r));
             return;
         }
-        var ast = rmLoc(r);
+        var ast = rmLoc(r.tree);
         t.deepEquals(ast, expected);
     };
     var tstErr = function(src, expected){
@@ -45,14 +48,78 @@ test("expression", function(t){
     tst("aorb", Id("aorb"));
     tst("a or b", ast.Infix("or", Id("a"), Id("b")));
 
-    tstErr("a + + b", "Rule `+` does not have a nud|4-5");
+    tstErr("a + + b", "Expected an expression|4-5");
 
-    tstErr("=", "Rule `=` does not have a nud|0-1");
+    tstErr("=", "Expected an expression|0-1");
+    tstErr("= a", "Expected an expression|0-1");
+    tstErr("a =", "Expected `(end)`|2-3");
+
+    tstErr("or", "Expected an expression|0-2");
+
+    tstErr("a +", "Expected an expression|3-3");
 
     tstErr("a b", "Expected `(end)`|2-3");
 
-    tstErr("a +", "Rule `(end)` does not have a nud|3-3");
 
+    tst("a + b + c", ast.Infix("+", ast.Infix("+", Id("a"), Id("b")), Id("c")));
+    tst("a + b * c", ast.Infix("+", Id("a"), ast.Infix("*", Id("b"), Id("c"))));
+
+    tst("not a", ast.Prefix("not", Id("a")));
+    tst("not a or b", ast.Infix("or", ast.Prefix("not", Id("a")), Id("b")));
+    tst("a or not b == c", ast.Infix("or", Id("a"), ast.Infix("==", ast.Prefix("not", Id("b")), Id("c"))));
+
+    tst("a - b", ast.Infix("-", Id("a"), Id("b")));
+    tst("a - - b", ast.Infix("-", Id("a"), ast.Prefix("-", Id("b"))));
+
+    tstErr("-", "Expected an expression|1-1");
+    tstErr("not", "Expected an expression|3-3");
+
+    t.end();
+});
+
+test("ast shape", function(t){
+
+    t.deepEquals(parser("a"), {
+        type: "Ok",
+        tree: {
+            loc: {start: 0, end: 1},
+            ast: {type: "Identifier", value: "a"}
+        }
+    });
+
+    t.deepEquals(parser("not a"), {
+        type: "Ok",
+        tree: {
+            loc: {start: 0, end: 3},
+            ast: {
+                type: "Prefix",
+                op: "not",
+                value: {
+                    loc: {start: 4, end: 5},
+                    ast: {type: "Identifier", value: "a"}
+                }
+            }
+        }
+    });
+
+    t.deepEquals(parser("a + b"), {
+        type: "Ok",
+        tree: {
+            loc: {start: 2, end: 3},
+            ast: {
+                type: "Infix",
+                op: "+",
+                left: {
+                    loc: {start: 0, end: 1},
+                    ast: {type: "Identifier", value: "a"}
+                },
+                right: {
+                    loc: {start: 4, end: 5},
+                    ast: {type: "Identifier", value: "b"}
+                },
+            },
+        },
+    });
 
     t.end();
 });
