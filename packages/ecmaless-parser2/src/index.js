@@ -6,5 +6,5 @@ module.exports = function(src){
     if(r.type !== "Ok"){
         return r;
     }
-    return tdop(r.value);
+    return tdop.parse(r.value);
 };

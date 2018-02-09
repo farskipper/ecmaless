@@ -1,12 +1,22 @@
 var _ = require("lodash");
 var ast = require("./ast");
+var tdop = require("./tdop");
 var test = require("tape");
 var parser = require("./");
+var tokenizer = require("./tokenizer");
+
+var parseExpression = function(src){
+    var r = tokenizer(src);
+    if(r.type !== "Ok"){
+        return r;
+    }
+    return tdop.parseExpression(r.value);
+};
 
 var rmLoc = function(ast){
     if(_.isPlainObject(ast)){
         if(!_.isEqual(_.keys(ast), ["loc", "ast"])){
-            throw "AST tree should only have {loc, ast} properties";
+            throw "AST tree should only have {loc, ast} properties: " + _.keys(ast).join(", ");
         }
         return _.mapValues(ast.ast, rmLoc);
     }
@@ -20,7 +30,7 @@ var S = ast.Symbol;
 
 test("expression", function(t){
     var tst = function(src, expected){
-        var r = parser(src);
+        var r = parseExpression(src);
         if(r.type !== "Ok"){
             t.fail(JSON.stringify(r));
             return;
@@ -29,7 +39,7 @@ test("expression", function(t){
         t.deepEquals(ast, expected);
     };
     var tstErr = function(src, expected){
-        var r = parser(src);
+        var r = parseExpression(src);
         if(r.type === "Ok"){
             t.fail("Should have failed: " + expected);
             return;
@@ -85,18 +95,18 @@ test("expression", function(t){
     tst("fn(a, b) c", ast.Function([S("a"), S("b")], S("c")));
 
     tstErr("fn a", "Expected `(`|3-4");
-    tstErr("fn(", "Expected a parameter symbol|3-3");
-    tstErr("fn(+)", "Expected a parameter symbol|3-4");
+    tstErr("fn(", "Expected a symbol|3-3");
+    tstErr("fn(+)", "Expected a symbol|3-4");
     tstErr("fn(a", "Expected `)`|4-4");
     tstErr("fn(a + b)", "Expected `)`|5-6");
-    tstErr("fn(1)", "Expected a parameter symbol|3-4");
+    tstErr("fn(1)", "Expected a symbol|3-4");
 
     t.end();
 });
 
 test("ast shape", function(t){
 
-    t.deepEquals(parser("a"), {
+    t.deepEquals(parseExpression("a"), {
         type: "Ok",
         tree: {
             loc: {start: 0, end: 1},
@@ -104,7 +114,7 @@ test("ast shape", function(t){
         }
     });
 
-    t.deepEquals(parser("not a"), {
+    t.deepEquals(parseExpression("not a"), {
         type: "Ok",
         tree: {
             loc: {start: 0, end: 3},
@@ -119,7 +129,7 @@ test("ast shape", function(t){
         }
     });
 
-    t.deepEquals(parser("a + b"), {
+    t.deepEquals(parseExpression("a + b"), {
         type: "Ok",
         tree: {
             loc: {start: 2, end: 3},
@@ -138,7 +148,7 @@ test("ast shape", function(t){
         },
     });
 
-    t.deepEquals(parser("(a)"), {
+    t.deepEquals(parseExpression("(a)"), {
         type: "Ok",
         tree: {
             loc: {start: 1, end: 2},
@@ -146,7 +156,7 @@ test("ast shape", function(t){
         },
     });
 
-    t.deepEquals(parser("a(b)"), {
+    t.deepEquals(parseExpression("a(b)"), {
         type: "Ok",
         tree: {
             loc: {start: 1, end: 2},
@@ -165,6 +175,44 @@ test("ast shape", function(t){
             }
         },
     });
+
+    t.end();
+});
+
+test("statements", function(t){
+    var tst = function(src, expected){
+        var r = parser(src);
+        if(r.type !== "Ok"){
+            t.fail(JSON.stringify(r));
+            return;
+        }
+        var ast = rmLoc(r.tree);
+        t.deepEquals(ast, expected);
+    };
+    var tstErr = function(src, expected){
+        var r = parser(src);
+        if(r.type === "Ok"){
+            t.fail("Should have failed: " + expected);
+            return;
+        }
+        t.equals(r.message+"|"+r.loc.start+"-"+r.loc.end, expected);
+    };
+
+    tst("a()", [ast.ApplyFn(S("a"), [])]);
+    tstErr("a + 1", "Expected a statement|2-3");
+
+    tst("a() b()", [
+        ast.ApplyFn(S("a"), []),
+        ast.ApplyFn(S("b"), []),
+    ]);
+    tstErr("a() b", "Expected a statement|4-5");
+
+    tst("def a = 1", [
+        ast.Define(S("a"), ast.Number(1)),
+    ]);
+    tstErr("def 1 = a", "Expected a symbol|4-5");
+    tstErr("def a + a", "Expected `=`|6-7");
+    tstErr("def a = def b = 2", "Expected an expression|8-11");
 
     t.end();
 });

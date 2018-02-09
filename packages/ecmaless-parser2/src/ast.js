@@ -37,4 +37,11 @@ module.exports = {
             body: body,
         };
     },
+    Define: function(id, init){
+        return {
+            type: "Define",
+            id: id,
+            init: init,
+        };
+    },
 };

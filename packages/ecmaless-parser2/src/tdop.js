@@ -89,14 +89,50 @@ var expression = function(state, rbp){
     return left;
 };
 
-var parameter = function(state){
+var symbol = function(state){
     if(state.curr.rule.id !== "SYMBOL"){
-        return Error(state.curr.token.loc, "Expected a parameter symbol");
+        return Error(state.curr.token.loc, "Expected a symbol");
     }
     var nud = state.curr.rule.nud;
     var token = state.curr.token;
     advance(state);
     return nud(state, token);
+};
+
+var statement = function(state){
+    var rule = state.curr.rule;
+    if(rule.sta){
+        advance(state);
+        return rule.sta(state);
+    }
+    var e = expression(state, 0);
+    if(notOk(e)){
+        return e;
+    }
+    if(e.tree.ast.type === "ApplyFn"){
+        return e;
+    }
+    return Error(e.tree.loc, "Expected a statement");
+};
+
+var statements = function(state){
+    var loc = {
+        start: state.curr.token.loc.start,
+        end: state.curr.token.loc.end,
+    };
+    var a = [];
+    while(true){
+        if(state.curr.rule.id === "end" || state.curr.rule.id === "(end)"){
+            break;
+        }
+        var s = statement(state);
+        if(notOk(s)){
+            return s;
+        }
+        a.push(s.tree);
+    }
+    loc.end = state.curr.token.loc.end;
+    return Ok(loc, a);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -118,6 +154,9 @@ var defRule = function(id, rule){
     if(rule.led && rule.lbp > 0){
         rules[id].lbp = rule.lbp;
         rules[id].led = rule.led;
+    }
+    if(rule.sta){
+        rules[id].sta = rule.sta;
     }
 };
 
@@ -146,6 +185,9 @@ var prefix = function(op, rbp){
     });
 };
 
+var stmt = function(s, f){
+    return defRule(s, {sta: f});
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Rules
@@ -243,7 +285,7 @@ defRule("fn", {
         var params = [];
         if(state.curr.rule.id !== ")"){
             while(true){
-                var e = parameter(state, 0);
+                var e = symbol(state);
                 if(notOk(e)){
                     return e;
                 }
@@ -267,11 +309,32 @@ defRule("fn", {
     },
 });
 
+stmt("def", function(state){
+    var loc = state.curr.token.loc;
+    var id = symbol(state);
+    if(notOk(id)){
+        return id;
+    }
+    if(state.curr.rule.id !== "="){
+        return Error(state.curr.token.loc, "Expected `=`");
+    }
+    advance(state);
+    var init = expression(state, 0);
+    if(notOk(init)){
+        return init;
+    }
+    return Ok(loc, {
+        type: "Define",
+        id: id.tree,
+        init: init.tree,
+    });
+});
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
 
-module.exports = function(tokens){
+var parse = function(tokens, entryParseFn){
     var state = {
         tokens: tokens,
         token_i: 0,
@@ -279,7 +342,7 @@ module.exports = function(tokens){
     };
 
     advance(state);
-    var s = expression(state, 0);
+    var s = entryParseFn(state);
     if(notOk(s)){
         return s;
     }
@@ -289,4 +352,15 @@ module.exports = function(tokens){
     advance(state);
 
     return s;
+};
+
+module.exports = {
+    parse: function(tokens){
+        return parse(tokens, statements);
+    },
+    parseExpression: function(tokens){
+        return parse(tokens, function(state){
+            return expression(state, 0);
+        });
+    },
 };
