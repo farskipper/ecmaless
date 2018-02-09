@@ -5,8 +5,8 @@ module.exports = {
     String: function(value){
         return {type: "String", value: value};
     },
-    Identifier: function(value){
-        return {type: "Identifier", value: value};
+    Symbol: function(value){
+        return {type: "Symbol", value: value};
     },
     Infix: function(op, left, right){
         return {
@@ -21,6 +21,20 @@ module.exports = {
             type: "Prefix",
             op: op,
             value: value
+        };
+    },
+    ApplyFn: function(callee, args){
+        return {
+            type: "ApplyFn",
+            callee: callee,
+            args: args,
+        };
+    },
+    Function: function(params, body){
+        return {
+            type: "Function",
+            params: params,
+            body: body,
         };
     },
 };

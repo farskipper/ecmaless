@@ -1,3 +1,4 @@
+/* eslint-disable no-constant-condition */
 // inspired by http://crockford.com/javascript/tdop/tdop.html
 
 var ast = require("./ast");
@@ -88,6 +89,16 @@ var expression = function(state, rbp){
     return left;
 };
 
+var parameter = function(state){
+    if(state.curr.rule.id !== "SYMBOL"){
+        return Error(state.curr.token.loc, "Expected a parameter symbol");
+    }
+    var nud = state.curr.rule.nud;
+    var token = state.curr.token;
+    advance(state);
+    return nud(state, token);
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 
 var defRule = function(id, rule){
@@ -161,7 +172,7 @@ defRule("STRING", {
 });
 defRule("SYMBOL", {
     nud: function(state, token){
-        return Ok(token.loc,  ast.Identifier(token.src));
+        return Ok(token.loc,  ast.Symbol(token.src));
     },
 });
 
@@ -185,6 +196,76 @@ infix("/", 60);
 
 prefix("not", 70);
 prefix("-", 70);
+
+defRule("(", {
+    nud: function(state, token){
+        var e = expression(state, 0);
+        if(notOk(e)){
+            return e;
+        }
+        if(state.curr.rule.id !== ")"){
+            return Error(state.curr.token.loc, "Expected `)`");
+        }
+        advance(state);
+        return e;
+    },
+
+    lbp: 80,
+    led: function(state, token, left){
+        var args = [];
+        if(state.curr.rule.id !== ")"){
+            while(true){
+                var e = expression(state, 0);
+                if(notOk(e)){
+                    return e;
+                }
+                args.push(e.tree);
+                if(state.curr.rule.id !== ","){
+                    break;
+                }
+                advance(state);
+            }
+        }
+        if(state.curr.rule.id !== ")"){
+            return Error(state.curr.token.loc, "Expected `)`");
+        }
+        advance(state);
+        return Ok(token.loc,  ast.ApplyFn(left, args));
+    },
+});
+
+defRule("fn", {
+    nud: function(state, token){
+        if(state.curr.rule.id !== "("){
+            return Error(state.curr.token.loc, "Expected `(`");
+        }
+        advance(state);
+        var params = [];
+        if(state.curr.rule.id !== ")"){
+            while(true){
+                var e = parameter(state, 0);
+                if(notOk(e)){
+                    return e;
+                }
+                params.push(e.tree);
+                if(state.curr.rule.id !== ","){
+                    break;
+                }
+                advance(state);
+            }
+        }
+        if(state.curr.rule.id !== ")"){
+            return Error(state.curr.token.loc, "Expected `)`");
+        }
+        advance(state);
+        // TODO block or expression
+        var body = expression(state, 0);
+        if(notOk(body)){
+            return body;
+        }
+        return Ok(token.loc,  ast.Function(params, body.tree));
+    },
+});
 
 
 
