@@ -207,12 +207,42 @@ test("statements", function(t){
     ]);
     tstErr("a() b", "Expected a statement|4-5");
 
-    tst("def a = 1", [
-        ast.Define(S("a"), ast.Number(1)),
-    ]);
+    tst("def a = 1", [ast.Define(S("a"), ast.Number(1))]);
     tstErr("def 1 = a", "Expected a symbol|4-5");
     tstErr("def a + a", "Expected `=`|6-7");
     tstErr("def a = def b = 2", "Expected an expression|8-11");
+
+    tst("do end", [ast.Block([])]);
+
+    tst("do def a = 1 end", [
+        ast.Block([
+            ast.Define(S("a"), ast.Number(1)),
+        ]),
+    ]);
+
+    tst("def noop = fn() do end", [
+        ast.Define(S("noop"), ast.Function([], ast.Block([]))),
+    ]);
+    tst("def foo = fn() do bar() baz() end", [
+        ast.Define(S("foo"), ast.Function([], ast.Block([
+            ast.ApplyFn(S("bar"), []),
+            ast.ApplyFn(S("baz"), []),
+        ]))),
+    ]);
+
+    tst("return a", [ast.Return(S("a"))]);
+    tstErr("return +", "Expected an expression|7-8");
+
+    tstErr("while a", "Expected `do`|7-7");
+    tst("while a do foo() end", [
+        ast.While(S("a"), ast.Block([
+            ast.ApplyFn(S("foo"), []),
+        ]))
+    ]);
+    tst("continue break", [
+        ast.Continue(),
+        ast.Break(),
+    ]);
 
     t.end();
 });

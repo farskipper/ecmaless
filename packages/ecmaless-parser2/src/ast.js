@@ -44,4 +44,29 @@ module.exports = {
             init: init,
         };
     },
+    Block: function(body){
+        return {
+            type: "Block",
+            body: body,
+        };
+    },
+    Return: function(value){
+        return {
+            type: "Return",
+            value: value,
+        };
+    },
+    While: function(cond, body){
+        return {
+            type: "While",
+            cond: cond,
+            body: body,
+        };
+    },
+    Continue: function(){
+        return {type: "Continue"};
+    },
+    Break: function(){
+        return {type: "Break"};
+    },
 };

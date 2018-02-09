@@ -185,9 +185,29 @@ var prefix = function(op, rbp){
     });
 };
 
+
 var stmt = function(s, f){
     return defRule(s, {sta: f});
 };
+
+
+var doBlock = function(state){
+    var loc = {
+        start: state.curr.token.loc.start,
+        end: state.curr.token.loc.end,
+    };
+    var body = statements(state);
+    if(notOk(body)){
+        return body;
+    }
+    if(state.curr.rule.id !== "end"){
+        return Error(state.curr.token.loc, "Expected `end`");
+    }
+    loc.end = state.curr.token.loc.end;
+    advance(state);
+    return Ok(loc, ast.Block(body.tree));
+};
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Rules
@@ -300,14 +320,20 @@ defRule("fn", {
             return Error(state.curr.token.loc, "Expected `)`");
         }
         advance(state);
-        // TODO block or expression
-        var body = expression(state, 0);
+        var body;
+        if(state.curr.rule.id === "do"){
+            advance(state);
+            body = doBlock(state);
+        }else{
+            body = expression(state, 0);
+        }
         if(notOk(body)){
             return body;
         }
         return Ok(token.loc,  ast.Function(params, body.tree));
     },
 });
+
 
 stmt("def", function(state){
     var loc = state.curr.token.loc;
@@ -323,11 +349,44 @@ stmt("def", function(state){
     if(notOk(init)){
         return init;
     }
-    return Ok(loc, {
-        type: "Define",
-        id: id.tree,
-        init: init.tree,
-    });
+    return Ok(loc, ast.Define(id.tree, init.tree));
+});
+
+
+stmt("do", doBlock);
+
+
+stmt("return", function(state){
+    var loc = state.curr.token.loc;
+    var val = expression(state, 0);
+    if(notOk(val)){
+        return val;
+    }
+    return Ok(loc, ast.Return(val.tree));
+});
+
+
+stmt("while", function(state){
+    var loc = state.curr.token.loc;
+    var cond = expression(state, 0);
+    if(notOk(cond)){
+        return cond;
+    }
+    if(state.curr.rule.id !== "do"){
+        return Error(state.curr.token.loc, "Expected `do`");
+    }
+    advance(state);
+    var body = doBlock(state);
+    if(notOk(body)){
+        return body;
+    }
+    return Ok(loc, ast.While(cond.tree, body.tree));
+});
+stmt("continue", function(state){
+    return Ok(state.curr.token.loc, ast.Continue());
+});
+stmt("break", function(state){
+    return Ok(state.curr.token.loc, ast.Break());
 });
 
 

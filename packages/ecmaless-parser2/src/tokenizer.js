@@ -32,6 +32,7 @@ var keywords = {
     "fn": true,
     "do": true,
     "end": true,
+    "return": true,
 
     "not": true,
     "and": true,
