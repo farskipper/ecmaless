@@ -41,6 +41,7 @@ var keywords = {
 
     "if": true,
     "then": true,
+    "elseif": true,
     "else": true,
 
     "while": true,

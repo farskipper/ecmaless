@@ -235,6 +235,7 @@ test("statements", function(t){
             ast.ApplyFn(S("baz"), []),
         ]))),
     ]);
+    tstErr("def noop = fn() do", "Expected `end`|18-18");
 
     tst("return a", [ast.Return(S("a"))]);
     tstErr("return +", "Expected an expression|7-8");
@@ -250,6 +251,23 @@ test("statements", function(t){
         ast.Break(),
     ]);
     tstErr("def a = fn() continue", "Expected an expression|13-21");
+
+    tstErr("if a then", "Expected `do`|5-9");
+    tstErr("if a do foo()", "Expected `elseif` or `else` or `end`|13-13");
+    tst("if a do foo() end", [
+        ast.IfStatement(S("a"), [
+            ast.ApplyFn(S("foo"), []),
+        ], null),
+    ]);
+    tst("if a do foo() else bar() end", [
+        ast.IfStatement(S("a"), [
+            ast.ApplyFn(S("foo"), []),
+        ], [
+            ast.ApplyFn(S("bar"), []),
+        ]),
+    ]);
+    tst("if a do else end", [ast.IfStatement(S("a"), [], [])]);
+    tst("if a do end", [ast.IfStatement(S("a"), [], null)]);
 
     t.end();
 });

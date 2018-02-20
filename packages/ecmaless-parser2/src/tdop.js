@@ -122,7 +122,11 @@ var statements = function(state){
     };
     var a = [];
     while(true){
-        if(state.curr.rule.id === "end" || state.curr.rule.id === "(end)"){
+        if(state.curr.rule.id === "end"
+        || state.curr.rule.id === "(end)"
+        || state.curr.rule.id === "else"
+        || state.curr.rule.id === "elseif"
+        ){
             break;
         }
         var s = statement(state);
@@ -218,6 +222,7 @@ defRule(",", {});
 defRule("=", {});
 defRule("then", {});
 defRule("else", {});
+defRule("elseif", {});
 defRule("NUMBER", {
     nud: function(state, token){
         var v = parseFloat(token.src) || 0;
@@ -360,6 +365,45 @@ defRule("if", {
         }
 
         return Ok(token.loc,  ast.IfExpression(test.tree, then.tree, elseExpr.tree));
+    },
+    sta: function(state){
+        var loc = state.curr.token.loc;
+
+        var test = expression(state, 0);
+        if(notOk(test)){
+            return test;
+        }
+        if(state.curr.rule.id !== "do"){
+            return Error(state.curr.token.loc, "Expected `do`");
+        }
+        advance(state);
+        var then = statements(state);
+        if(notOk(then)){
+            return then;
+        }
+        var elseStmt;
+        while(true){
+            if(state.curr.rule.id === "elseif"){
+                return Error(state.curr.token.loc, "`elseif` is not yet supported");
+            }else if(state.curr.rule.id === "else"){
+                advance(state);
+                elseStmt = statements(state);
+                if(notOk(elseStmt)){
+                    return elseStmt;
+                }
+                if(state.curr.rule.id !== "end"){
+                    return Error(state.curr.token.loc, "Expected `end`");
+                }
+                advance(state);
+                break;
+            }else if(state.curr.rule.id === "end"){
+                advance(state);
+                break;
+            }else{
+                return Error(state.curr.token.loc, "Expected `elseif` or `else` or `end`");
+            }
+        }
+        return Ok(loc,  ast.IfStatement(test.tree, then.tree, elseStmt ? elseStmt.tree : null));
     },
 });
 
