@@ -69,4 +69,20 @@ module.exports = {
     Break: function(){
         return {type: "Break"};
     },
+    IfExpression: function(test, then, elseExpr){
+        return {
+            type: "IfExpression",
+            test: test,
+            then: then,
+            "else": elseExpr,
+        };
+    },
+    IfStatement: function(test, then, elseStmt){
+        return {
+            type: "IfStatement",
+            test: test,
+            then: then,
+            "else": elseStmt,
+        };
+    },
 };

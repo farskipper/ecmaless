@@ -101,6 +101,12 @@ test("expression", function(t){
     tstErr("fn(a + b)", "Expected `)`|5-6");
     tstErr("fn(1)", "Expected a symbol|3-4");
 
+    tstErr("if a", "Expected `then`|4-4");
+    tstErr("if a then b", "Expected `else`|11-11");
+    tst("if a then b else c", ast.IfExpression(S("a"), S("b"), S("c")));
+    tst("if a then b else if c then d else e", ast.IfExpression(S("a"), S("b"), ast.IfExpression(S("c"), S("d"), S("e"))));
+    tst("if a then if b then c else d else e", ast.IfExpression(S("a"), ast.IfExpression(S("b"), S("c"), S("d")), S("e")));
+
     t.end();
 });
 
@@ -243,6 +249,7 @@ test("statements", function(t){
         ast.Continue(),
         ast.Break(),
     ]);
+    tstErr("def a = fn() continue", "Expected an expression|13-21");
 
     t.end();
 });

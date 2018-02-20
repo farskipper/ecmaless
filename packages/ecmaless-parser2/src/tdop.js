@@ -216,6 +216,8 @@ defRule("end", {});
 defRule(")", {});
 defRule(",", {});
 defRule("=", {});
+defRule("then", {});
+defRule("else", {});
 defRule("NUMBER", {
     nud: function(state, token){
         var v = parseFloat(token.src) || 0;
@@ -331,6 +333,33 @@ defRule("fn", {
             return body;
         }
         return Ok(token.loc,  ast.Function(params, body.tree));
+    },
+});
+
+defRule("if", {
+    nud: function(state, token){
+        var test = expression(state, 0);
+        if(notOk(test)){
+            return test;
+        }
+        if(state.curr.rule.id !== "then"){
+            return Error(state.curr.token.loc, "Expected `then`");
+        }
+        advance(state);
+        var then = expression(state, 0);
+        if(notOk(then)){
+            return then;
+        }
+        if(state.curr.rule.id !== "else"){
+            return Error(state.curr.token.loc, "Expected `else`");
+        }
+        advance(state);
+        var elseExpr = expression(state, 0);
+        if(notOk(elseExpr)){
+            return elseExpr;
+        }
+
+        return Ok(token.loc,  ast.IfExpression(test.tree, then.tree, elseExpr.tree));
     },
 });
 
