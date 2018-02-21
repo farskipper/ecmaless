@@ -85,4 +85,28 @@ module.exports = {
             "else": elseStmt,
         };
     },
+    Type: function(value){
+        return {type: "Type", value: value};
+    },
+    DefineType: function(id, init){
+        return {
+            type: "DefineType",
+            id: id,
+            init: init,
+        };
+    },
+    TypeUnion: function(left, right){
+        return {
+            type: "TypeUnion",
+            left: left,
+            right: right,
+        };
+    },
+    TypeVariant: function(tag, args){
+        return {
+            type: "TypeVariant",
+            tag: tag,
+            args: args,
+        };
+    },
 };

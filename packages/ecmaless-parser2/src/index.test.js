@@ -27,6 +27,7 @@ var rmLoc = function(ast){
 };
 
 var S = ast.Symbol;
+var T = ast.Type;
 
 test("expression", function(t){
     var tst = function(src, expected){
@@ -268,6 +269,47 @@ test("statements", function(t){
     ]);
     tst("if a do else end", [ast.IfStatement(S("a"), [], [])]);
     tst("if a do end", [ast.IfStatement(S("a"), [], null)]);
+
+
+    tstErr("type", "Expected a type|4-4");
+    tstErr("type Foo", "Expected `=`|8-8");
+    tstErr("type Foo =", "Expected a type expression|10-10");
+    tst("type Foo = Bar", [ast.DefineType(T("Foo"), T("Bar"))]);
+
+    tstErr("type A=B(", "Expected a type expression|9-9");
+    tstErr("type A=B(C", "Expected `)`|10-10");
+    tst("type Foo = Bar()", [
+        ast.DefineType(T("Foo"), ast.TypeVariant(T("Bar"), [])),
+    ]);
+    tst("type Foo = Bar(String)", [
+        ast.DefineType(T("Foo"), ast.TypeVariant(T("Bar"), [
+            T("String"),
+        ])),
+    ]);
+    tst("type Foo = Bar(String, Number)", [
+        ast.DefineType(T("Foo"), ast.TypeVariant(T("Bar"), [
+            T("String"),
+            T("Number"),
+        ])),
+    ]);
+
+    tst("type A = B() | C()", [
+        ast.DefineType(T("A"), ast.TypeUnion(
+            ast.TypeVariant(T("B"), []),
+            ast.TypeVariant(T("C"), [])
+        )),
+    ]);
+
+    tst("type A = B() | C() | D()", [
+        ast.DefineType(T("A"), ast.TypeUnion(
+            ast.TypeUnion(
+                ast.TypeVariant(T("B"), []),
+                ast.TypeVariant(T("C"), [])
+            ),
+            ast.TypeVariant(T("D"), [])
+        )),
+    ]);
+
 
     t.end();
 });

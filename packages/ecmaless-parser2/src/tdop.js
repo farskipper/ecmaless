@@ -99,6 +99,37 @@ var symbol = function(state){
     return nud(state, token);
 };
 
+var type = function(state){
+    if(state.curr.rule.id !== "TYPE"){
+        return Error(state.curr.token.loc, "Expected a type");
+    }
+    var type_nud = state.curr.rule.type_nud;
+    var token = state.curr.token;
+    advance(state);
+    return type_nud(state, token);
+};
+
+var typeExpression = function(state, rbp){
+    var prev = state.curr;
+    advance(state);
+    if(!prev.rule.type_nud){
+        return Error(prev.token.loc, "Expected a type expression");
+    }
+    var left = prev.rule.type_nud(state, prev.token);
+    if(notOk(left)){
+        return left;
+    }
+    while(rbp < state.curr.rule.type_lbp){
+        prev = state.curr;
+        advance(state);
+        left = prev.rule.type_led(state, prev.token, left.tree);
+        if(notOk(left)){
+            return left;
+        }
+    }
+    return left;
+};
+
 var statement = function(state){
     var rule = state.curr.rule;
     if(rule.sta){
@@ -150,6 +181,12 @@ var defRule = function(id, rule){
 
             lbp: 0,
             led: void 0,// Maybe< Fn(State, Token, left: Tree) >
+
+            sta: void 0,// Maybe< Fn(State) >
+
+            type_nud: void 0,// Maybe< Fn(State, Token) >
+            type_lbp: 0,
+            type_led: void 0,// Maybe< Fn(State, Token, left: Tree) >
         };
     }
     if(rule.nud){
@@ -161,6 +198,13 @@ var defRule = function(id, rule){
     }
     if(rule.sta){
         rules[id].sta = rule.sta;
+    }
+    if(rule.type_nud){
+        rules[id].type_nud = rule.type_nud;
+    }
+    if(rule.type_led && rule.type_lbp > 0){
+        rules[id].type_lbp = rule.type_lbp;
+        rules[id].type_led = rule.type_led;
     }
 };
 
@@ -242,6 +286,11 @@ defRule("STRING", {
 defRule("SYMBOL", {
     nud: function(state, token){
         return Ok(token.loc,  ast.Symbol(token.src));
+    },
+});
+defRule("TYPE", {
+    type_nud: function(state, token){
+        return Ok(token.loc,  ast.Type(token.src));
     },
 });
 
@@ -462,6 +511,59 @@ stmt("break", function(state){
     return Ok(state.curr.token.loc, ast.Break());
 });
 
+stmt("type", function(state){
+    var loc = state.curr.token.loc;
+    var id = type(state);
+    if(notOk(id)){
+        return id;
+    }
+    if(state.curr.rule.id !== "="){
+        return Error(state.curr.token.loc, "Expected `=`");
+    }
+    advance(state);
+
+    var init = typeExpression(state, 0);
+    if(notOk(init)){
+        return init;
+    }
+    return Ok(loc, ast.DefineType(id.tree, init.tree));
+});
+
+defRule("|", {
+    type_lbp: 10,
+    type_led: function(state, token, left){
+        var right = typeExpression(state, 10);
+        if(notOk(right)){
+            return right;
+        }
+        return Ok(token.loc, ast.TypeUnion(left, right.tree));
+    },
+});
+
+defRule("(", {
+    type_lbp: 80,
+    type_led: function(state, token, left){
+        var args = [];
+        if(state.curr.rule.id !== ")"){
+            while(true){
+                var e = typeExpression(state, 0);
+                if(notOk(e)){
+                    return e;
+                }
+                args.push(e.tree);
+                if(state.curr.rule.id !== ","){
+                    break;
+                }
+                advance(state);
+            }
+        }
+        if(state.curr.rule.id !== ")"){
+            return Error(state.curr.token.loc, "Expected `)`");
+        }
+        advance(state);
+        return Ok(token.loc, ast.TypeVariant(left, args));
+    },
+});
 
 
 ////////////////////////////////////////////////////////////////////////////////

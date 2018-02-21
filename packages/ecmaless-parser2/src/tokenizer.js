@@ -49,6 +49,7 @@ var keywords = {
     "continue": true,
 
     "case": true,
+    "when": true,
 
     "import": true,
     "export": true,
