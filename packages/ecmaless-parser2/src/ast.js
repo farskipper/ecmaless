@@ -37,6 +37,32 @@ module.exports = {
             body: body,
         };
     },
+    Struct: function(pairs){
+        return {
+            type: "Struct",
+            pairs: pairs,
+        };
+    },
+    StructPair: function(key, value){
+        return {
+            type: "StructPair",
+            key: key,
+            value: value,
+        };
+    },
+    TypeStruct: function(pairs){
+        return {
+            type: "TypeStruct",
+            pairs: pairs,
+        };
+    },
+    TypeStructPair: function(key, value){
+        return {
+            type: "TypeStructPair",
+            key: key,
+            value: value,
+        };
+    },
     Define: function(id, init){
         return {
             type: "Define",

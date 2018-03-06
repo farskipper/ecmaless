@@ -130,6 +130,56 @@ var typeExpression = function(state, rbp){
     return left;
 };
 
+var structPair = function(state, isType){
+    var sym = symbol(state);
+    if(notOk(sym)){
+        return sym;
+    }
+    if(state.curr.rule.id !== ":"){
+        return Error(state.curr.token.loc, "Expected `:`");
+    }
+    advance(state);
+    var exp = isType
+        ? typeExpression(state, 0)
+        : expression(state, 0);
+    if(notOk(exp)){
+        return exp;
+    }
+    var tree = isType
+        ? ast.TypeStructPair(sym.tree, exp.tree)
+        : ast.StructPair(sym.tree, exp.tree);
+    return Ok({
+        start: sym.tree.loc.start,
+        end: exp.tree.loc.end,
+    }, tree);
+};
+
+var struct = function(state, token, isType){
+    var loc = {start: 0, end: 0};
+    loc.start = token.loc.start;
+    var pairs = [];
+    while(state.curr.rule.id !== "}"){
+        var pair = structPair(state, isType);
+        if(notOk(pair)){
+            return pair;
+        }
+        pairs.push(pair.tree);
+        if(state.curr.rule.id !== ","){
+            break;
+        }
+        advance(state);
+    }
+    if(state.curr.rule.id !== "}"){
+        return Error(state.curr.token.loc, "Expected `}`");
+    }
+    loc.end = state.curr.token.loc.end;
+    advance(state);
+    var tree = isType
+        ? ast.TypeStruct(pairs)
+        : ast.Struct(pairs);
+    return Ok(loc,  tree);
+};
+
 var statement = function(state){
     var rule = state.curr.rule;
     if(rule.sta){
@@ -262,6 +312,8 @@ var doBlock = function(state){
 defRule("(end)", {});
 defRule("end", {});
 defRule(")", {});
+defRule("}", {});
+defRule(":", {});
 defRule(",", {});
 defRule("=", {});
 defRule("then", {});
@@ -350,6 +402,15 @@ defRule("(", {
         advance(state);
         return Ok(token.loc,  ast.ApplyFn(left, args));
     },
+});
+
+defRule("{", {
+    nud: function(state, token){
+        return struct(state, token);
+    },
+    type_nud: function(state, token){
+        return struct(state, token, true);
+    }
 });
 
 defRule("fn", {

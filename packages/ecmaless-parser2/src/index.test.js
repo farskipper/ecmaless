@@ -108,6 +108,30 @@ test("expression", function(t){
     tst("if a then b else if c then d else e", ast.IfExpression(S("a"), S("b"), ast.IfExpression(S("c"), S("d"), S("e"))));
     tst("if a then if b then c else d else e", ast.IfExpression(S("a"), ast.IfExpression(S("b"), S("c"), S("d")), S("e")));
 
+
+    tstErr("{", "Expected a symbol|1-1");
+    tst("{}", ast.Struct([]));
+    tstErr("{a", "Expected `:`|2-2");
+    tstErr("{a:", "Expected an expression|3-3");
+    tstErr("{a: 1", "Expected `}`|5-5");
+    tst("{a: 1}", ast.Struct([
+        ast.StructPair(S("a"), ast.Number(1)),
+    ]));
+    tstErr("{a: 1,", "Expected a symbol|6-6");
+    tst("{a: 1,}", ast.Struct([
+        ast.StructPair(S("a"), ast.Number(1)),
+    ]));
+    tstErr("{a: 1,,}", "Expected a symbol|6-7");
+    tst("{b: 2, c: 3}", ast.Struct([
+        ast.StructPair(S("b"), ast.Number(2)),
+        ast.StructPair(S("c"), ast.Number(3)),
+    ]));
+    tst("{b: 2, c: 3,}", ast.Struct([
+        ast.StructPair(S("b"), ast.Number(2)),
+        ast.StructPair(S("c"), ast.Number(3)),
+    ]));
+    tstErr("{def: 1}", "Expected a symbol|1-4");
+
     t.end();
 });
 
@@ -181,6 +205,32 @@ test("ast shape", function(t){
                 ],
             }
         },
+    });
+
+    t.deepEquals(parseExpression("{a: 1}"), {
+        type: "Ok",
+        tree: {
+            loc: {start: 0, end: 6},
+            ast: {
+                type: "Struct",
+                pairs: [
+                    {
+                        loc: {start: 1, end: 5},
+                        ast: {
+                            type: "StructPair",
+                            key: {
+                                loc: {start: 1, end: 2},
+                                ast: S("a")
+                            },
+                            value: {
+                                loc: {start: 4, end: 5},
+                                ast: ast.Number(1)
+                            }
+                        }
+                    }
+                ]
+            }
+        }
     });
 
     t.end();
@@ -310,6 +360,23 @@ test("statements", function(t){
         )),
     ]);
 
+    tstErr("type A = {", "Expected a symbol|10-10");
+    tst("type A = {}", [
+        ast.DefineType(T("A"), ast.TypeStruct([]))
+    ]);
+    tstErr("type A = {name", "Expected `:`|14-14");
+    tstErr("type A = {name:", "Expected a type expression|15-15");
+    tst("type A = {name: String}", [
+        ast.DefineType(T("A"), ast.TypeStruct([
+            ast.TypeStructPair(S("name"), T("String")),
+        ]))
+    ]);
+    tst("type A = {name: String,}", [
+        ast.DefineType(T("A"), ast.TypeStruct([
+            ast.TypeStructPair(S("name"), T("String")),
+        ]))
+    ]);
+    tstErr("type A = {name: String", "Expected `}`|22-22");
 
     t.end();
 });
