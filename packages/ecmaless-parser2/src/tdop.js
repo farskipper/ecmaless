@@ -207,6 +207,7 @@ var statements = function(state){
         || state.curr.rule.id === "(end)"
         || state.curr.rule.id === "else"
         || state.curr.rule.id === "elseif"
+        || state.curr.rule.id === "when"
         ){
             break;
         }
@@ -319,6 +320,7 @@ defRule("=", {});
 defRule("then", {});
 defRule("else", {});
 defRule("elseif", {});
+defRule("when", {});
 defRule("NUMBER", {
     nud: function(state, token){
         var v = parseFloat(token.src) || 0;
@@ -514,6 +516,105 @@ defRule("if", {
             }
         }
         return Ok(loc,  ast.IfStatement(test.tree, then.tree, elseStmt ? elseStmt.tree : null));
+    },
+});
+
+
+defRule("case", {
+    nud: function(state, token){
+        var loc = token.loc;
+        var discriminant = expression(state, 0);
+        if(notOk(discriminant)){
+            return discriminant;
+        }
+        if(state.curr.rule.id !== "when" && state.curr.rule.id !== "else"){
+            return Error(state.curr.token.loc, "Expected `when` or `else`");
+        }
+        var whens = [];
+        var elseExpr;
+        while(true){
+            if(state.curr.rule.id === "when"){
+                advance(state);
+                var test = typeExpression(state, 0);
+                if(notOk(test)){
+                    return test;
+                }
+                var then = expression(state, 0);
+                if(notOk(then)){
+                    return then;
+                }
+                whens.push({
+                    loc: {
+                        start: test.tree.loc.start,
+                        end: then.tree.loc.end,
+                    },
+                    ast: ast.CaseWhenExpression(test.tree, then.tree)
+                });
+            }else if(state.curr.rule.id === "else"){
+                advance(state);
+                elseExpr = expression(state, 0);
+                if(notOk(elseExpr)){
+                    return elseExpr;
+                }
+                break;
+            }else{
+                break;
+            }
+        }
+        return Ok(loc,  ast.CaseExpression(discriminant.tree, whens, elseExpr && elseExpr.tree));
+    },
+    sta: function(state){
+        var loc = {start: 0, end: 0};
+        var discriminant = expression(state, 0);
+        if(notOk(discriminant)){
+            return discriminant;
+        }
+        if(state.curr.rule.id !== "do"){
+            return Error(state.curr.token.loc, "Expected `do`");
+        }
+        advance(state);
+        if(state.curr.rule.id !== "when" && state.curr.rule.id !== "else"){
+            return Error(state.curr.token.loc, "Expected `when` or `else`");
+        }
+        var whens = [];
+        var elseStmt;
+        while(true){
+            if(state.curr.rule.id === "when"){
+                advance(state);
+                var test = typeExpression(state, 0);
+                if(notOk(test)){
+                    return test;
+                }
+                var then = statements(state);
+                if(notOk(then)){
+                    return then;
+                }
+                whens.push({
+                    loc: {
+                        start: test.tree.loc.start,
+                        end: then.tree.loc.end,
+                    },
+                    ast: ast.CaseWhenStatement(test.tree, then.tree)
+                });
+            }else if(state.curr.rule.id === "else"){
+                advance(state);
+                elseStmt = statements(state);
+                if(notOk(elseStmt)){
+                    return elseStmt;
+                }
+                if(state.curr.rule.id !== "end"){
+                    return Error(state.curr.token.loc, "Expected `end`");
+                }
+                advance(state);
+                break;
+            }else if(state.curr.rule.id === "end"){
+                advance(state);
+                break;
+            }else{
+                return Error(state.curr.token.loc, "Expected `when`, `else` or `end`");
+            }
+        }
+        return Ok(loc,  ast.CaseStatement(discriminant.tree, whens, elseStmt && elseStmt.tree));
     },
 });
 

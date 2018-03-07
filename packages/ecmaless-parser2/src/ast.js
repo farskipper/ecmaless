@@ -111,6 +111,36 @@ module.exports = {
             "else": elseStmt,
         };
     },
+    CaseExpression: function(discriminant, whens, elseExpr){
+        return {
+            type: "CaseExpression",
+            discriminant: discriminant,
+            whens: whens,
+            "else": elseExpr,
+        };
+    },
+    CaseStatement: function(discriminant, whens, elseStmt){
+        return {
+            type: "CaseStatement",
+            discriminant: discriminant,
+            whens: whens,
+            "else": elseStmt,
+        };
+    },
+    CaseWhenExpression: function(test, then){
+        return {
+            type: "CaseWhenExpression",
+            test: test,
+            then: then,
+        };
+    },
+    CaseWhenStatement: function(test, then){
+        return {
+            type: "CaseWhenStatement",
+            test: test,
+            then: then,
+        };
+    },
     Type: function(value){
         return {type: "Type", value: value};
     },

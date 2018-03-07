@@ -132,6 +132,24 @@ test("expression", function(t){
     ]));
     tstErr("{def: 1}", "Expected a symbol|1-4");
 
+
+    tstErr("case", "Expected an expression|4-4");
+    tstErr("case foo", "Expected `when` or `else`|8-8");
+    tstErr("case foo when", "Expected a type expression|13-13");
+    tstErr("case foo when Foo()", "Expected an expression|19-19");
+    tst("case foo when Foo() bar", ast.CaseExpression(S("foo"), [
+        ast.CaseWhenExpression(ast.TypeVariant(T("Foo"), []), S("bar")),
+    ]));
+    tstErr("case foo when Foo() bar else", "Expected an expression|28-28");
+    tst("case foo when Foo() bar else baz", ast.CaseExpression(S("foo"), [
+        ast.CaseWhenExpression(ast.TypeVariant(T("Foo"), []), S("bar")),
+    ], S("baz")));
+    tst("case foo when Foo() bar when Baz() qux", ast.CaseExpression(S("foo"), [
+        ast.CaseWhenExpression(ast.TypeVariant(T("Foo"), []), S("bar")),
+        ast.CaseWhenExpression(ast.TypeVariant(T("Baz"), []), S("qux")),
+    ]));
+
+
     t.end();
 });
 
@@ -377,6 +395,43 @@ test("statements", function(t){
         ]))
     ]);
     tstErr("type A = {name: String", "Expected `}`|22-22");
+
+    tstErr("case", "Expected an expression|4-4");
+    tstErr("case foo", "Expected `do`|8-8");
+    tstErr("case foo do", "Expected `when` or `else`|11-11");
+    tstErr("case foo do when", "Expected a type expression|16-16");
+    tstErr("case foo do when Bar()", "Expected `when`, `else` or `end`|22-22");
+    tst("case foo do when Bar() end", [
+        ast.CaseStatement(S("foo"), [
+            ast.CaseWhenStatement(ast.TypeVariant(T("Bar"), []), []),
+        ])
+    ]);
+    tstErr("case foo do when Bar() baz end", "Expected a statement|23-26");
+    tst("case foo do when Bar() baz() end", [
+        ast.CaseStatement(S("foo"), [
+            ast.CaseWhenStatement(ast.TypeVariant(T("Bar"), []), [
+                ast.ApplyFn(S("baz"), []),
+            ]),
+        ])
+    ]);
+    tst("case foo do when Bar() baz() when Qux() end", [
+        ast.CaseStatement(S("foo"), [
+            ast.CaseWhenStatement(ast.TypeVariant(T("Bar"), []), [
+                ast.ApplyFn(S("baz"), []),
+            ]),
+            ast.CaseWhenStatement(ast.TypeVariant(T("Qux"), []), [])
+        ])
+    ]);
+    tstErr("case foo do when Bar() baz() else qux() when Foo() end", "Expected `end`|40-44");
+    tst("case foo do when Bar() baz() else qux() end", [
+        ast.CaseStatement(S("foo"), [
+            ast.CaseWhenStatement(ast.TypeVariant(T("Bar"), []), [
+                ast.ApplyFn(S("baz"), []),
+            ]),
+        ], [
+            ast.ApplyFn(S("qux"), []),
+        ])
+    ]);
 
     t.end();
 });
