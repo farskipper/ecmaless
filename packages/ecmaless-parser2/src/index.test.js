@@ -95,6 +95,8 @@ test("expression", function(t){
     tst("fn() a", ast.Function([], S("a")));
     tst("fn(a, b) c", ast.Function([S("a"), S("b")], S("c")));
 
+    tst("(fn() a)()", ast.ApplyFn(ast.Function([], S("a")), []));
+
     tstErr("fn a", "Expected `(`|3-4");
     tstErr("fn(", "Expected a symbol|3-3");
     tstErr("fn(+)", "Expected a symbol|3-4");
