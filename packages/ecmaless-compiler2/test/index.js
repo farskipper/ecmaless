@@ -1,9 +1,9 @@
 var _ = require('lodash')
-var test = require('tape')
+var test = require('ava')
 var parser = require('ecmaless-parser2')
-var compiler = require('./')
+var compiler = require('../')
 var escodegen = require('escodegen')
-var okOrError = require('./okOrError')
+var okOrError = require('../src/okOrError')
 var Ok = okOrError.Ok
 var notOk = okOrError.notOk
 
@@ -30,7 +30,7 @@ var testCompile = function (t, src, expected) {
   if (notOk(out)) {
     throw "Didn't expect an error: " + JSON.stringify(out)//eslint-disable-line
   }
-  t.equals(out.value, expected)
+  t.is(out.value, expected)
 }
 
 var testError = function (t, src, expected) {
@@ -45,7 +45,7 @@ var testError = function (t, src, expected) {
     return
   }
   var estr = out.message + '|' + out.loc.start + '-' + out.loc.end
-  t.equals(estr, expected)
+  t.is(estr, expected)
 }
 
 test('compile', function (t) {
@@ -62,6 +62,4 @@ test('compile', function (t) {
 
   terr('def a = 1 + "b"', 'e:Number a:String|12-15')
   terr('def a = "b" + 2', 'e:Number a:String|8-11')
-
-  t.end()
 })

@@ -1,9 +1,9 @@
 var _ = require('lodash')
-var ast = require('./ast')
-var tdop = require('./tdop')
-var test = require('tape')
-var parser = require('./')
-var tokenizer = require('./tokenizer')
+var ast = require('../src/ast')
+var tdop = require('../src/tdop')
+var test = require('ava')
+var parser = require('../')
+var tokenizer = require('../src/tokenizer')
 
 var parseExpression = function (src) {
   var r = tokenizer(src)
@@ -18,7 +18,9 @@ var rmLoc = function (ast) {
     if (!_.isEqual(_.keys(ast), ['loc', 'ast'])) {
       throw 'AST tree should only have {loc, ast} properties: ' + _.keys(ast).join(', ')//eslint-disable-line
     }
-    return _.mapValues(ast.ast, rmLoc)
+    return _.isArray(ast.ast)
+      ? _.map(ast.ast, rmLoc)
+      : _.mapValues(ast.ast, rmLoc)
   }
   if (_.isArray(ast)) {
     return _.map(ast, rmLoc)
@@ -37,7 +39,7 @@ test('expression', function (t) {
       return
     }
     var ast = rmLoc(r.tree)
-    t.deepEquals(ast, expected)
+    t.deepEqual(ast, expected)
   }
   var tstErr = function (src, expected) {
     var r = parseExpression(src)
@@ -45,7 +47,7 @@ test('expression', function (t) {
       t.fail('Should have failed: ' + expected)
       return
     }
-    t.equals(r.message + '|' + r.loc.start + '-' + r.loc.end, expected)
+    t.is(r.message + '|' + r.loc.start + '-' + r.loc.end, expected)
   }
 
   tst('123', ast.Number(123))
@@ -147,12 +149,10 @@ test('expression', function (t) {
     ast.CaseWhenExpression(ast.TypeVariant(T('Foo'), []), S('bar')),
     ast.CaseWhenExpression(ast.TypeVariant(T('Baz'), []), S('qux'))
   ]))
-
-  t.end()
 })
 
 test('ast shape', function (t) {
-  t.deepEquals(parseExpression('a'), {
+  t.deepEqual(parseExpression('a'), {
     type: 'Ok',
     tree: {
       loc: {start: 0, end: 1},
@@ -160,7 +160,7 @@ test('ast shape', function (t) {
     }
   })
 
-  t.deepEquals(parseExpression('not a'), {
+  t.deepEqual(parseExpression('not a'), {
     type: 'Ok',
     tree: {
       loc: {start: 0, end: 3},
@@ -175,7 +175,7 @@ test('ast shape', function (t) {
     }
   })
 
-  t.deepEquals(parseExpression('a + b'), {
+  t.deepEqual(parseExpression('a + b'), {
     type: 'Ok',
     tree: {
       loc: {start: 2, end: 3},
@@ -194,7 +194,7 @@ test('ast shape', function (t) {
     }
   })
 
-  t.deepEquals(parseExpression('(a)'), {
+  t.deepEqual(parseExpression('(a)'), {
     type: 'Ok',
     tree: {
       loc: {start: 1, end: 2},
@@ -202,7 +202,7 @@ test('ast shape', function (t) {
     }
   })
 
-  t.deepEquals(parseExpression('a(b)'), {
+  t.deepEqual(parseExpression('a(b)'), {
     type: 'Ok',
     tree: {
       loc: {start: 1, end: 2},
@@ -222,7 +222,7 @@ test('ast shape', function (t) {
     }
   })
 
-  t.deepEquals(parseExpression('{a: 1}'), {
+  t.deepEqual(parseExpression('{a: 1}'), {
     type: 'Ok',
     tree: {
       loc: {start: 0, end: 6},
@@ -247,8 +247,6 @@ test('ast shape', function (t) {
       }
     }
   })
-
-  t.end()
 })
 
 test('statements', function (t) {
@@ -259,7 +257,7 @@ test('statements', function (t) {
       return
     }
     var ast = rmLoc(r.tree)
-    t.deepEquals(ast, expected)
+    t.deepEqual(ast, expected)
   }
   var tstErr = function (src, expected) {
     var r = parser(src)
@@ -267,7 +265,7 @@ test('statements', function (t) {
       t.fail('Should have failed: ' + expected)
       return
     }
-    t.equals(r.message + '|' + r.loc.start + '-' + r.loc.end, expected)
+    t.is(r.message + '|' + r.loc.start + '-' + r.loc.end, expected)
   }
 
   tst('a()', [ast.ApplyFn(S('a'), [])])
@@ -428,6 +426,4 @@ test('statements', function (t) {
       ast.ApplyFn(S('qux'), [])
     ])
   ])
-
-  t.end()
 })

@@ -1,6 +1,6 @@
 var _ = require('lodash')
-var test = require('tape')
-var tokenizer = require('./tokenizer')
+var test = require('ava')
+var tokenizer = require('../src/tokenizer')
 
 test('tokenizer', function (t) {
   var tst = function (src, expected, message) {
@@ -11,13 +11,13 @@ test('tokenizer', function (t) {
     }
     var tokens = r.value
 
-    t.deepEquals(_.map(tokens, function (tok) {
+    t.deepEqual(_.map(tokens, function (tok) {
       var locSrc = src.substring(tok.loc.start, tok.loc.end)
-      t.equals(tok.src, locSrc, 'loc should point to the same src string')
+      t.is(tok.src, locSrc, 'loc should point to the same src string')
       return _.padEnd(tok.type, 7) + '|' + tok.src
     }), expected, message)
 
-    t.equals(_.map(tokens, 'src').join(''), src, 'all src should be tokenized')
+    t.is(_.map(tokens, 'src').join(''), src, 'all src should be tokenized')
   }
 
   var tstTok = function (type, src) {
@@ -25,7 +25,7 @@ test('tokenizer', function (t) {
   }
 
   var tstErr = function (src, eType, eMessage, eSrc, eLoc) {
-    t.deepEquals(tokenizer(src), {
+    t.deepEqual(tokenizer(src), {
       type: eType,
       message: eMessage,
       src: eSrc,
@@ -213,6 +213,4 @@ test('tokenizer', function (t) {
     '\r',
     {start: 2, end: 3}
   )
-
-  t.end()
 })

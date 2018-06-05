@@ -7,8 +7,7 @@
     "src/"
   ],
   "scripts": {
-    "start": "onchange 'src/' -i -- npm test",
-    "test": "standard && node src/tests.js | faucet"
+    "test": "standard && ava"
   },
   "repository": {
     "type": "git",
@@ -32,11 +31,9 @@
     "to-js-identifier": "^1.0.0"
   },
   "devDependencies": {
+    "ava": "^0.25.0",
     "ecmaless-parser2": "^0.7.0",
     "escodegen": "^1.8.0",
-    "faucet": "0.0.1",
-    "onchange": "^3.2.1",
-    "standard": "^11.0.1",
-    "tape": "^4.8.0"
+    "standard": "^11.0.1"
   }
 }
