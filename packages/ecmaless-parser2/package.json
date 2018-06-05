@@ -8,8 +8,7 @@
   ],
   "scripts": {
     "start": "onchange 'src/' -i -- npm test",
-    "lint": "eslint src/ && echo lint-ok",
-    "test": "npm run lint -s && node src/tests.js | faucet"
+    "test": "standard && node src/tests.js | faucet"
   },
   "repository": {
     "type": "git",
@@ -32,6 +31,7 @@
     "json-stringify-pretty-compact": "^1.0.4",
     "lodash": "^4.17.4",
     "onchange": "^3.2.1",
+    "standard": "^11.0.1",
     "tape": "^4.8.0"
   }
 }

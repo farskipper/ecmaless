@@ -1,2 +1,2 @@
-require("./tokenizer.test");
-require("./index.test");
+require('./tokenizer.test')
+require('./index.test')
