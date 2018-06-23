@@ -450,6 +450,38 @@ defRule('fn', {
   }
 })
 
+defRule('Fn', {
+  type_nud: function (state, token) {
+    if (state.curr.rule.id !== '(') {
+      return Error(state.curr.token.loc, 'Expected `(`')
+    }
+    advance(state)
+    var params = []
+    if (state.curr.rule.id !== ')') {
+      while (true) {
+        var e = typeExpression(state, 0)
+        if (notOk(e)) {
+          return e
+        }
+        params.push(e.tree)
+        if (state.curr.rule.id !== ',') {
+          break
+        }
+        advance(state)
+      }
+    }
+    if (state.curr.rule.id !== ')') {
+      return Error(state.curr.token.loc, 'Expected `)`')
+    }
+    advance(state)
+    var body = typeExpression(state, 0)
+    if (notOk(body)) {
+      return body
+    }
+    return Ok(token.loc, ast.TypeFunction(params, body.tree))
+  }
+})
+
 defRule('if', {
   nud: function (state, token) {
     var test = expression(state, 0)
@@ -766,6 +798,11 @@ module.exports = {
   parseExpression: function (tokens) {
     return parse(tokens, function (state) {
       return expression(state, 0)
+    })
+  },
+  parseTypeExpression: function (tokens) {
+    return parse(tokens, function (state) {
+      return typeExpression(state, 0)
     })
   }
 }

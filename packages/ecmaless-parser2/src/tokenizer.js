@@ -30,6 +30,7 @@ var keywords = {
   'def': true,
 
   'fn': true,
+  'Fn': true,
   'do': true,
   'end': true,
   'return': true,

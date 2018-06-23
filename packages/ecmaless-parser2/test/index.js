@@ -13,6 +13,14 @@ var parseExpression = function (src) {
   return tdop.parseExpression(r.value)
 }
 
+var parseTypeExpression = function (src) {
+  var r = tokenizer(src)
+  if (r.type !== 'Ok') {
+    return r
+  }
+  return tdop.parseTypeExpression(r.value)
+}
+
 var rmLoc = function (ast) {
   if (_.isPlainObject(ast)) {
     if (!_.isEqual(_.keys(ast), ['loc', 'ast'])) {
@@ -431,4 +439,34 @@ test('statements', function (t) {
       ast.ApplyFn(S('qux'), [])
     ])
   ])
+})
+
+test('type expression', function (t) {
+  var tst = function (src, expected) {
+    var r = parseTypeExpression(src)
+    if (r.type !== 'Ok') {
+      t.fail(JSON.stringify(r))
+      return
+    }
+    var ast = rmLoc(r.tree)
+    t.deepEqual(ast, expected)
+  }
+  var tstErr = function (src, expected) {
+    var r = parseTypeExpression(src)
+    if (r.type === 'Ok') {
+      t.fail('Should have failed: ' + expected)
+      return
+    }
+    t.is(r.message + '|' + r.loc.start + '-' + r.loc.end, expected)
+  }
+
+  tst('Number', T('Number'))
+
+  tstErr('Fn', 'Expected `(`|2-2')
+  tstErr('Fn(', 'Expected a type expression|3-3')
+  tstErr('Fn(Number', 'Expected `)`|9-9')
+  tstErr('Fn(Number)', 'Expected a type expression|10-10')
+  tst('Fn(Number)Number', ast.TypeFunction([T('Number')], T('Number')))
+  tst('Fn()Number', ast.TypeFunction([], T('Number')))
+  tst('Fn(Number, String) Fn(Number)Number', ast.TypeFunction([T('Number'), T('String')], ast.TypeFunction([T('Number')], T('Number'))))
 })

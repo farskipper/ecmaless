@@ -37,6 +37,13 @@ module.exports = {
       body: body
     }
   },
+  TypeFunction: function (params, body) {
+    return {
+      type: 'TypeFunction',
+      params: params,
+      body: body
+    }
+  },
   Struct: function (pairs) {
     return {
       type: 'Struct',
