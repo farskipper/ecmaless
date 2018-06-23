@@ -282,6 +282,11 @@ test('statements', function (t) {
   tstErr('def a + a', 'Expected `=`|6-7')
   tstErr('def a = def b = 2', 'Expected an expression|8-11')
 
+  tst('ann a = Number', [ast.Annotate(S('a'), T('Number'))])
+  tstErr('ann 1 = Number', 'Expected a symbol|4-5')
+  tstErr('ann a a Number', 'Expected `=`|6-7')
+  tstErr('ann a = 1', 'Expected a type expression|8-9')
+
   tst('do end', [ast.Block([])])
 
   tst('do def a = 1 end', [

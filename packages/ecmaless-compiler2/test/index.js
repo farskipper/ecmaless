@@ -62,4 +62,10 @@ test('compile', function (t) {
 
   terr('def a = 1 + "b"', 'e:Number a:String|12-15')
   terr('def a = "b" + 2', 'e:Number a:String|8-11')
+
+  tc('ann a=Number def a=1', 'var a=1;')
+  terr('ann a=Number def a="b"', 'e:Number a:String|19-22')
+  terr('ann a=String def a=1', 'e:String a:Number|19-20')
+  terr('def a=1 ann a=Number', '`a` should be annotated before it\'s defined|12-13')
+  terr('ann a=Number ann a=Number', '`a` is already annotated|17-18')
 })

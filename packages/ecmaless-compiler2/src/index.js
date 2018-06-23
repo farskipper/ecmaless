@@ -51,17 +51,51 @@ var compAstNode = {
       }
     })
   },
-  'Define': function (node, comp, ctx) {
+  'Annotate': function (node, comp, ctx) {
     var sym = node.ast.id.ast.value
     if (ctx.scope.has(sym)) {
+      if (ctx.scope.get(sym).def_loc) {
+        return Error(node.ast.id.loc, '`' + sym + '` should be annotated before it\'s defined')
+      }
+      return Error(node.ast.id.loc, '`' + sym + '` is already annotated')
+    }
+
+    var init = comp(node.ast.init)
+    if (notOk(init)) {
+      return init
+    }
+    ctx.scope.set(sym, {
+      TYPE: init.value.TYPE,
+      ann_loc: node.loc
+    })
+
+    return Ok({})
+  },
+  'Define': function (node, comp, ctx) {
+    var sym = node.ast.id.ast.value
+
+    var ann = ctx.scope.get(sym)
+    if (ann && ann.def_loc) {
       return Error(node.ast.id.loc, '`' + sym + '` is already defined')
     }
+
     var init = comp(node.ast.init)
     if (notOk(init)) {
       return init
     }
 
-    ctx.scope.set(sym, {TYPE: init.value.TYPE})
+    if (ann) {
+      var out = assertT(init.value.TYPE, ann.TYPE)
+      if (notOk(out)) {
+        return out
+      }
+    }
+
+    ctx.scope.set(sym, {
+      TYPE: init.value.TYPE,
+      def_loc: node.loc,
+      ann_loc: ann && ann.ann_loc
+    })
 
     var id = comp(node.ast.id)
     if (notOk(id)) {
@@ -131,6 +165,21 @@ var compAstNode = {
       default:
         return Error(node.loc, '`' + op + '` not supported')
     }
+  },
+  'Type': function (node, comp, ctx) {
+    var id = node.ast.value
+    switch (id) {
+      case 'Number':
+      case 'String':
+        return Ok({
+          TYPE: {
+            loc: node.loc,
+            typ: {tag: id}
+          }
+        })
+      default:
+        return Error(node.loc, '`' + id + '` is not a defined Type')
+    }
   }
 }
 
@@ -163,7 +212,9 @@ module.exports = function (ast, conf) {
     if (notOk(out)) {
       return out
     }
-    estree.push(out.value.estree)
+    if (out.value.estree) {
+      estree.push(out.value.estree)
+    }
   }
 
   return {

@@ -144,6 +144,13 @@ module.exports = {
   Type: function (value) {
     return {type: 'Type', value: value}
   },
+  Annotate: function (id, init) {
+    return {
+      type: 'Annotate',
+      id: id,
+      init: init
+    }
+  },
   DefineType: function (id, init) {
     return {
       type: 'DefineType',

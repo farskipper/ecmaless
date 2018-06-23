@@ -1,7 +1,7 @@
 # ecmaless
 
 [![Build Status](https://travis-ci.org/farskipper/ecmaless.svg)](https://travis-ci.org/farskipper/ecmaless)
-[![stability - experimental][https://img.shields.io/badge/stability-experimental-orange.svg]][https://nodejs.org/api/documentation.html#documentation_stability_index]
+[![stability - experimental](https://img.shields.io/badge/stability-experimental-orange.svg)](https://nodejs.org/api/documentation.html#documentation_stability_index)
 
 A compile to JS language where less is more, worse is better, and reliability is king.
 

@@ -665,6 +665,24 @@ stmt('break', function (state) {
   return Ok(state.curr.token.loc, ast.Break())
 })
 
+stmt('ann', function (state) {
+  var loc = state.curr.token.loc
+  var id = symbol(state)
+  if (notOk(id)) {
+    return id
+  }
+  if (state.curr.rule.id !== '=') {
+    return Error(state.curr.token.loc, 'Expected `=`')
+  }
+  advance(state)
+
+  var init = typeExpression(state, 0)
+  if (notOk(init)) {
+    return init
+  }
+  return Ok(loc, ast.Annotate(id.tree, init.tree))
+})
+
 stmt('type', function (state) {
   var loc = state.curr.token.loc
   var id = type(state)
