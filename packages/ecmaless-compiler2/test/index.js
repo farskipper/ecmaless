@@ -68,4 +68,12 @@ test('compile', function (t) {
   terr('ann a=String def a=1', 'e:String a:Number|19-20')
   terr('def a=1 ann a=Number', '`a` should be annotated before it\'s defined|12-13')
   terr('ann a=Number ann a=Number', '`a` is already annotated|17-18')
+
+  tc('ann add=Fn(Number, Number) Number', '')
+  terr('def add=fn(a,b)a+b', 'Sorry, this function type was not infered, add an annotation|8-10')
+  terr('ann add=Fn(Number, Number)Number def add=fn()1', 'Expected 2 params not 0|41-43')
+  tc('ann one=Fn()Number def one=fn()1', 'var one=function one(){return 1;};')
+  terr('ann add=Fn(Number,String)Number def add=fn(a,b)a+b', 'e:Number a:String|49-50')
+  tc('ann add=Fn(Number,Number)Number def add=fn(a,b)a+b', 'var add=function add(a,b){return a+b;};')
+  terr('ann add=Fn(Number,Number)String def add=fn(a,b)a+b', 'e:String a:Number|48-49')
 })

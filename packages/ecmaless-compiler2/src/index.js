@@ -79,7 +79,7 @@ var compAstNode = {
       return Error(node.ast.id.loc, '`' + sym + '` is already defined')
     }
 
-    var init = comp(node.ast.init)
+    var init = comp(node.ast.init, {expTYPE: ann && ann.TYPE})
     if (notOk(init)) {
       return init
     }
@@ -180,6 +180,77 @@ var compAstNode = {
       default:
         return Error(node.loc, '`' + id + '` is not a defined Type')
     }
+  },
+  'TypeFunction': function (node, comp, ctx) {
+    var params = []
+    var i = 0
+    while (i < node.ast.params.length) {
+      var param = comp(node.ast.params[i])
+      i++
+      if (notOk(param)) {
+        return param
+      }
+      params.push(param.value.TYPE)
+    }
+    var body = comp(node.ast.body)
+    if (notOk(body)) {
+      return body
+    }
+    body = body.value.TYPE
+    return Ok({
+      TYPE: {
+        loc: node.loc,
+        typ: {
+          tag: 'Fn',
+          params: params,
+          body: body
+        }
+      }
+    })
+  },
+  'Function': function (node, comp, ctx, fromCaller) {
+    var expTYPE = fromCaller && fromCaller.expTYPE
+    if (!expTYPE || !expTYPE.typ || expTYPE.typ.tag !== 'Fn') {
+      return Error(node.loc, 'Sorry, this function type was not infered, add an annotation')
+    }
+    if (node.ast.params.length !== expTYPE.typ.params.length) {
+      return Error(node.loc, 'Expected ' + expTYPE.typ.params.length + ' params not ' + node.ast.params.length)
+    }
+    ctx.scope.push()
+
+    var params = []
+    var i = 0
+    while (i < node.ast.params.length) {
+      var param = node.ast.params[i]
+      var paramTYPE = expTYPE.typ.params[i]
+      ctx.scope.set(param.ast.value, {TYPE: paramTYPE})
+      param = comp(param)
+      if (notOk(param)) {
+        return param
+      }
+      params.push(param.value.estree)
+      i++
+    }
+
+    var body = comp(node.ast.body)
+    if (notOk(body)) {
+      return body
+    }
+    var out = assertT(body.value.TYPE, expTYPE.typ.body)
+    if (notOk(out)) {
+      return out
+    }
+    body = [e('return', body.value.estree, node.ast.body.loc)]
+
+    ctx.scope.pop()
+    var id
+    return Ok({
+      estree: e('function', params, body, id, node.loc),
+      TYPE: {
+        loc: node.loc,
+        typ: expTYPE.typ
+      }
+    })
   }
 }
 
@@ -193,12 +264,12 @@ module.exports = function (ast, conf) {
     toLoc: toLoc
   }
 
-  var comp = function (node) {
+  var comp = function (node, fromCaller) {
     var type = node.ast.type
     if (!compAstNode[type]) {
       throw 'Unsupported ast type: ' + type//eslint-disable-line
     }
-    return compAstNode[type](node, comp, ctx)
+    return compAstNode[type](node, comp, ctx, fromCaller)
   }
 
   var estree = []
