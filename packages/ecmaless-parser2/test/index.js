@@ -534,8 +534,15 @@ test('import', function (t) {
 })
 
 test('export', function (t) {
-  // TODO
-  t.is(1, 1)
-  // export *
-  // export (add, Foo, map, Msg)
+  t.is(parseErr('export'), 'Expected `*` or `(`|6-6')
+
+  t.deepEqual(parseOk('export *'), [ast.Export(null)])
+
+  t.is(parseErr('export ('), 'Expected a variable or type to export|8-8')
+  t.is(parseErr('export ()'), 'Expected a variable or type to export|8-9')
+  t.is(parseErr('export (foo'), 'Expected `,` or `)`|11-11')
+  t.is(parseErr('export (foo())'), 'Expected `,` or `)`|11-12')
+
+  t.deepEqual(parseOk('export (foo)'), [ast.Export([S('foo')])])
+  t.deepEqual(parseOk('export (foo, Bar, baz, Qux)'), [ast.Export([S('foo'), T('Bar'), S('baz'), T('Qux')])])
 })

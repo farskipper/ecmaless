@@ -865,6 +865,47 @@ stmt('import', function (state) {
   return Ok(loc, ast.Import(path, parts))
 })
 
+stmt('export', function (state) {
+  var loc = state.curr.token.loc
+
+  var parts = []
+  if (state.curr.rule.id === '*') {
+    advance(state)
+    parts = null
+  } else if (state.curr.rule.id === '(') {
+    advance(state)
+    while (true) {
+      if (state.curr.rule.id === 'SYMBOL') {
+        var sym = symbol(state)
+        if (notOk(sym)) {
+          return sym
+        }
+        parts.push(sym.tree)
+      } else if (state.curr.rule.id === 'TYPE') {
+        var typ = type(state)
+        if (notOk(typ)) {
+          return typ
+        }
+        parts.push(typ.tree)
+      } else {
+        return Error(state.curr.token.loc, 'Expected a variable or type to export')
+      }
+      if (state.curr.rule.id !== ',') {
+        break
+      }
+      advance(state)
+    }
+    if (state.curr.rule.id !== ')') {
+      return Error(state.curr.token.loc, 'Expected `,` or `)`')
+    }
+    advance(state)
+  } else {
+    return Error(state.curr.token.loc, 'Expected `*` or `(`')
+  }
+
+  return Ok(loc, ast.Export(parts))
+})
+
 /// /////////////////////////////////////////////////////////////////////////////
 
 var parse = function (tokens, entryParseFn) {

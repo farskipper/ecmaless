@@ -200,5 +200,11 @@ module.exports = {
       value: value,
       as: as
     }
+  },
+  Export: function (parts) {
+    return {
+      type: 'Export',
+      parts: parts
+    }
   }
 }
