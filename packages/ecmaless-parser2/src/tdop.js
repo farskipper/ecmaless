@@ -221,6 +221,48 @@ var statements = function (state) {
   return Ok(loc, a)
 }
 
+var importSymbol = function (state) {
+  var loc = state.curr.token.loc
+  var sym = symbol(state)
+  if (notOk(sym)) {
+    return sym
+  }
+  var as
+  if (state.curr.rule.id === 'as') {
+    advance(state)
+    as = symbol(state)
+    if (notOk(as)) {
+      return as
+    }
+  }
+  var is
+  if (state.curr.rule.id === 'is') {
+    advance(state)
+    is = typeExpression(state, 0)
+    if (notOk(is)) {
+      return is
+    }
+  }
+  return Ok(loc, ast.ImportSymbol(sym.tree, as && as.tree, is && is.tree))
+}
+
+var importType = function (state) {
+  var loc = state.curr.token.loc
+  var typ = type(state)
+  if (notOk(typ)) {
+    return typ
+  }
+  var as
+  if (state.curr.rule.id === 'as') {
+    advance(state)
+    as = type(state)
+    if (notOk(as)) {
+      return as
+    }
+  }
+  return Ok(loc, ast.ImportType(typ.tree, as && as.tree))
+}
+
 /// /////////////////////////////////////////////////////////////////////////////
 
 var defRule = function (id, rule) {
@@ -314,6 +356,8 @@ defRule('}', {})
 defRule(':', {})
 defRule(',', {})
 defRule('=', {})
+defRule('as', {})
+defRule('is', {})
 defRule('then', {})
 defRule('else', {})
 defRule('elseif', {})
@@ -324,13 +368,18 @@ defRule('NUMBER', {
     return Ok(token.loc, ast.Number(v))
   }
 })
+
+function stringTokenSrcToValue (src) {
+  var value = src
+    .replace(/(^")|("$)/g, '')
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, '\\')
+  return value
+}
+
 defRule('STRING', {
   nud: function (state, token) {
-    var value = token.src
-      .replace(/(^")|("$)/g, '')
-      .replace(/\\"/g, '"')
-      .replace(/\\\\/g, '\\')
-
+    var value = stringTokenSrcToValue(token.src)
     return Ok(token.loc, ast.String(value))
   }
 })
@@ -767,6 +816,53 @@ defRule('(', {
     advance(state)
     return Ok(token.loc, ast.TypeVariant(left, args))
   }
+})
+
+stmt('import', function (state) {
+  var loc = state.curr.token.loc
+
+  if (state.curr.rule.id !== 'STRING') {
+    return Error(state.curr.token.loc, 'Expected a path string literal')
+  }
+  var path = stringTokenSrcToValue(state.curr.token.src)
+  var parts = []
+  advance(state)
+
+  if (state.curr.rule.id === '*') {
+    advance(state)
+    parts = null
+  } else if (state.curr.rule.id === '(') {
+    advance(state)
+    while (true) {
+      if (state.curr.rule.id === 'SYMBOL') {
+        var sym = importSymbol(state)
+        if (notOk(sym)) {
+          return sym
+        }
+        parts.push(sym.tree)
+      } else if (state.curr.rule.id === 'TYPE') {
+        var typ = importType(state)
+        if (notOk(typ)) {
+          return typ
+        }
+        parts.push(typ.tree)
+      } else {
+        return Error(state.curr.token.loc, 'Expected a variable or type to import')
+      }
+      if (state.curr.rule.id !== ',') {
+        break
+      }
+      advance(state)
+    }
+    if (state.curr.rule.id !== ')') {
+      return Error(state.curr.token.loc, 'Expected `,` or `)`')
+    }
+    advance(state)
+  } else {
+    return Error(state.curr.token.loc, 'Expected `*` or `(`')
+  }
+
+  return Ok(loc, ast.Import(path, parts))
 })
 
 /// /////////////////////////////////////////////////////////////////////////////

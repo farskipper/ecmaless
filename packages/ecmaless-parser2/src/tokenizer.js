@@ -53,6 +53,8 @@ var keywords = {
   'when': true,
 
   'import': true,
+  'is': true,
+  'as': true,
   'export': true
 }
 

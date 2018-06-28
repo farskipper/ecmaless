@@ -36,6 +36,22 @@ var rmLoc = function (ast) {
   return ast
 }
 
+var parseOk = function (src) {
+  var r = parser(src)
+  if (r.type !== 'Ok') {
+    return JSON.stringify(r)
+  }
+  var ast = rmLoc(r.tree)
+  return ast
+}
+var parseErr = function (src) {
+  var r = parser(src)
+  if (r.type === 'Ok') {
+    return 'should have failed'
+  }
+  return r.message + '|' + r.loc.start + '-' + r.loc.end
+}
+
 var S = ast.Symbol
 var T = ast.Type
 
@@ -469,4 +485,57 @@ test('type expression', function (t) {
   tst('Fn(Number)Number', ast.TypeFunction([T('Number')], T('Number')))
   tst('Fn()Number', ast.TypeFunction([], T('Number')))
   tst('Fn(Number, String) Fn(Number)Number', ast.TypeFunction([T('Number'), T('String')], ast.TypeFunction([T('Number')], T('Number'))))
+})
+test('import', function (t) {
+  t.is(parseErr('import'), 'Expected a path string literal|6-6')
+  t.is(parseErr('import a'), 'Expected a path string literal|7-8')
+  t.is(parseErr('import "./foo"'), 'Expected `*` or `(`|14-14')
+
+  t.deepEqual(parseOk('import "./foo" *'), [ast.Import('./foo', null)])
+
+  t.is(parseErr('import "./foo" ('), 'Expected a variable or type to import|16-16')
+  t.is(parseErr('import "./foo" (bar'), 'Expected `,` or `)`|19-19')
+  t.is(parseErr('import "./foo" (bar,'), 'Expected a variable or type to import|20-20')
+  t.is(parseErr('import "./foo" (bar,Baz'), 'Expected `,` or `)`|23-23')
+  t.deepEqual(parseOk('import "./foo" (bar,Baz)'), [
+    ast.Import('./foo', [
+      ast.ImportSymbol(S('bar')),
+      ast.ImportType(T('Baz'))
+    ])
+  ])
+
+  t.is(parseErr('import "./foo" (bar as )'), 'Expected a symbol|23-24')
+  t.deepEqual(parseOk('import "./foo" (bar as wat)'), [
+    ast.Import('./foo', [
+      ast.ImportSymbol(S('bar'), S('wat'))
+    ])
+  ])
+
+  t.is(parseErr('import "./foo" (bar is )'), 'Expected a type expression|23-24')
+  t.deepEqual(parseOk('import "./foo" (bar is Fn(Number) String)'), [
+    ast.Import('./foo', [
+      ast.ImportSymbol(S('bar'), void 0, ast.TypeFunction([T('Number')], T('String')))
+    ])
+  ])
+
+  t.deepEqual(parseOk('import "./foo" (bar as wat is String)'), [
+    ast.Import('./foo', [
+      ast.ImportSymbol(S('bar'), S('wat'), T('String'))
+    ])
+  ])
+
+  t.is(parseErr('import "./foo" (Baz as )'), 'Expected a type|23-24')
+  t.deepEqual(parseOk('import "./foo" (Baz as Wat)'), [
+    ast.Import('./foo', [
+      ast.ImportType(T('Baz'), T('Wat'))
+    ])
+  ])
+  t.is(parseErr('import "./foo" (Baz as Wat is String)'), 'Expected `,` or `)`|27-29')
+})
+
+test('export', function (t) {
+  // TODO
+  t.is(1, 1)
+  // export *
+  // export (add, Foo, map, Msg)
 })

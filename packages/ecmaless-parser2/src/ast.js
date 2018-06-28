@@ -178,5 +178,27 @@ module.exports = {
       tag: tag,
       args: args
     }
+  },
+  Import: function (path, parts) {
+    return {
+      type: 'Import',
+      path: path,
+      parts: parts
+    }
+  },
+  ImportSymbol: function (value, as, is) {
+    return {
+      type: 'ImportSymbol',
+      value: value,
+      as: as,
+      is: is
+    }
+  },
+  ImportType: function (value, as) {
+    return {
+      type: 'ImportType',
+      value: value,
+      as: as
+    }
   }
 }
