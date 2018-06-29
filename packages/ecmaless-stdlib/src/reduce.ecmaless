@@ -1,9 +1,0 @@
-fn [obj, ifn, accumulator]:
-    iterate(
-        obj,
-        fn [v, k, o]:
-            accumulator = ifn(accumulator, v, k, o)
-            true
-        ,
-    )
-    accumulator

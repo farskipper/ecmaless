@@ -7,9 +7,7 @@
     "ecmaless": "bin/ecmaless"
   },
   "scripts": {
-    "start": "onchange src/ -i -- npm test",
-    "lint": "eslint src/ && echo lint-ok",
-    "test": "npm run lint -s && node src/tests.js"
+    "test": "standard && ava"
   },
   "repository": {
     "type": "git",
@@ -17,10 +15,8 @@
   },
   "keywords": [
     "language",
-    "lisp",
-    "scheme",
-    "racket",
-    "clojure",
+    "functional",
+    "pragmatic",
     "freedom",
     "minimalism"
   ],
@@ -35,19 +31,16 @@
     "chalk": "^2.3.0",
     "contra": "^1.9.4",
     "dependency-resolver": "^2.0.1",
-    "ecmaless-compiler": "^0.4.0",
+    "ecmaless-compiler": "^0.7.0",
     "ecmaless-parser": "^0.7.0",
-    "ecmaless-stdlib": "^0.3.0",
     "escodegen": "^1.8.0",
-    "esprima": "^2.7.3",
     "estree-builder": "^1.10.0",
     "excerpt-at-line-col": "^1.0.0",
     "lodash": "^4.17.4",
     "minimist": "^1.2.0"
   },
   "devDependencies": {
-    "eslint": "^4.8.0",
-    "onchange": "^3.2.1",
-    "tape": "^4.8.0"
+    "ava": "^0.25.0",
+    "standard": "^11.0.1"
   }
 }

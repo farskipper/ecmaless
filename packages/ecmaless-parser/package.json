@@ -7,10 +7,7 @@
     "src/"
   ],
   "scripts": {
-    "start": "onchange 'src/' -e 'src/grammar.js' -i -- npm test",
-    "build": "nearleyc src/grammar.ne > src/grammar.js && node src/genSpec.js > spec.md",
-    "lint": "eslint --ignore-pattern 'src/grammar.*' src/ && echo lint-ok",
-    "test": "npm run build && npm run lint -s && node src/tests.js | faucet"
+    "test": "standard && ava"
   },
   "repository": {
     "type": "git",
@@ -28,15 +25,9 @@
   },
   "homepage": "https://github.com/farskipper/ecmaless#readme",
   "devDependencies": {
-    "eslint": "^4.8.0",
-    "faucet": "0.0.1",
+    "ava": "^0.25.0",
     "json-stringify-pretty-compact": "^1.0.4",
     "lodash": "^4.17.4",
-    "onchange": "^3.2.1",
-    "tape": "^4.8.0"
-  },
-  "dependencies": {
-    "estree-loc": "^2.0.0",
-    "nearley": "^2.10.1"
+    "standard": "^11.0.1"
   }
 }
