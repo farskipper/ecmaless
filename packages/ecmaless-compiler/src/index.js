@@ -251,6 +251,35 @@ var compAstNode = {
         typ: expTYPE.typ
       }
     })
+  },
+  'Export': function (node, comp, ctx, fromCaller) {
+    if (!fromCaller.isRootLevel || !fromCaller.isLastNode) {
+      return Error(node.loc, 'Export only works as the last statement in a file')
+    }
+    if (!node.ast.parts) {
+      return Error(node.loc, '`export *` is not yet supported')
+    }
+
+    var typ = {tag: 'Struct', byKey: {}}
+    var obj = {}
+    var i = 0
+    while (i < node.ast.parts.length) {
+      var part = comp(node.ast.parts[i])
+      var key = node.ast.parts[i].ast.value
+      i++
+      if (notOk(part)) {
+        return part
+      }
+      obj[key] = part.value.estree
+      typ.byKey[key] = part.value.TYPE
+    }
+    return Ok({
+      estree: e('return', e('object', obj, ctx.toLoc(node.loc)), ctx.toLoc(node.loc)),
+      TYPE: {
+        loc: node.loc,
+        typ: typ
+      }
+    })
   }
 }
 
@@ -278,13 +307,21 @@ module.exports = function (ast, conf) {
 
   var i = 0
   while (i < ast.ast.length) {
-    var out = comp(ast.ast[i])
+    var isLastNode = i === ast.ast.length - 1
+    var isExport = isLastNode && ast.ast[i].ast.type === 'Export'
+    var out = comp(ast.ast[i], {
+      isRootLevel: true,
+      isLastNode: isLastNode
+    })
     i++
     if (notOk(out)) {
       return out
     }
     if (out.value.estree) {
       estree.push(out.value.estree)
+    }
+    if (isExport) {
+      TYPE = out.value.TYPE
     }
   }
 

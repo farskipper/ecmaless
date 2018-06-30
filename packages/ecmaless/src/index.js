@@ -36,13 +36,11 @@ module.exports = function (conf, callback) {
     loadPath(path, function (err, src) {
       if (err) return callback(err)
 
-      var ast
-      try {
-        ast = parser(src, {filepath: path})
-      } catch (e) {
-        callback(e)
-        return
+      var ast = parser(src)
+      if (ast.type !== 'Ok') {
+        return callback(new Error(JSON.stringify(ast)))
       }
+      ast = ast.tree
 
       moduleSrc[path] = src
       moduleAst[path] = ast
@@ -95,8 +93,7 @@ module.exports = function (conf, callback) {
         var ast = moduleAst[path]
 
         var c = compiler(ast, {
-          src: src,
-          filepath: path,
+          toLoc: _.noop, // TODO use src + path
           requireModule: function (path) {
             // TODO resolve relative to curr path
             path = normalizePath(base, path)
@@ -104,8 +101,11 @@ module.exports = function (conf, callback) {
             return modules[path]
           }
         })
+        if (c.type !== 'Ok') {
+          throw new Error(JSON.stringify(ast))
+        }
+        c = c.value
 
-        c.mod_index = modIndex
         modules[path] = c
 
         var args = []

@@ -1,0 +1,40 @@
+var test = require('ava')
+var main = require('./src')
+var escodegen = require('escodegen')
+
+var StructLoader = function (files) {
+  return function (path, callback) {
+    if (files[path]) {
+      callback(null, files[path])
+    } else {
+      callback(new Error('Unknown path: ' + path))
+    }
+  }
+}
+
+var run = function (files) {
+  return new Promise(function (resolve, reject) {
+    main({
+      base: '/test/',
+      start_path: './a',
+      loadPath: StructLoader(files)
+    }, function (err, est) {
+      if (err) return reject(err)
+
+      var js = escodegen.generate(est)
+
+      var out = eval(js)// eslint-disable-line
+
+      resolve(out)
+    })
+  })
+}
+
+test('it', async function (t) {
+  t.deepEqual(await run({
+    '/test/a': 'def a = 1 export(a)'
+  }), {a: 1})
+
+  // '/test/a': 'import:\n    "./b":\n        b\ndef a = b + 1\n\nexport:\n    a',
+  // '/test/b': 'def b = 2\n\nexport:\n    b'
+})

@@ -1,6 +1,6 @@
 var _ = require('lodash')
 var test = require('ava')
-var parser = require('ecmaless-parser2')
+var parser = require('ecmaless-parser')
 var compiler = require('../')
 var escodegen = require('escodegen')
 var okOrError = require('../src/okOrError')
@@ -76,4 +76,9 @@ test('compile', function (t) {
   terr('ann add=Fn(Number,String)Number def add=fn(a,b)a+b', 'e:Number a:String|49-50')
   tc('ann add=Fn(Number,Number)Number def add=fn(a,b)a+b', 'var add=function add(a,b){return a+b;};')
   terr('ann add=Fn(Number,Number)String def add=fn(a,b)a+b', 'e:String a:Number|48-49')
+
+  terr('export(a)', 'Not defined `a`|7-8')
+  tc('def a=1 export(a)', "var a=1;return{'a':a};")
+
+  terr('export *', '`export *` is not yet supported|7-8')
 })
