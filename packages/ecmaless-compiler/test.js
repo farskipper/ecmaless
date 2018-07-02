@@ -54,6 +54,10 @@ test('compile', function (t) {
   t.is(tc('def a = 1 + "b"'), 'e:Number a:String|12-15')
   t.is(tc('def a = "b" + 2'), 'e:Number a:String|8-11')
 
+  t.is(tc('def a = "a" + "b"'), 'e:Number a:String|8-11')
+  t.is(tc('def a = "a" ++ "b"'), "var a='a'+'b';")
+  t.is(tc('def a = "a" ++ 1'), 'e:String a:Number|15-16')
+
   t.is(tc('ann a=Number def a=1'), 'var a=1;')
   t.is(tc('ann a=Number def a="b"'), 'e:Number a:String|19-22')
   t.is(tc('ann a=String def a=1'), 'e:String a:Number|19-20')

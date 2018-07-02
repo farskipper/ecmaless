@@ -193,6 +193,18 @@ var compAstNode = {
             typ: left.TYPE.typ
           }
         })
+      case '++':
+        var out = assertLR('String')
+        if (notOk(out)) {
+          return out
+        }
+        return Ok({
+          estree: e('+', left.estree, right.estree, ctx.toLoc(node.loc)),
+          TYPE: {
+            loc: node.loc,
+            typ: left.TYPE.typ
+          }
+        })
       default:
         return Error(node.loc, '`' + op + '` not supported')
     }
@@ -509,7 +521,7 @@ var compAstNode = {
       if (isType) {
         // nothing
       } else {
-        estree.push(e('var', as, e('get', e('id', modId), e('str', key))))
+        estree.push(e('var', toId(as), e('get', e('id', modId), e('str', key))))
       }
     }
     return Ok({
