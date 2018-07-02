@@ -31,6 +31,22 @@ var assertT = function (actual, expected) {
       }
     }
   }
+  if (aTag === 'Struct') {
+    var aclKeys = Object.keys(actual.typ.byKey).sort()
+    var expKeys = Object.keys(expected.typ.byKey).sort()
+    if (aclKeys.join(',') != expKeys.join(',')) {
+      return Error(actual.loc, 'expected {' + expKeys.join(',') + '} but was {' + aclKeys.join(',') + '}')
+    }
+    var i = 0
+    while (i < aclKeys.length) {
+      var key = aclKeys[i]
+      i++
+      var out = assertT(actual.typ.byKey[key], expected.typ.byKey[key])
+      if (notOk(out)) {
+        return out
+      }
+    }
+  }
   return Ok()
 }
 
@@ -319,6 +335,65 @@ var compAstNode = {
     }
     return Ok({
       estree: e(';', out.value.estree, ctx.toLoc(node.loc))
+    })
+  },
+  'Struct': function (node, comp, ctx, fromCaller) {
+    var byKey = {}
+    var pairs = []
+
+    var i = 0
+    while (i < node.ast.pairs.length) {
+      var pair = node.ast.pairs[i]
+      i++
+      var key = pair.ast.key.ast.value
+      var val = comp(pair.ast.value)
+      if (notOk(val)) {
+        return val
+      }
+      val = val.value
+      if (byKey.hasOwnProperty(key)) {
+        return Error(pair.ast.key.loc, 'Duplicate key `' + key + '`')
+      }
+      byKey[key] = val.TYPE
+      pairs.push(e('object-property', e('string', key, ctx.toLoc(pair.ast.key.loc)), val.estree, ctx.toLoc(pair.loc)))
+    }
+
+    return Ok({
+      estree: e('object-raw', pairs, ctx.toLoc(node.loc)),
+      TYPE: {
+        loc: node.loc,
+        typ: {
+          tag: 'Struct',
+          byKey: byKey
+        }
+      }
+    })
+  },
+  'TypeStruct': function (node, comp, ctx, fromCaller) {
+    var byKey = {}
+    var i = 0
+    while (i < node.ast.pairs.length) {
+      var pair = node.ast.pairs[i]
+      i++
+      var key = pair.ast.key.ast.value
+      var val = comp(pair.ast.value)
+      if (notOk(val)) {
+        return val
+      }
+      val = val.value
+      if (byKey.hasOwnProperty(key)) {
+        return Error(pair.ast.key.loc, 'Duplicate key `' + key + '`')
+      }
+      byKey[key] = val.TYPE
+    }
+    return Ok({
+      TYPE: {
+        loc: node.loc,
+        typ: {
+          tag: 'Struct',
+          byKey: byKey
+        }
+      }
     })
   },
   'Import': function (node, comp, ctx, fromCaller) {

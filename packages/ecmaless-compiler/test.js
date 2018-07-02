@@ -59,7 +59,9 @@ test('compile', function (t) {
   t.is(tc('ann a=String def a=1'), 'e:String a:Number|19-20')
   t.is(tc('def a=1 ann a=Number'), '`a` should be annotated before it\'s defined|12-13')
   t.is(tc('ann a=Number ann a=Number'), '`a` is already annotated|17-18')
+})
 
+test('functions', function (t) {
   t.is(tc('ann add=Fn(Number, Number) Number'), '')
   t.is(tc('def add=fn(a,b)a+b'), 'Sorry, this function type was not infered, add an annotation|8-10')
   t.is(tc('ann add=Fn(Number, Number)Number def add=fn()1'), 'Expected 2 params not 0|41-43')
@@ -76,6 +78,19 @@ test('compile', function (t) {
   t.is(tc(addEl + ' add(1,"a")'), 'e:Number a:String|57-60')
   t.is(tc(addEl + ' add(1,2)'), addJs + 'add(1,2);')
   t.is(tc(addEl + ' ann a=String def a=add(1,2)'), 'e:String a:Number|70-73')
+})
+
+test('struct', function (t) {
+  t.is(tc('def foo={}'), 'var foo={};')
+  t.is(tc('def foo={a: 1}'), "var foo={'a':1};")
+  t.is(tc('def foo={a: 1, b: 2}'), "var foo={'a':1,'b':2};")
+  t.is(tc('def foo={a: 1, a: 2}'), 'Duplicate key `a`|15-16')
+
+  t.is(tc('ann foo={a: Number}'), '')
+  t.is(tc('ann foo={a: Number} def foo={a: 1}'), "var foo={'a':1};")
+
+  t.is(tc('ann foo={a: Number} def foo={a: 1, b: 2}'), 'expected {a} but was {a,b}|28-40')
+  t.is(tc('ann foo={a: Number} def foo={a: "hi"}'), 'e:Number a:String|32-36')
 })
 
 test('export', function (t) {
