@@ -7,6 +7,11 @@ var Ok = okOrError.Ok
 var Error = okOrError.Error
 var notOk = okOrError.notOk
 
+var baseTypes = {
+  'Number': true,
+  'String': true
+}
+
 var typeToString = function (TYPE) {
   return TYPE.typ.tag
 }
@@ -103,11 +108,19 @@ var compAstNode = {
     return Ok({})
   },
   'Define': function (node, comp, ctx) {
+    var isType = node.ast.id.ast.type === 'Type'
+
     var sym = node.ast.id.ast.value
 
     var ann = ctx.scope.get(sym)
     if (ann && ann.defLoc) {
       return Error(node.ast.id.loc, '`' + sym + '` is already defined')
+    }
+    if (isType) {
+      ann = null// types are not annotated
+      if (baseTypes[sym]) {
+        return Error(node.ast.id.loc, 'Cannot redefine base types')
+      }
     }
 
     var init = comp(node.ast.init, {expTYPE: ann && ann.TYPE})
@@ -128,6 +141,10 @@ var compAstNode = {
       annLoc: ann && ann.annLoc
     })
 
+    if (isType) {
+      return Ok({})
+    }
+
     var id = comp(node.ast.id)
     if (notOk(id)) {
       return id
@@ -137,11 +154,7 @@ var compAstNode = {
       init.value.estree.id = id.value.estree
     }
     return Ok({
-      estree: e('var', id.value.estree, init.value.estree, ctx.toLoc(node.loc)),
-      TYPE: {
-        loc: node.loc,
-        typ: {tag: 'Nil'}
-      }
+      estree: e('var', id.value.estree, init.value.estree, ctx.toLoc(node.loc))
     })
   },
   'Infix': function (node, comp, ctx) {
@@ -211,18 +224,21 @@ var compAstNode = {
   },
   'Type': function (node, comp, ctx) {
     var id = node.ast.value
-    switch (id) {
-      case 'Number':
-      case 'String':
-        return Ok({
-          TYPE: {
-            loc: node.loc,
-            typ: {tag: id}
-          }
-        })
-      default:
-        return Error(node.loc, '`' + id + '` is not a defined type')
+    if (baseTypes[id]) {
+      return Ok({
+        TYPE: {
+          loc: node.loc,
+          typ: {tag: id}
+        }
+      })
     }
+    var type = ctx.scope.get(id)
+    if (!type || !type.TYPE) {
+      return Error(node.loc, '`' + id + '` is not defined')
+    }
+    return Ok({
+      TYPE: type.TYPE
+    })
   },
   'TypeFunction': function (node, comp, ctx) {
     var params = []

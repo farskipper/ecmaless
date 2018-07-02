@@ -102,6 +102,15 @@ test('struct', function (t) {
   t.is(tc('def foo={a: 1} def bar=foo.a + 1'), "var foo={'a':1};var bar=foo['a']+1;")
 })
 
+test('type alias', function (t) {
+  t.is(tc('def Number=String'), 'Cannot redefine base types|4-10')
+  t.is(tc('def Bar=Number'), '')
+  t.is(tc('def Bar=Number def Bar=Number'), '`Bar` is already defined|19-22')
+  t.is(tc('ann foo=Bar def foo=1'), '`Bar` is not defined|8-11')
+  t.is(tc('def Bar=Number ann foo=Bar def foo=1'), 'var foo=1;')
+  t.is(tc('def Bar=String ann foo=Bar def foo=1'), 'e:String a:Number|35-36')
+})
+
 test('export', function (t) {
   t.is(tc('export(a)'), 'Not defined `a`|7-8')
   t.is(tc('def a=1 export(a)'), "var a=1;return{'a':a};")
@@ -163,7 +172,7 @@ test('import', function (t) {
   t.is(tcM('import "./log.js" (log)'), 'Must annotate js imports using `is`|19-22')
   t.is(tcM('import "./log.js" (log is String)'), "var log=$_log_js['log'];")
   t.is(tcM('import "./log.js" (log is Fn(String) String)'), "var log=$_log_js['log'];")
-  t.is(tcM('import "./log.js" (log is WatDa)'), '`WatDa` is not a defined type|26-31')
+  t.is(tcM('import "./log.js" (log is WatDa)'), '`WatDa` is not defined|26-31')
   t.is(tcM('import "./a" (a is String)'), '`is` only works for js imports|19-25')
   t.is(tcM('import "./log.js" (log as foo is String)'), "var foo=$_log_js['log'];")
 })
