@@ -2,7 +2,6 @@ var _ = require('lodash')
 var ast = require('./src/ast')
 var tdop = require('./src/tdop')
 var test = require('ava')
-var parser = require('./')
 var tokenizer = require('ecmaless-tokenizer')
 
 var parseExpression = function (src) {
@@ -11,14 +10,6 @@ var parseExpression = function (src) {
     return r
   }
   return tdop.parseExpression(r.value)
-}
-
-var parseTypeExpression = function (src) {
-  var r = tokenizer(src)
-  if (r.type !== 'Ok') {
-    return r
-  }
-  return tdop.parseTypeExpression(r.value)
 }
 
 var rmLoc = function (ast) {
@@ -36,145 +27,134 @@ var rmLoc = function (ast) {
   return ast
 }
 
-var parseOk = function (src) {
-  var r = parser(src)
+function p (src, entryFn) {
+  entryFn = entryFn || tdop.parse
+
+  var tokens = tokenizer(src)
+  if (tokens.type !== 'Ok') {
+    return 'TokenizerError: ' + JSON.stringify(tokens)
+  }
+  var r = entryFn(tokens.value)
   if (r.type !== 'Ok') {
-    return JSON.stringify(r)
+    return r.message + '|' + r.loc.start + '-' + r.loc.end
   }
   var ast = rmLoc(r.tree)
   return ast
 }
-var parseErr = function (src) {
-  var r = parser(src)
-  if (r.type === 'Ok') {
-    return 'should have failed'
-  }
-  return r.message + '|' + r.loc.start + '-' + r.loc.end
+
+function pe (src) {
+  return p(src, tdop.parseExpression)
+}
+
+function pte (src) {
+  return p(src, tdop.parseTypeExpression)
 }
 
 var S = ast.Symbol
 var T = ast.Type
 
 test('expression', function (t) {
-  var tst = function (src, expected) {
-    var r = parseExpression(src)
-    if (r.type !== 'Ok') {
-      t.fail(JSON.stringify(r))
-      return
-    }
-    var ast = rmLoc(r.tree)
-    t.deepEqual(ast, expected)
-  }
-  var tstErr = function (src, expected) {
-    var r = parseExpression(src)
-    if (r.type === 'Ok') {
-      t.fail('Should have failed: ' + expected)
-      return
-    }
-    t.is(r.message + '|' + r.loc.start + '-' + r.loc.end, expected)
-  }
+  t.deepEqual(pe('123'), ast.Number(123))
+  t.deepEqual(pe('"a"'), ast.String('a'))
+  t.deepEqual(pe('"a\\"b"'), ast.String('a"b'))
+  t.deepEqual(pe('"a\\\\b"'), ast.String('a\\b'))
 
-  tst('123', ast.Number(123))
-  tst('"a"', ast.String('a'))
-  tst('"a\\"b"', ast.String('a"b'))
-  tst('"a\\\\b"', ast.String('a\\b'))
+  t.deepEqual(pe('foo'), ast.Symbol('foo'))
 
-  tst('foo', ast.Symbol('foo'))
+  t.deepEqual(pe('a+b'), ast.Infix('+', S('a'), S('b')))
+  t.deepEqual(pe('aorb'), S('aorb'))
+  t.deepEqual(pe('a or b'), ast.Infix('or', S('a'), S('b')))
 
-  tst('a+b', ast.Infix('+', S('a'), S('b')))
-  tst('aorb', S('aorb'))
-  tst('a or b', ast.Infix('or', S('a'), S('b')))
+  t.is(pe('a + + b'), 'Expected an expression|4-5')
 
-  tstErr('a + + b', 'Expected an expression|4-5')
+  t.is(pe('='), 'Expected an expression|0-1')
+  t.is(pe('= a'), 'Expected an expression|0-1')
+  t.is(pe('a ='), 'Expected `(end)`|2-3')
 
-  tstErr('=', 'Expected an expression|0-1')
-  tstErr('= a', 'Expected an expression|0-1')
-  tstErr('a =', 'Expected `(end)`|2-3')
+  t.is(pe('or'), 'Expected an expression|0-2')
 
-  tstErr('or', 'Expected an expression|0-2')
+  t.is(pe('a +'), 'Expected an expression|3-3')
 
-  tstErr('a +', 'Expected an expression|3-3')
+  t.is(pe('a b'), 'Expected `(end)`|2-3')
 
-  tstErr('a b', 'Expected `(end)`|2-3')
+  t.deepEqual(pe('a + b + c'), ast.Infix('+', ast.Infix('+', S('a'), S('b')), S('c')))
+  t.deepEqual(pe('a + b * c'), ast.Infix('+', S('a'), ast.Infix('*', S('b'), S('c'))))
+  t.deepEqual(pe('(a + b) * c'), ast.Infix('*', ast.Infix('+', S('a'), S('b')), S('c')))
 
-  tst('a + b + c', ast.Infix('+', ast.Infix('+', S('a'), S('b')), S('c')))
-  tst('a + b * c', ast.Infix('+', S('a'), ast.Infix('*', S('b'), S('c'))))
-  tst('(a + b) * c', ast.Infix('*', ast.Infix('+', S('a'), S('b')), S('c')))
+  t.deepEqual(pe('not a'), ast.Prefix('not', S('a')))
+  t.deepEqual(pe('not a or b'), ast.Infix('or', ast.Prefix('not', S('a')), S('b')))
+  t.deepEqual(pe('a or not b == c'), ast.Infix('or', S('a'), ast.Infix('==', ast.Prefix('not', S('b')), S('c'))))
 
-  tst('not a', ast.Prefix('not', S('a')))
-  tst('not a or b', ast.Infix('or', ast.Prefix('not', S('a')), S('b')))
-  tst('a or not b == c', ast.Infix('or', S('a'), ast.Infix('==', ast.Prefix('not', S('b')), S('c'))))
+  t.deepEqual(pe('a - b'), ast.Infix('-', S('a'), S('b')))
+  t.deepEqual(pe('a - - b'), ast.Infix('-', S('a'), ast.Prefix('-', S('b'))))
 
-  tst('a - b', ast.Infix('-', S('a'), S('b')))
-  tst('a - - b', ast.Infix('-', S('a'), ast.Prefix('-', S('b'))))
+  t.is(pe('-'), 'Expected an expression|1-1')
+  t.is(pe('not'), 'Expected an expression|3-3')
 
-  tstErr('-', 'Expected an expression|1-1')
-  tstErr('not', 'Expected an expression|3-3')
+  t.is(pe('(a'), 'Expected `)`|2-2')
 
-  tstErr('(a', 'Expected `)`|2-2')
+  t.deepEqual(pe('a()'), ast.ApplyFn(S('a'), []))
+  t.deepEqual(pe('a(b + (c))'), ast.ApplyFn(S('a'), [ast.Infix('+', S('b'), S('c'))]))
+  t.deepEqual(pe('a(b())'), ast.ApplyFn(S('a'), [ast.ApplyFn(S('b'), [])]))
 
-  tst('a()', ast.ApplyFn(S('a'), []))
-  tst('a(b + (c))', ast.ApplyFn(S('a'), [ast.Infix('+', S('b'), S('c'))]))
-  tst('a(b())', ast.ApplyFn(S('a'), [ast.ApplyFn(S('b'), [])]))
+  t.deepEqual(pe('fn() a'), ast.Function([], S('a')))
+  t.deepEqual(pe('fn(a, b) c'), ast.Function([S('a'), S('b')], S('c')))
 
-  tst('fn() a', ast.Function([], S('a')))
-  tst('fn(a, b) c', ast.Function([S('a'), S('b')], S('c')))
+  t.deepEqual(pe('(fn() a)()'), ast.ApplyFn(ast.Function([], S('a')), []))
 
-  tst('(fn() a)()', ast.ApplyFn(ast.Function([], S('a')), []))
+  t.is(pe('fn a'), 'Expected `(`|3-4')
+  t.is(pe('fn('), 'Expected a symbol|3-3')
+  t.is(pe('fn(+)'), 'Expected a symbol|3-4')
+  t.is(pe('fn(a'), 'Expected `)`|4-4')
+  t.is(pe('fn(a + b)'), 'Expected `)`|5-6')
+  t.is(pe('fn(1)'), 'Expected a symbol|3-4')
 
-  tstErr('fn a', 'Expected `(`|3-4')
-  tstErr('fn(', 'Expected a symbol|3-3')
-  tstErr('fn(+)', 'Expected a symbol|3-4')
-  tstErr('fn(a', 'Expected `)`|4-4')
-  tstErr('fn(a + b)', 'Expected `)`|5-6')
-  tstErr('fn(1)', 'Expected a symbol|3-4')
+  t.is(pe('if a'), 'Expected `then`|4-4')
+  t.is(pe('if a then b'), 'Expected `else`|11-11')
+  t.deepEqual(pe('if a then b else c'), ast.IfExpression(S('a'), S('b'), S('c')))
+  t.deepEqual(pe('if a then b else if c then d else e'), ast.IfExpression(S('a'), S('b'), ast.IfExpression(S('c'), S('d'), S('e'))))
+  t.deepEqual(pe('if a then if b then c else d else e'), ast.IfExpression(S('a'), ast.IfExpression(S('b'), S('c'), S('d')), S('e')))
 
-  tstErr('if a', 'Expected `then`|4-4')
-  tstErr('if a then b', 'Expected `else`|11-11')
-  tst('if a then b else c', ast.IfExpression(S('a'), S('b'), S('c')))
-  tst('if a then b else if c then d else e', ast.IfExpression(S('a'), S('b'), ast.IfExpression(S('c'), S('d'), S('e'))))
-  tst('if a then if b then c else d else e', ast.IfExpression(S('a'), ast.IfExpression(S('b'), S('c'), S('d')), S('e')))
-
-  tstErr('{', 'Expected a symbol|1-1')
-  tst('{}', ast.Struct([]))
-  tstErr('{a', 'Expected `:`|2-2')
-  tstErr('{a:', 'Expected an expression|3-3')
-  tstErr('{a: 1', 'Expected `}`|5-5')
-  tst('{a: 1}', ast.Struct([
+  t.is(pe('{'), 'Expected a symbol|1-1')
+  t.deepEqual(pe('{}'), ast.Struct([]))
+  t.is(pe('{a'), 'Expected `:`|2-2')
+  t.is(pe('{a:'), 'Expected an expression|3-3')
+  t.is(pe('{a: 1'), 'Expected `}`|5-5')
+  t.deepEqual(pe('{a: 1}'), ast.Struct([
     ast.StructPair(S('a'), ast.Number(1))
   ]))
-  tstErr('{a: 1,', 'Expected a symbol|6-6')
-  tst('{a: 1,}', ast.Struct([
+  t.is(pe('{a: 1,'), 'Expected a symbol|6-6')
+  t.deepEqual(pe('{a: 1,}'), ast.Struct([
     ast.StructPair(S('a'), ast.Number(1))
   ]))
-  tstErr('{a: 1,,}', 'Expected a symbol|6-7')
-  tst('{b: 2, c: 3}', ast.Struct([
+  t.is(pe('{a: 1,,}'), 'Expected a symbol|6-7')
+  t.deepEqual(pe('{b: 2, c: 3}'), ast.Struct([
     ast.StructPair(S('b'), ast.Number(2)),
     ast.StructPair(S('c'), ast.Number(3))
   ]))
-  tst('{b: 2, c: 3,}', ast.Struct([
+  t.deepEqual(pe('{b: 2, c: 3,}'), ast.Struct([
     ast.StructPair(S('b'), ast.Number(2)),
     ast.StructPair(S('c'), ast.Number(3))
   ]))
-  tstErr('{def: 1}', 'Expected a symbol|1-4')
+  t.is(pe('{def: 1}'), 'Expected a symbol|1-4')
 
-  tst('a.b', ast.Member(S('a'), S('b')))
-  tst('a.b.c', ast.Member(ast.Member(S('a'), S('b')), S('c')))
-  tstErr('a.', 'Expected a symbol|2-2')
-  tstErr('a. 1', 'Expected a symbol|3-4')// NOTE need the space so it doesn't tokenize the number `.1`
+  t.deepEqual(pe('a.b'), ast.Member(S('a'), S('b')))
+  t.deepEqual(pe('a.b.c'), ast.Member(ast.Member(S('a'), S('b')), S('c')))
+  t.is(pe('a.'), 'Expected a symbol|2-2')
+  t.is(pe('a. 1'), 'Expected a symbol|3-4')// NOTE need the space so it doesn't tokenize the number `.1`
 
-  tstErr('case', 'Expected an expression|4-4')
-  tstErr('case foo', 'Expected `when` or `else`|8-8')
-  tstErr('case foo when', 'Expected a type expression|13-13')
-  tstErr('case foo when Foo()', 'Expected an expression|19-19')
-  tst('case foo when Foo() bar', ast.CaseExpression(S('foo'), [
+  t.is(pe('case'), 'Expected an expression|4-4')
+  t.is(pe('case foo'), 'Expected `when` or `else`|8-8')
+  t.is(pe('case foo when'), 'Expected a type expression|13-13')
+  t.is(pe('case foo when Foo()'), 'Expected an expression|19-19')
+  t.deepEqual(pe('case foo when Foo() bar'), ast.CaseExpression(S('foo'), [
     ast.CaseWhenExpression(ast.TypeVariant(T('Foo'), []), S('bar'))
   ]))
-  tstErr('case foo when Foo() bar else', 'Expected an expression|28-28')
-  tst('case foo when Foo() bar else baz', ast.CaseExpression(S('foo'), [
+  t.is(pe('case foo when Foo() bar else'), 'Expected an expression|28-28')
+  t.deepEqual(pe('case foo when Foo() bar else baz'), ast.CaseExpression(S('foo'), [
     ast.CaseWhenExpression(ast.TypeVariant(T('Foo'), []), S('bar'))
   ], S('baz')))
-  tst('case foo when Foo() bar when Baz() qux', ast.CaseExpression(S('foo'), [
+  t.deepEqual(pe('case foo when Foo() bar when Baz() qux'), ast.CaseExpression(S('foo'), [
     ast.CaseWhenExpression(ast.TypeVariant(T('Foo'), []), S('bar')),
     ast.CaseWhenExpression(ast.TypeVariant(T('Baz'), []), S('qux'))
   ]))
@@ -279,131 +259,113 @@ test('ast shape', function (t) {
 })
 
 test('statements', function (t) {
-  var tst = function (src, expected) {
-    var r = parser(src)
-    if (r.type !== 'Ok') {
-      t.fail(JSON.stringify(r))
-      return
-    }
-    var ast = rmLoc(r.tree)
-    t.deepEqual(ast, expected)
-  }
-  var tstErr = function (src, expected) {
-    var r = parser(src)
-    if (r.type === 'Ok') {
-      t.fail('Should have failed: ' + expected)
-      return
-    }
-    t.is(r.message + '|' + r.loc.start + '-' + r.loc.end, expected)
-  }
+  t.deepEqual(p('a()'), [ast.CallFn(S('a'), [])])
+  t.is(p('a + 1'), 'Expected a statement|2-3')
 
-  tst('a()', [ast.CallFn(S('a'), [])])
-  tstErr('a + 1', 'Expected a statement|2-3')
-
-  tst('a() b()', [
+  t.deepEqual(p('a() b()'), [
     ast.CallFn(S('a'), []),
     ast.CallFn(S('b'), [])
   ])
-  tstErr('a() b', 'Expected a statement|4-5')
+  t.is(p('a() b'), 'Expected a statement|4-5')
 
-  tst('def a = 1', [ast.Define(S('a'), ast.Number(1))])
-  tstErr('def 1 = a', 'Expected a symbol or type|4-5')
-  tstErr('def a + a', 'Expected `=`|6-7')
-  tstErr('def a = def b = 2', 'Expected an expression|8-11')
+  t.deepEqual(p('def a = 1'), [ast.Define(S('a'), ast.Number(1))])
+  t.is(p('def 1 = a'), 'Expected a symbol or type|4-5')
+  t.is(p('def a + a'), 'Expected `=`|6-7')
+  t.is(p('def a = def b = 2'), 'Expected an expression|8-11')
 
-  tst('ann a = Number', [ast.Annotate(S('a'), T('Number'))])
-  tstErr('ann 1 = Number', 'Expected a symbol|4-5')
-  tstErr('ann a a Number', 'Expected `=`|6-7')
-  tstErr('ann a = 1', 'Expected a type expression|8-9')
+  t.deepEqual(p('ann a = Number'), [ast.Annotate(S('a'), T('Number'))])
+  t.is(p('ann 1 = Number'), 'Expected a symbol|4-5')
+  t.is(p('ann a a Number'), 'Expected `=`|6-7')
+  t.is(p('ann a = 1'), 'Expected a type expression|8-9')
 
-  tst('do end', [ast.Block([])])
-  tst('\n\ndo\n  \n\nend\n\n', [ast.Block([])])
-  tst('  do\n  \n\nend  ', [ast.Block([])])
+  t.deepEqual(p('do end'), [ast.Block([])])
+  t.deepEqual(p('\n\ndo\n  \n\nend\n\n'), [ast.Block([])])
+  t.deepEqual(p('  do\n  \n\nend  '), [ast.Block([])])
 
-  tst('do def a = 1 end', [
+  t.deepEqual(p('do def a = 1 end'), [
     ast.Block([
       ast.Define(S('a'), ast.Number(1))
     ])
   ])
 
-  tst('def noop = fn() do end', [
+  t.deepEqual(p('def noop = fn() do end'), [
     ast.Define(S('noop'), ast.Function([], ast.Block([])))
   ])
-  tst('def foo = fn() do bar() baz() end', [
+  t.deepEqual(p('def foo = fn() do bar() baz() end'), [
     ast.Define(S('foo'), ast.Function([], ast.Block([
       ast.CallFn(S('bar'), []),
       ast.CallFn(S('baz'), [])
     ])))
   ])
-  tstErr('def noop = fn() do', 'Expected `end`|18-18')
+  t.is(p('def noop = fn() do'), 'Expected `end`|18-18')
 
-  tst('return a', [ast.Return(S('a'))])
-  tstErr('return +', 'Expected an expression|7-8')
+  t.deepEqual(p('return a'), [ast.Return(S('a'))])
+  t.is(p('return +'), 'Expected an expression|7-8')
 
-  tstErr('while a', 'Expected `do`|7-7')
-  tst('while a do foo() end', [
+  t.is(p('while a'), 'Expected `do`|7-7')
+  t.deepEqual(p('while a do foo() end'), [
     ast.While(S('a'), ast.Block([
       ast.CallFn(S('foo'), [])
     ]))
   ])
-  tst('continue break', [
+  t.deepEqual(p('continue break'), [
     ast.Continue(),
     ast.Break()
   ])
-  tstErr('def a = fn() continue', 'Expected an expression|13-21')
+  t.is(p('def a = fn() continue'), 'Expected an expression|13-21')
 
-  tstErr('if a then', 'Expected `do`|5-9')
-  tstErr('if a do foo()', 'Expected `elseif` or `else` or `end`|13-13')
-  tst('if a do foo() end', [
+  t.is(p('if a then'), 'Expected `do`|5-9')
+  t.is(p('if a do foo()'), 'Expected `elseif` or `else` or `end`|13-13')
+  t.deepEqual(p('if a do foo() end'), [
     ast.IfStatement(S('a'), [
       ast.CallFn(S('foo'), [])
     ], null)
   ])
-  tst('if a do foo() else bar() end', [
+  t.deepEqual(p('if a do foo() else bar() end'), [
     ast.IfStatement(S('a'), [
       ast.CallFn(S('foo'), [])
     ], [
       ast.CallFn(S('bar'), [])
     ])
   ])
-  tst('if a do else end', [ast.IfStatement(S('a'), [], [])])
-  tst('if a do end', [ast.IfStatement(S('a'), [], null)])
+  t.deepEqual(p('if a do else end'), [ast.IfStatement(S('a'), [], [])])
+  t.deepEqual(p('if a do end'), [ast.IfStatement(S('a'), [], null)])
 
-  tstErr('def', 'Expected a symbol or type|3-3')
-  tstErr('def Foo', 'Expected `=`|7-7')
-  tstErr('def Foo =', 'Expected a type expression|9-9')
-  tst('def Foo = Bar', [ast.Define(T('Foo'), T('Bar'))])
+  t.is(p('def'), 'Expected a symbol or type|3-3')
+  t.is(p('def Foo'), 'Expected `=`|7-7')
+  t.is(p('def Foo ='), 'Expected a type expression|9-9')
+  t.deepEqual(p('def Foo = Bar'), [ast.Define(T('Foo'), T('Bar'))])
 
-  tstErr('type', 'Expected a type|4-4')
-  tstErr('type A', 'Expected `=`|6-6')
-  tstErr('type A=', 'Expected a type expression|7-7')
-  tstErr('type A=B', 'Expected a type variant|7-8')
-  tstErr('type A=B(', 'Expected a type expression|9-9')
-  tstErr('type A=B(C', 'Expected `,` or `)`|10-10')
-  tst('type Foo = Bar()', [
+  t.is(p('type'), 'Expected a type|4-4')
+  t.is(p('type A'), 'Expected `=`|6-6')
+  t.is(p('type A='), 'Expected a type expression|7-7')
+  t.is(p('type A=B'), 'Expected a type variant|7-8')
+  t.is(p('type A=B('), 'Expected a type expression|9-9')
+  t.is(p('type A=B(C'), 'Expected `,` or `)`|10-10')
+  t.deepEqual(p('type Foo = Bar()'), [
     ast.TypeUnion(T('Foo'), [
       ast.TypeVariant(T('Bar'), [])
     ])
   ])
-  tst('type Foo = Bar(String)', [
+  t.deepEqual(p('type Foo = Bar(String)'), [
     ast.TypeUnion(T('Foo'), [
       ast.TypeVariant(T('Bar'), [T('String')])
     ])
   ])
-  tst('type Foo = Bar(String, Number)', [
+  t.deepEqual(p('type Foo = Bar(String, Number)'), [
     ast.TypeUnion(T('Foo'), [
       ast.TypeVariant(T('Bar'), [T('String'), T('Number')])
     ])
   ])
 
-  tst('type A = B() | C()', [
+  t.deepEqual(p('type A = B() | C()'), [
     ast.TypeUnion(T('A'), [
       ast.TypeVariant(T('B'), []),
       ast.TypeVariant(T('C'), [])
     ])
   ])
 
-  tst('type A = B() | C() | D()', [
+  t.deepEqual(p('type A = B() | C() | D()'), [
     ast.TypeUnion(T('A'), [
       ast.TypeVariant(T('B'), []),
       ast.TypeVariant(T('C'), []),
@@ -411,43 +373,43 @@ test('statements', function (t) {
     ])
   ])
 
-  tstErr('def A = {', 'Expected a symbol|9-9')
-  tst('def A = {}', [
+  t.is(p('def A = {'), 'Expected a symbol|9-9')
+  t.deepEqual(p('def A = {}'), [
     ast.Define(T('A'), ast.TypeStruct([]))
   ])
-  tstErr('def A = {name', 'Expected `:`|13-13')
-  tstErr('def A = {name:', 'Expected a type expression|14-14')
-  tst('def A = {name: String}', [
+  t.is(p('def A = {name'), 'Expected `:`|13-13')
+  t.is(p('def A = {name:'), 'Expected a type expression|14-14')
+  t.deepEqual(p('def A = {name: String}'), [
     ast.Define(T('A'), ast.TypeStruct([
       ast.TypeStructPair(S('name'), T('String'))
     ]))
   ])
-  tst('def A = {name: String,}', [
+  t.deepEqual(p('def A = {name: String,}'), [
     ast.Define(T('A'), ast.TypeStruct([
       ast.TypeStructPair(S('name'), T('String'))
     ]))
   ])
-  tstErr('def A = {name: String', 'Expected `}`|21-21')
+  t.is(p('def A = {name: String'), 'Expected `}`|21-21')
 
-  tstErr('case', 'Expected an expression|4-4')
-  tstErr('case foo', 'Expected `do`|8-8')
-  tstErr('case foo do', 'Expected `when` or `else`|11-11')
-  tstErr('case foo do when', 'Expected a type expression|16-16')
-  tstErr('case foo do when Bar()', 'Expected `when`, `else` or `end`|22-22')
-  tst('case foo do when Bar() end', [
+  t.is(p('case'), 'Expected an expression|4-4')
+  t.is(p('case foo'), 'Expected `do`|8-8')
+  t.is(p('case foo do'), 'Expected `when` or `else`|11-11')
+  t.is(p('case foo do when'), 'Expected a type expression|16-16')
+  t.is(p('case foo do when Bar()'), 'Expected `when`, `else` or `end`|22-22')
+  t.deepEqual(p('case foo do when Bar() end'), [
     ast.CaseStatement(S('foo'), [
       ast.CaseWhenStatement(ast.TypeVariant(T('Bar'), []), [])
     ])
   ])
-  tstErr('case foo do when Bar() baz end', 'Expected a statement|23-26')
-  tst('case foo do when Bar() baz() end', [
+  t.is(p('case foo do when Bar() baz end'), 'Expected a statement|23-26')
+  t.deepEqual(p('case foo do when Bar() baz() end'), [
     ast.CaseStatement(S('foo'), [
       ast.CaseWhenStatement(ast.TypeVariant(T('Bar'), []), [
         ast.CallFn(S('baz'), [])
       ])
     ])
   ])
-  tst('case foo do when Bar() baz() when Qux() end', [
+  t.deepEqual(p('case foo do when Bar() baz() when Qux() end'), [
     ast.CaseStatement(S('foo'), [
       ast.CaseWhenStatement(ast.TypeVariant(T('Bar'), []), [
         ast.CallFn(S('baz'), [])
@@ -455,8 +417,8 @@ test('statements', function (t) {
       ast.CaseWhenStatement(ast.TypeVariant(T('Qux'), []), [])
     ])
   ])
-  tstErr('case foo do when Bar() baz() else qux() when Foo() end', 'Expected `end`|40-44')
-  tst('case foo do when Bar() baz() else qux() end', [
+  t.is(p('case foo do when Bar() baz() else qux() when Foo() end'), 'Expected `end`|40-44')
+  t.deepEqual(p('case foo do when Bar() baz() else qux() end'), [
     ast.CaseStatement(S('foo'), [
       ast.CaseWhenStatement(ast.TypeVariant(T('Bar'), []), [
         ast.CallFn(S('baz'), [])
@@ -468,92 +430,74 @@ test('statements', function (t) {
 })
 
 test('type expression', function (t) {
-  var tst = function (src, expected) {
-    var r = parseTypeExpression(src)
-    if (r.type !== 'Ok') {
-      t.fail(JSON.stringify(r))
-      return
-    }
-    var ast = rmLoc(r.tree)
-    t.deepEqual(ast, expected)
-  }
-  var tstErr = function (src, expected) {
-    var r = parseTypeExpression(src)
-    if (r.type === 'Ok') {
-      t.fail('Should have failed: ' + expected)
-      return
-    }
-    t.is(r.message + '|' + r.loc.start + '-' + r.loc.end, expected)
-  }
+  t.deepEqual(pte('Number'), T('Number'))
 
-  tst('Number', T('Number'))
-
-  tstErr('Fn', 'Expected `(`|2-2')
-  tstErr('Fn(', 'Expected a type expression|3-3')
-  tstErr('Fn(Number', 'Expected `)`|9-9')
-  tstErr('Fn(Number)', 'Expected a type expression|10-10')
-  tst('Fn(Number)Number', ast.TypeFunction([T('Number')], T('Number')))
-  tst('Fn()Number', ast.TypeFunction([], T('Number')))
-  tst('Fn(Number, String) Fn(Number)Number', ast.TypeFunction([T('Number'), T('String')], ast.TypeFunction([T('Number')], T('Number'))))
+  t.is(pte('Fn'), 'Expected `(`|2-2')
+  t.is(pte('Fn('), 'Expected a type expression|3-3')
+  t.is(pte('Fn(Number'), 'Expected `)`|9-9')
+  t.is(pte('Fn(Number)'), 'Expected a type expression|10-10')
+  t.deepEqual(pte('Fn(Number)Number'), ast.TypeFunction([T('Number')], T('Number')))
+  t.deepEqual(pte('Fn()Number'), ast.TypeFunction([], T('Number')))
+  t.deepEqual(pte('Fn(Number, String) Fn(Number)Number'), ast.TypeFunction([T('Number'), T('String')], ast.TypeFunction([T('Number')], T('Number'))))
 })
 
 test('import', function (t) {
-  t.is(parseErr('import'), 'Expected a path string literal|6-6')
-  t.is(parseErr('import a'), 'Expected a path string literal|7-8')
-  t.is(parseErr('import "./foo"'), 'Expected `*` or `(`|14-14')
+  t.is(p('import'), 'Expected a path string literal|6-6')
+  t.is(p('import a'), 'Expected a path string literal|7-8')
+  t.is(p('import "./foo"'), 'Expected `*` or `(`|14-14')
 
-  t.deepEqual(parseOk('import "./foo" *'), [ast.Import('./foo', null)])
+  t.deepEqual(p('import "./foo" *'), [ast.Import('./foo', null)])
 
-  t.is(parseErr('import "./foo" ('), 'Expected a variable or type to import|16-16')
-  t.is(parseErr('import "./foo" (bar'), 'Expected `,` or `)`|19-19')
-  t.is(parseErr('import "./foo" (bar,'), 'Expected a variable or type to import|20-20')
-  t.is(parseErr('import "./foo" (bar,Baz'), 'Expected `,` or `)`|23-23')
-  t.deepEqual(parseOk('import "./foo" (bar,Baz)'), [
+  t.is(p('import "./foo" ('), 'Expected a variable or type to import|16-16')
+  t.is(p('import "./foo" (bar'), 'Expected `,` or `)`|19-19')
+  t.is(p('import "./foo" (bar,'), 'Expected a variable or type to import|20-20')
+  t.is(p('import "./foo" (bar,Baz'), 'Expected `,` or `)`|23-23')
+  t.deepEqual(p('import "./foo" (bar,Baz)'), [
     ast.Import('./foo', [
       ast.ImportSymbol(S('bar')),
       ast.ImportType(T('Baz'))
     ])
   ])
 
-  t.is(parseErr('import "./foo" (bar as )'), 'Expected a symbol|23-24')
-  t.deepEqual(parseOk('import "./foo" (bar as wat)'), [
+  t.is(p('import "./foo" (bar as )'), 'Expected a symbol|23-24')
+  t.deepEqual(p('import "./foo" (bar as wat)'), [
     ast.Import('./foo', [
       ast.ImportSymbol(S('bar'), S('wat'))
     ])
   ])
 
-  t.is(parseErr('import "./foo" (bar is )'), 'Expected a type expression|23-24')
-  t.deepEqual(parseOk('import "./foo" (bar is Fn(Number) String)'), [
+  t.is(p('import "./foo" (bar is )'), 'Expected a type expression|23-24')
+  t.deepEqual(p('import "./foo" (bar is Fn(Number) String)'), [
     ast.Import('./foo', [
       ast.ImportSymbol(S('bar'), void 0, ast.TypeFunction([T('Number')], T('String')))
     ])
   ])
 
-  t.deepEqual(parseOk('import "./foo" (bar as wat is String)'), [
+  t.deepEqual(p('import "./foo" (bar as wat is String)'), [
     ast.Import('./foo', [
       ast.ImportSymbol(S('bar'), S('wat'), T('String'))
     ])
   ])
 
-  t.is(parseErr('import "./foo" (Baz as )'), 'Expected a type|23-24')
-  t.deepEqual(parseOk('import "./foo" (Baz as Wat)'), [
+  t.is(p('import "./foo" (Baz as )'), 'Expected a type|23-24')
+  t.deepEqual(p('import "./foo" (Baz as Wat)'), [
     ast.Import('./foo', [
       ast.ImportType(T('Baz'), T('Wat'))
     ])
   ])
-  t.is(parseErr('import "./foo" (Baz as Wat is String)'), 'Expected `,` or `)`|27-29')
+  t.is(p('import "./foo" (Baz as Wat is String)'), 'Expected `,` or `)`|27-29')
 })
 
 test('export', function (t) {
-  t.is(parseErr('export'), 'Expected `*` or `(`|6-6')
+  t.is(p('export'), 'Expected `*` or `(`|6-6')
 
-  t.deepEqual(parseOk('export *'), [ast.Export(null)])
+  t.deepEqual(p('export *'), [ast.Export(null)])
 
-  t.is(parseErr('export ('), 'Expected a variable or type to export|8-8')
-  t.is(parseErr('export ()'), 'Expected a variable or type to export|8-9')
-  t.is(parseErr('export (foo'), 'Expected `,` or `)`|11-11')
-  t.is(parseErr('export (foo())'), 'Expected `,` or `)`|11-12')
+  t.is(p('export ('), 'Expected a variable or type to export|8-8')
+  t.is(p('export ()'), 'Expected a variable or type to export|8-9')
+  t.is(p('export (foo'), 'Expected `,` or `)`|11-11')
+  t.is(p('export (foo())'), 'Expected `,` or `)`|11-12')
 
-  t.deepEqual(parseOk('export (foo)'), [ast.Export([S('foo')])])
-  t.deepEqual(parseOk('export (foo, Bar, baz, Qux)'), [ast.Export([S('foo'), T('Bar'), S('baz'), T('Qux')])])
+  t.deepEqual(p('export (foo)'), [ast.Export([S('foo')])])
+  t.deepEqual(p('export (foo, Bar, baz, Qux)'), [ast.Export([S('foo'), T('Bar'), S('baz'), T('Qux')])])
 })
