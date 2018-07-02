@@ -35,6 +35,8 @@ test('it', async function (t) {
     '/test/a': 'def a = 1 export(a)'
   }), {a: 1})
 
-  // '/test/a': 'import:\n    "./b":\n        b\ndef a = b + 1\n\nexport:\n    a',
-  // '/test/b': 'def b = 2\n\nexport:\n    b'
+  t.deepEqual(await run({
+    '/test/a': 'import "./b" * def a=b+1 export(a)',
+    '/test/b': 'def b=2 export(b)'
+  }), {a: 3})
 })

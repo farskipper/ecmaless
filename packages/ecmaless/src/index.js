@@ -46,19 +46,19 @@ module.exports = function (conf, callback) {
       moduleAst[path] = ast
       resolver.add(path)
 
-      var ast0 = _.head(ast)
-      if (ast0 && ast0.type === 'ImportBlock') {
-        λ.each(ast0.modules, function (m, next) {
-          // TODO resolve relative to curr path
-          var depPath = normalizePath(base, m.path.value)
+      var dirname = pathFns.dirname(path)
 
-          resolver.setDependency(path, depPath)
+      var importPaths = _.compact(_.map(ast.ast, function (node) {
+        if (node.ast.type === 'Import') {
+          return normalizePath(dirname, node.ast.path)
+        }
+      }))
 
-          parseModules(depPath, next)
-        }, callback)
-      } else {
-        callback()
-      }
+      λ.each(importPaths, function (depPath, next) {
+        resolver.setDependency(path, depPath)
+
+        parseModules(depPath, next)
+      }, callback)
     })
   }
 
@@ -97,21 +97,28 @@ module.exports = function (conf, callback) {
 
         var c = compiler(ast, {
           toLoc: function () { _.noop(src, path) }, // TODO use src + path
-          requireModule: function (path) {
+          requireModule: function (path, loc) {
             // TODO resolve relative to curr path
             path = normalizePath(base, path)
+
+            if (!modules[path]) {
+              return {type: 'Error', loc: loc, message: 'Module not found: ' + path}
+            }
 
             var moduleId = nextModuleId()
             myModules[moduleId] = path
 
             return {
-              id: moduleId,
-              module: modules[path]
+              type: 'Ok',
+              value: {
+                id: moduleId,
+                module: modules[path]
+              }
             }
           }
         })
         if (c.type !== 'Ok') {
-          throw new Error(JSON.stringify(ast))
+          throw new Error(JSON.stringify(c))
         }
         c = c.value
 
@@ -124,7 +131,7 @@ module.exports = function (conf, callback) {
           args.push(e('id', '$mod$' + i))
           params.push(moduleId)
         })
-        body.push(e('var', '$mod$' + modIndex, e('call', e('function', params, c.estree), args)))
+        body.push(e('var', '$mod$' + modIndex, e('call', e('function', params, c.estree.body), args)))
       })
     } catch (e) {
       callback(e)
