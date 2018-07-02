@@ -358,6 +358,7 @@ defRule(')', {})
 defRule('}', {})
 defRule(':', {})
 defRule(',', {})
+defRule('|', {})
 defRule('=', {})
 defRule('as', {})
 defRule('is', {})
@@ -712,7 +713,19 @@ defRule('case', {
 
 stmt('def', function (state) {
   var loc = state.curr.token.loc
-  var id = symbol(state)
+  var isType = false
+  switch (state.curr.rule.id) {
+    case 'SYMBOL':
+      break
+    case 'TYPE':
+      isType = true
+      break
+    default:
+      return Error(state.curr.token.loc, 'Expected a symbol or type')
+  }
+  var id = isType
+    ? type(state)
+    : symbol(state)
   if (notOk(id)) {
     return id
   }
@@ -720,7 +733,9 @@ stmt('def', function (state) {
     return Error(state.curr.token.loc, 'Expected `=`')
   }
   advance(state)
-  var init = expression(state, 0)
+  var init = isType
+    ? typeExpression(state, 0)
+    : expression(state, 0)
   if (notOk(init)) {
     return init
   }
@@ -790,22 +805,25 @@ stmt('type', function (state) {
   }
   advance(state)
 
-  var init = typeExpression(state, 0)
-  if (notOk(init)) {
-    return init
-  }
-  return Ok(loc, ast.DefineType(id.tree, init.tree))
-})
+  var variants = []
 
-defRule('|', {
-  type_lbp: 10,
-  type_led: function (state, token, left) {
-    var right = typeExpression(state, 10)
-    if (notOk(right)) {
-      return right
+  while (true) {
+    var variant = typeExpression(state, 10)
+    if (notOk(variant)) {
+      return variant
     }
-    return Ok(token.loc, ast.TypeUnion(left, right.tree))
+    variant = variant.tree
+    if (variant.ast.type !== 'TypeVariant') {
+      return Error(variant.loc, 'Expected a type variant')
+    }
+    variants.push(variant)
+    if (state.curr.rule.id !== '|') {
+      break
+    }
+    advance(state)
   }
+
+  return Ok(loc, ast.TypeUnion(id.tree, variants))
 })
 
 defRule('(', {
@@ -826,7 +844,7 @@ defRule('(', {
       }
     }
     if (state.curr.rule.id !== ')') {
-      return Error(state.curr.token.loc, 'Expected `)`')
+      return Error(state.curr.token.loc, 'Expected `,` or `)`')
     }
     advance(state)
     return Ok(token.loc, ast.TypeVariant(left, args))

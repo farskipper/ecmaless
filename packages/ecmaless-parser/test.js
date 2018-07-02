@@ -307,7 +307,7 @@ test('statements', function (t) {
   tstErr('a() b', 'Expected a statement|4-5')
 
   tst('def a = 1', [ast.Define(S('a'), ast.Number(1))])
-  tstErr('def 1 = a', 'Expected a symbol|4-5')
+  tstErr('def 1 = a', 'Expected a symbol or type|4-5')
   tstErr('def a + a', 'Expected `=`|6-7')
   tstErr('def a = def b = 2', 'Expected an expression|8-11')
 
@@ -369,62 +369,65 @@ test('statements', function (t) {
   tst('if a do else end', [ast.IfStatement(S('a'), [], [])])
   tst('if a do end', [ast.IfStatement(S('a'), [], null)])
 
-  tstErr('type', 'Expected a type|4-4')
-  tstErr('type Foo', 'Expected `=`|8-8')
-  tstErr('type Foo =', 'Expected a type expression|10-10')
-  tst('type Foo = Bar', [ast.DefineType(T('Foo'), T('Bar'))])
+  tstErr('def', 'Expected a symbol or type|3-3')
+  tstErr('def Foo', 'Expected `=`|7-7')
+  tstErr('def Foo =', 'Expected a type expression|9-9')
+  tst('def Foo = Bar', [ast.Define(T('Foo'), T('Bar'))])
 
+  tstErr('type', 'Expected a type|4-4')
+  tstErr('type A', 'Expected `=`|6-6')
+  tstErr('type A=', 'Expected a type expression|7-7')
+  tstErr('type A=B', 'Expected a type variant|7-8')
   tstErr('type A=B(', 'Expected a type expression|9-9')
-  tstErr('type A=B(C', 'Expected `)`|10-10')
+  tstErr('type A=B(C', 'Expected `,` or `)`|10-10')
   tst('type Foo = Bar()', [
-    ast.DefineType(T('Foo'), ast.TypeVariant(T('Bar'), []))
+    ast.TypeUnion(T('Foo'), [
+      ast.TypeVariant(T('Bar'), [])
+    ])
   ])
   tst('type Foo = Bar(String)', [
-    ast.DefineType(T('Foo'), ast.TypeVariant(T('Bar'), [
-      T('String')
-    ]))
+    ast.TypeUnion(T('Foo'), [
+      ast.TypeVariant(T('Bar'), [S('String')])
+    ])
   ])
   tst('type Foo = Bar(String, Number)', [
-    ast.DefineType(T('Foo'), ast.TypeVariant(T('Bar'), [
-      T('String'),
-      T('Number')
-    ]))
+    ast.TypeUnion(T('Foo'), [
+      ast.TypeVariant(T('Bar'), [S('String'), T('Number')])
+    ])
   ])
 
   tst('type A = B() | C()', [
-    ast.DefineType(T('A'), ast.TypeUnion(
+    ast.TypeUnion(T('A'), [
       ast.TypeVariant(T('B'), []),
       ast.TypeVariant(T('C'), [])
-    ))
+    ])
   ])
 
   tst('type A = B() | C() | D()', [
-    ast.DefineType(T('A'), ast.TypeUnion(
-      ast.TypeUnion(
-        ast.TypeVariant(T('B'), []),
-        ast.TypeVariant(T('C'), [])
-      ),
+    ast.TypeUnion(T('A'), [
+      ast.TypeVariant(T('B'), []),
+      ast.TypeVariant(T('C'), []),
       ast.TypeVariant(T('D'), [])
-    ))
+    ])
   ])
 
-  tstErr('type A = {', 'Expected a symbol|10-10')
-  tst('type A = {}', [
-    ast.DefineType(T('A'), ast.TypeStruct([]))
+  tstErr('def A = {', 'Expected a symbol|9-9')
+  tst('def A = {}', [
+    ast.Define(T('A'), ast.TypeStruct([]))
   ])
-  tstErr('type A = {name', 'Expected `:`|14-14')
-  tstErr('type A = {name:', 'Expected a type expression|15-15')
-  tst('type A = {name: String}', [
-    ast.DefineType(T('A'), ast.TypeStruct([
+  tstErr('def A = {name', 'Expected `:`|13-13')
+  tstErr('def A = {name:', 'Expected a type expression|14-14')
+  tst('def A = {name: String}', [
+    ast.Define(T('A'), ast.TypeStruct([
       ast.TypeStructPair(S('name'), T('String'))
     ]))
   ])
-  tst('type A = {name: String,}', [
-    ast.DefineType(T('A'), ast.TypeStruct([
+  tst('def A = {name: String,}', [
+    ast.Define(T('A'), ast.TypeStruct([
       ast.TypeStructPair(S('name'), T('String'))
     ]))
   ])
-  tstErr('type A = {name: String', 'Expected `}`|22-22')
+  tstErr('def A = {name: String', 'Expected `}`|21-21')
 
   tstErr('case', 'Expected an expression|4-4')
   tstErr('case foo', 'Expected `do`|8-8')

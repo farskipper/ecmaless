@@ -172,18 +172,10 @@ module.exports = {
       init: init
     }
   },
-  DefineType: function (id, init) {
-    return {
-      type: 'DefineType',
-      id: id,
-      init: init
-    }
-  },
-  TypeUnion: function (left, right) {
+  TypeUnion: function (variants) {
     return {
       type: 'TypeUnion',
-      left: left,
-      right: right
+      variants: variants
     }
   },
   TypeVariant: function (tag, args) {
