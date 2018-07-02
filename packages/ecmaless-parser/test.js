@@ -158,6 +158,11 @@ test('expression', function (t) {
   ]))
   tstErr('{def: 1}', 'Expected a symbol|1-4')
 
+  tst('a.b', ast.Member(S('a'), S('b')))
+  tst('a.b.c', ast.Member(ast.Member(S('a'), S('b')), S('c')))
+  tstErr('a.', 'Expected a symbol|2-2')
+  tstErr('a. 1', 'Expected a symbol|3-4')// NOTE need the space so it doesn't tokenize the number `.1`
+
   tstErr('case', 'Expected an expression|4-4')
   tstErr('case foo', 'Expected `when` or `else`|8-8')
   tstErr('case foo when', 'Expected a type expression|13-13')

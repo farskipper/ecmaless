@@ -396,6 +396,30 @@ var compAstNode = {
       }
     })
   },
+  'Member': function (node, comp, ctx, fromCaller) {
+    var struct = comp(node.ast.struct)
+    if (notOk(struct)) {
+      return struct
+    }
+    struct = struct.value
+    if (struct.TYPE.typ.tag !== 'Struct') {
+      return Error(node.ast.struct.loc, 'expected `Struct` but was `' + typeToString(struct.TYPE) + '`')
+    }
+
+    var key = node.ast.key.ast.value
+    var TYPE = struct.TYPE.typ.byKey[key]
+    if (!TYPE) {
+      return Error(node.ast.key.loc, 'Key `' + key + '` not found on {' + Object.keys(struct.TYPE.typ.byKey).join(',') + '}')
+    }
+
+    return Ok({
+      estree: e('.', struct.estree, e('str', key, ctx.toLoc(node.ast.key.loc))),
+      TYPE: {
+        loc: node.ast.key.loc,
+        typ: TYPE.typ
+      }
+    })
+  },
   'Import': function (node, comp, ctx, fromCaller) {
     if (!fromCaller.isRootLevel) {
       return Error(node.loc, 'Imports only work at the root level')

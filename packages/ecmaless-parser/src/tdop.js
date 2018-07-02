@@ -419,6 +419,17 @@ infix('/', 60)
 prefix('not', 70)
 prefix('-', 70)
 
+defRule('.', {
+  lbp: 80,
+  led: function (state, token, left) {
+    var right = symbol(state)
+    if (notOk(right)) {
+      return right
+    }
+    return Ok(token.loc, ast.Member(left, right.tree))
+  }
+})
+
 defRule('(', {
   nud: function (state, token) {
     var e = expression(state, 0)

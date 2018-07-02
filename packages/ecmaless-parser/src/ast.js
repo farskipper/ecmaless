@@ -64,6 +64,13 @@ module.exports = {
       value: value
     }
   },
+  Member: function (struct, key) {
+    return {
+      type: 'Member',
+      struct: struct,
+      key: key
+    }
+  },
   TypeStruct: function (pairs) {
     return {
       type: 'TypeStruct',

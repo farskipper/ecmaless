@@ -91,6 +91,11 @@ test('struct', function (t) {
 
   t.is(tc('ann foo={a: Number} def foo={a: 1, b: 2}'), 'expected {a} but was {a,b}|28-40')
   t.is(tc('ann foo={a: Number} def foo={a: "hi"}'), 'e:Number a:String|32-36')
+
+  t.is(tc('def foo=1 def bar=foo.a + 1'), 'e:Struct a:Number|18-21')
+  t.is(tc('def foo={a:"hi"} def bar=foo.a + 1'), 'e:Number a:String|29-30')
+  t.is(tc('def foo={a: 1} def bar=foo.b + 1'), 'Key `b` not found on {a}|27-28')
+  t.is(tc('def foo={a: 1} def bar=foo.a + 1'), "var foo={'a':1};var bar=foo['a']+1;")
 })
 
 test('export', function (t) {
