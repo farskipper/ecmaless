@@ -54,7 +54,7 @@ var compAstNode = {
   'Annotate': function (node, comp, ctx) {
     var sym = node.ast.id.ast.value
     if (ctx.scope.has(sym)) {
-      if (ctx.scope.get(sym).def_loc) {
+      if (ctx.scope.get(sym).defLoc) {
         return Error(node.ast.id.loc, '`' + sym + '` should be annotated before it\'s defined')
       }
       return Error(node.ast.id.loc, '`' + sym + '` is already annotated')
@@ -66,7 +66,7 @@ var compAstNode = {
     }
     ctx.scope.set(sym, {
       TYPE: init.value.TYPE,
-      ann_loc: node.loc
+      annLoc: node.loc
     })
 
     return Ok({})
@@ -75,7 +75,7 @@ var compAstNode = {
     var sym = node.ast.id.ast.value
 
     var ann = ctx.scope.get(sym)
-    if (ann && ann.def_loc) {
+    if (ann && ann.defLoc) {
       return Error(node.ast.id.loc, '`' + sym + '` is already defined')
     }
 
@@ -93,8 +93,8 @@ var compAstNode = {
 
     ctx.scope.set(sym, {
       TYPE: init.value.TYPE,
-      def_loc: node.loc,
-      ann_loc: ann && ann.ann_loc
+      defLoc: node.loc,
+      annLoc: ann && ann.annLoc
     })
 
     var id = comp(node.ast.id)
@@ -292,23 +292,23 @@ var compAstNode = {
       var as = key
       var TYPE
 
-      var def_loc = node.loc
-      var ann_loc = node.loc
+      var defLoc = node.loc
+      var annLoc = node.loc
       if (part) {
-        def_loc = part.ast.value.loc
-        ann_loc = part.ast.value.loc
+        defLoc = part.ast.value.loc
+        annLoc = part.ast.value.loc
 
         if (part.ast.as) {
           as = part.ast.as.ast.value
-          def_loc = part.ast.as.loc
-          ann_loc = part.ast.as.loc
+          defLoc = part.ast.as.loc
+          annLoc = part.ast.as.loc
         }
 
         if (part.ast.is && !isJs) {
           return Error(part.ast.is.loc, '`is` only works for js imports')
         }
         if (part.ast.is) {
-          ann_loc = part.ast.is.loc
+          annLoc = part.ast.is.loc
         }
       }
 
@@ -329,12 +329,12 @@ var compAstNode = {
       }
 
       if (ctx.scope.has(as)) {
-        return Error(def_loc, '`' + as + '` is already defined, use `as` to rename')
+        return Error(defLoc, '`' + as + '` is already defined, use `as` to rename')
       }
       ctx.scope.set(as, {
         TYPE: TYPE,
-        def_loc: def_loc,
-        ann_loc: ann_loc
+        defLoc: defLoc,
+        annLoc: annLoc
       })
 
       var isType = /^[A-Z]/.test(key)

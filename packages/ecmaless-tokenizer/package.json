@@ -1,11 +1,8 @@
 {
-  "name": "ecmaless-parser",
+  "name": "ecmaless-tokenizer",
   "version": "0.7.0",
-  "description": "Parser for the ecmaless language",
-  "main": "src/index.js",
-  "files": [
-    "src/"
-  ],
+  "description": "Tokenizer for the ecmaless language",
+  "main": "index.js",
   "scripts": {
     "test": "standard && ava"
   },
@@ -15,8 +12,7 @@
   },
   "keywords": [
     "ecmaless",
-    "parser",
-    "lang"
+    "tokenizer"
   ],
   "author": "farskipper",
   "license": "MIT",
@@ -26,9 +22,7 @@
   "homepage": "https://github.com/farskipper/ecmaless#readme",
   "devDependencies": {
     "ava": "^0.25.0",
-    "ecmaless-tokenizer": "^0.7.0",
-    "json-stringify-pretty-compact": "^1.0.4",
-    "lodash": "^4.17.4",
+    "lodash": "^4.17.10",
     "standard": "^11.0.1"
   }
 }

@@ -1,6 +1,6 @@
 var _ = require('lodash')
 var test = require('ava')
-var tokenizer = require('../src/tokenizer')
+var tokenizer = require('./')
 
 test('tokenizer', function (t) {
   var tst = function (src, expected, message) {

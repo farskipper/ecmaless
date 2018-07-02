@@ -1,9 +1,9 @@
 var _ = require('lodash')
-var ast = require('../src/ast')
-var tdop = require('../src/tdop')
+var ast = require('./src/ast')
+var tdop = require('./src/tdop')
 var test = require('ava')
-var parser = require('../')
-var tokenizer = require('../src/tokenizer')
+var parser = require('./')
+var tokenizer = require('ecmaless-tokenizer')
 
 var parseExpression = function (src) {
   var r = tokenizer(src)

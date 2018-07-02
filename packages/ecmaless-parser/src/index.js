@@ -1,4 +1,4 @@
-var tokenizer = require('./tokenizer')
+var tokenizer = require('ecmaless-tokenizer')
 var tdop = require('./tdop')
 
 module.exports = function (src) {
