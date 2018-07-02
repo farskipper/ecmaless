@@ -28,7 +28,19 @@ var notOk = function (ast) {
 var rules = {}
 
 var advance = function (state) {
-  if (state.token_i >= state.tokens.length) {
+  // get next token
+  var token
+  var found = false
+  while (state.token_i < state.tokens.length) {
+    token = state.tokens[state.token_i]
+    state.token_i += 1
+    if (token.type !== 'SPACES' && token.type !== 'NEWLINE') {
+      found = true
+      break
+    }
+  }
+
+  if (!found && state.token_i >= state.tokens.length) {
     var srcLen = state.tokens[state.tokens.length - 1].loc.end
     state.curr = {
       rule: rules['(end)'],
@@ -39,16 +51,6 @@ var advance = function (state) {
       }
     }
     return
-  }
-
-  // get next token
-  var token
-  while (state.token_i < state.tokens.length) {
-    token = state.tokens[state.token_i]
-    state.token_i += 1
-    if (token.type !== 'SPACES') {
-      break
-    }
   }
 
   var rule
@@ -362,6 +364,7 @@ defRule('then', {})
 defRule('else', {})
 defRule('elseif', {})
 defRule('when', {})
+
 defRule('NUMBER', {
   nud: function (state, token) {
     var v = parseFloat(token.src) || 0

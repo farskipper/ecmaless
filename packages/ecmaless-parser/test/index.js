@@ -312,6 +312,8 @@ test('statements', function (t) {
   tstErr('ann a = 1', 'Expected a type expression|8-9')
 
   tst('do end', [ast.Block([])])
+  tst('\n\ndo\n  \n\nend\n\n', [ast.Block([])])
+  tst('  do\n  \n\nend  ', [ast.Block([])])
 
   tst('do def a = 1 end', [
     ast.Block([
