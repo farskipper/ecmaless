@@ -65,9 +65,20 @@ test('compile', function (t) {
   t.is(tc('ann add=Fn(Number, Number)Number def add=fn()1'), 'Expected 2 params not 0|41-43')
   t.is(tc('ann one=Fn()Number def one=fn()1'), 'var one=function one(){return 1;};')
   t.is(tc('ann add=Fn(Number,String)Number def add=fn(a,b)a+b'), 'e:Number a:String|49-50')
-  t.is(tc('ann add=Fn(Number,Number)Number def add=fn(a,b)a+b'), 'var add=function add(a,b){return a+b;};')
   t.is(tc('ann add=Fn(Number,Number)String def add=fn(a,b)a+b'), 'e:String a:Number|48-49')
 
+  var addEl = 'ann add=Fn(Number,Number)Number def add=fn(a,b)a+b'
+  var addJs = 'var add=function add(a,b){return a+b;};'
+  t.is(tc(addEl), addJs)
+  t.is(tc('def add=1 add()'), 'not a function|10-13')
+  t.is(tc(addEl + ' add()'), 'expected 2 params but was 0|54-55')
+  t.is(tc(addEl + ' add(1)'), 'expected 2 params but was 1|54-55')
+  t.is(tc(addEl + ' add(1,"a")'), 'e:Number a:String|57-60')
+  t.is(tc(addEl + ' add(1,2)'), addJs + 'add(1,2);')
+  t.is(tc(addEl + ' ann a=String def a=add(1,2)'), 'e:String a:Number|70-73')
+})
+
+test('export', function (t) {
   t.is(tc('export(a)'), 'Not defined `a`|7-8')
   t.is(tc('def a=1 export(a)'), "var a=1;return{'a':a};")
 

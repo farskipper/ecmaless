@@ -292,12 +292,12 @@ test('statements', function (t) {
     t.is(r.message + '|' + r.loc.start + '-' + r.loc.end, expected)
   }
 
-  tst('a()', [ast.ApplyFn(S('a'), [])])
+  tst('a()', [ast.CallFn(S('a'), [])])
   tstErr('a + 1', 'Expected a statement|2-3')
 
   tst('a() b()', [
-    ast.ApplyFn(S('a'), []),
-    ast.ApplyFn(S('b'), [])
+    ast.CallFn(S('a'), []),
+    ast.CallFn(S('b'), [])
   ])
   tstErr('a() b', 'Expected a statement|4-5')
 
@@ -326,8 +326,8 @@ test('statements', function (t) {
   ])
   tst('def foo = fn() do bar() baz() end', [
     ast.Define(S('foo'), ast.Function([], ast.Block([
-      ast.ApplyFn(S('bar'), []),
-      ast.ApplyFn(S('baz'), [])
+      ast.CallFn(S('bar'), []),
+      ast.CallFn(S('baz'), [])
     ])))
   ])
   tstErr('def noop = fn() do', 'Expected `end`|18-18')
@@ -338,7 +338,7 @@ test('statements', function (t) {
   tstErr('while a', 'Expected `do`|7-7')
   tst('while a do foo() end', [
     ast.While(S('a'), ast.Block([
-      ast.ApplyFn(S('foo'), [])
+      ast.CallFn(S('foo'), [])
     ]))
   ])
   tst('continue break', [
@@ -351,14 +351,14 @@ test('statements', function (t) {
   tstErr('if a do foo()', 'Expected `elseif` or `else` or `end`|13-13')
   tst('if a do foo() end', [
     ast.IfStatement(S('a'), [
-      ast.ApplyFn(S('foo'), [])
+      ast.CallFn(S('foo'), [])
     ], null)
   ])
   tst('if a do foo() else bar() end', [
     ast.IfStatement(S('a'), [
-      ast.ApplyFn(S('foo'), [])
+      ast.CallFn(S('foo'), [])
     ], [
-      ast.ApplyFn(S('bar'), [])
+      ast.CallFn(S('bar'), [])
     ])
   ])
   tst('if a do else end', [ast.IfStatement(S('a'), [], [])])
@@ -435,14 +435,14 @@ test('statements', function (t) {
   tst('case foo do when Bar() baz() end', [
     ast.CaseStatement(S('foo'), [
       ast.CaseWhenStatement(ast.TypeVariant(T('Bar'), []), [
-        ast.ApplyFn(S('baz'), [])
+        ast.CallFn(S('baz'), [])
       ])
     ])
   ])
   tst('case foo do when Bar() baz() when Qux() end', [
     ast.CaseStatement(S('foo'), [
       ast.CaseWhenStatement(ast.TypeVariant(T('Bar'), []), [
-        ast.ApplyFn(S('baz'), [])
+        ast.CallFn(S('baz'), [])
       ]),
       ast.CaseWhenStatement(ast.TypeVariant(T('Qux'), []), [])
     ])
@@ -451,10 +451,10 @@ test('statements', function (t) {
   tst('case foo do when Bar() baz() else qux() end', [
     ast.CaseStatement(S('foo'), [
       ast.CaseWhenStatement(ast.TypeVariant(T('Bar'), []), [
-        ast.ApplyFn(S('baz'), [])
+        ast.CallFn(S('baz'), [])
       ])
     ], [
-      ast.ApplyFn(S('qux'), [])
+      ast.CallFn(S('qux'), [])
     ])
   ])
 })

@@ -30,6 +30,13 @@ module.exports = {
       args: args
     }
   },
+  CallFn: function (callee, args) {
+    return {
+      type: 'CallFn',
+      callee: callee,
+      args: args
+    }
+  },
   Function: function (params, body) {
     return {
       type: 'Function',

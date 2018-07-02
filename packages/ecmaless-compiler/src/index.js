@@ -16,6 +16,21 @@ var assertT = function (actual, expected) {
   if (aTag !== expected.typ.tag) {
     return Error(actual.loc, 'expected `' + typeToString(expected) + '` but was `' + typeToString(actual) + '`')
   }
+  if (aTag === 'Fn') {
+    if (actual.typ.params.length !== expected.typ.params.length) {
+      return Error(actual.loc, 'expected ' + expected.typ.params.length + ' params but was ' + actual.typ.params.length)
+    }
+    var i = 0
+    while (i < actual.typ.params.length) {
+      var aclParam = actual.typ.params[i]
+      var expParam = expected.typ.params[i]
+      i++
+      var out = assertT(aclParam, expParam)
+      if (notOk(out)) {
+        return out
+      }
+    }
+  }
   return Ok()
 }
 
@@ -250,6 +265,60 @@ var compAstNode = {
         loc: node.loc,
         typ: expTYPE.typ
       }
+    })
+  },
+  'ApplyFn': function (node, comp, ctx, fromCaller) {
+    var callee = comp(node.ast.callee)
+    if (notOk(callee)) {
+      return callee
+    }
+    callee = callee.value
+
+    if (callee.TYPE.typ.tag !== 'Fn') {
+      return Error(node.ast.callee.loc, 'not a function')
+    }
+
+    var inferedTYPE = {
+      loc: node.loc,
+      typ: {
+        tag: 'Fn',
+        params: [],
+        body: null
+      }
+    }
+
+    var args = []
+    var i = 0
+    while (i < node.ast.args.length) {
+      var arg = comp(node.ast.args[i])
+      i++
+      if (notOk(arg)) {
+        return arg
+      }
+      args.push(arg.value.estree)
+      inferedTYPE.typ.params.push(arg.value.TYPE)
+    }
+
+    var out = assertT(inferedTYPE, callee.TYPE)
+    if (notOk(out)) {
+      return out
+    }
+
+    return Ok({
+      estree: e('call', callee.estree, args, ctx.toLoc(node.loc)),
+      TYPE: {
+        loc: node.ast.callee.loc,
+        typ: callee.TYPE.typ.body.typ
+      }
+    })
+  },
+  'CallFn': function (node, comp, ctx, fromCaller) {
+    var out = compAstNode.ApplyFn(node, comp, ctx, fromCaller)
+    if (notOk(out)) {
+      return out
+    }
+    return Ok({
+      estree: e(';', out.value.estree, ctx.toLoc(node.loc))
     })
   },
   'Import': function (node, comp, ctx, fromCaller) {

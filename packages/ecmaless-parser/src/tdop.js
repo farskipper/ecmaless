@@ -193,6 +193,7 @@ var statement = function (state) {
     return e
   }
   if (e.tree.ast.type === 'ApplyFn') {
+    e.tree.ast.type = 'CallFn'
     return e
   }
   return Error(e.tree.loc, 'Expected a statement')
