@@ -111,6 +111,15 @@ test('type alias', function (t) {
   t.is(tc('def Bar=String ann foo=Bar def foo=1'), 'e:String a:Number|35-36')
 })
 
+test('tagged unions', function (t) {
+  t.is(tc('type Number=A()'), 'Cannot redefine base types|5-11')
+  t.is(tc('def Bar=Number type Bar=A()'), '`Bar` is already defined|20-23')
+
+  t.is(tc('type Bar=A()'), '')
+  t.is(tc('type Bar=A() | A(String)'), 'Duplicate tag `A`|15-16')
+  t.is(tc('type Bar=A() | B(String)'), '')
+})
+
 test('export', function (t) {
   t.is(tc('export(a)'), 'Not defined `a`|7-8')
   t.is(tc('def a=1 export(a)'), "var a=1;return{'a':a};")

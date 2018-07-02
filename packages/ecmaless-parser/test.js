@@ -387,12 +387,12 @@ test('statements', function (t) {
   ])
   tst('type Foo = Bar(String)', [
     ast.TypeUnion(T('Foo'), [
-      ast.TypeVariant(T('Bar'), [S('String')])
+      ast.TypeVariant(T('Bar'), [T('String')])
     ])
   ])
   tst('type Foo = Bar(String, Number)', [
     ast.TypeUnion(T('Foo'), [
-      ast.TypeVariant(T('Bar'), [S('String'), T('Number')])
+      ast.TypeVariant(T('Bar'), [T('String'), T('Number')])
     ])
   ])
 
@@ -496,6 +496,7 @@ test('type expression', function (t) {
   tst('Fn()Number', ast.TypeFunction([], T('Number')))
   tst('Fn(Number, String) Fn(Number)Number', ast.TypeFunction([T('Number'), T('String')], ast.TypeFunction([T('Number')], T('Number'))))
 })
+
 test('import', function (t) {
   t.is(parseErr('import'), 'Expected a path string literal|6-6')
   t.is(parseErr('import a'), 'Expected a path string literal|7-8')

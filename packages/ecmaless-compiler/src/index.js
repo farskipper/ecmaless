@@ -39,16 +39,16 @@ var assertT = function (actual, expected) {
   if (aTag === 'Struct') {
     var aclKeys = Object.keys(actual.typ.byKey).sort()
     var expKeys = Object.keys(expected.typ.byKey).sort()
-    if (aclKeys.join(',') != expKeys.join(',')) {
+    if (aclKeys.join(',') !== expKeys.join(',')) {
       return Error(actual.loc, 'expected {' + expKeys.join(',') + '} but was {' + aclKeys.join(',') + '}')
     }
-    var i = 0
-    while (i < aclKeys.length) {
-      var key = aclKeys[i]
-      i++
-      var out = assertT(actual.typ.byKey[key], expected.typ.byKey[key])
-      if (notOk(out)) {
-        return out
+    var j = 0
+    while (j < aclKeys.length) {
+      var key = aclKeys[j]
+      j++
+      var tmp = assertT(actual.typ.byKey[key], expected.typ.byKey[key])
+      if (notOk(tmp)) {
+        return tmp
       }
     }
   }
@@ -207,9 +207,9 @@ var compAstNode = {
           }
         })
       case '++':
-        var out = assertLR('String')
-        if (notOk(out)) {
-          return out
+        var tmp = assertLR('String')
+        if (notOk(tmp)) {
+          return tmp
         }
         return Ok({
           estree: e('+', left.estree, right.estree, ctx.toLoc(node.loc)),
@@ -447,6 +447,55 @@ var compAstNode = {
         typ: TYPE.typ
       }
     })
+  },
+  'TypeUnion': function (node, comp, ctx, fromCaller) {
+    var id = node.ast.id.ast.value
+
+    if (ctx.scope.has(id)) {
+      return Error(node.ast.id.loc, '`' + id + '` is already defined')
+    }
+    if (baseTypes[id]) {
+      return Error(node.ast.id.loc, 'Cannot redefine base types')
+    }
+
+    var TYPE = {
+      loc: node.ast.id.loc,
+      typ: {
+        tag: 'Union',
+        variants: {}
+      }
+    }
+
+    var i = 0
+    while (i < node.ast.variants.length) {
+      var variant = node.ast.variants[i]
+      i++
+      var tag = variant.ast.tag.ast.value
+      if (TYPE.typ.variants.hasOwnProperty(tag)) {
+        return Error(variant.ast.tag.loc, 'Duplicate tag `' + tag + '`')
+      }
+
+      var args = []
+      var j = 0
+      while (j < variant.ast.args.length) {
+        var arg = variant.ast.args[j]
+        j++
+        arg = comp(arg)
+        if (notOk(arg)) {
+          return arg
+        }
+        arg = arg.value
+        args.push(arg.TYPE)
+      }
+      TYPE.typ.variants[tag] = args
+    }
+
+    ctx.scope.set(id, {
+      TYPE: TYPE,
+      defLoc: node.loc
+    })
+
+    return Ok({})
   },
   'Import': function (node, comp, ctx, fromCaller) {
     if (!fromCaller.isRootLevel) {

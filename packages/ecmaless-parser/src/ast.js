@@ -172,9 +172,10 @@ module.exports = {
       init: init
     }
   },
-  TypeUnion: function (variants) {
+  TypeUnion: function (id, variants) {
     return {
       type: 'TypeUnion',
+      id: id,
       variants: variants
     }
   },
