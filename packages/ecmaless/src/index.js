@@ -73,12 +73,7 @@ module.exports = function (conf, callback) {
     try {
       _.each(pathsToComp, function (path, modIndex) {
         if (/\.js$/i.test(path)) {
-          modules[path] = {
-            commonjs: {
-              path: path,
-              value: require(path)
-            }
-          }
+          modules[path] = {isJs: true}
 
           body.push(e('var',
             '$mod$' + modIndex,
@@ -92,13 +87,27 @@ module.exports = function (conf, callback) {
         var src = moduleSrc[path]
         var ast = moduleAst[path]
 
+        var myModules = {}
+        var nextModuleId = (function () {
+          var i = 0
+          return function () {
+            return '$' + i++
+          }
+        }())
+
         var c = compiler(ast, {
-          toLoc: _.noop, // TODO use src + path
+          toLoc: function () { _.noop(src, path) }, // TODO use src + path
           requireModule: function (path) {
             // TODO resolve relative to curr path
             path = normalizePath(base, path)
 
-            return modules[path]
+            var moduleId = nextModuleId()
+            myModules[moduleId] = path
+
+            return {
+              id: moduleId,
+              module: modules[path]
+            }
           }
         })
         if (c.type !== 'Ok') {
@@ -109,13 +118,13 @@ module.exports = function (conf, callback) {
         modules[path] = c
 
         var args = []
-        _.each(c.modules, function (path) {
-          // TODO resolve relative to curr path
-          path = normalizePath(base, path)
+        var params = []
+        _.each(myModules, function (path, moduleId) {
           var i = _.indexOf(pathsToComp, path)
           args.push(e('id', '$mod$' + i))
+          params.push(moduleId)
         })
-        body.push(e('var', '$mod$' + modIndex, e('call', c.estree, args)))
+        body.push(e('var', '$mod$' + modIndex, e('call', e('function', params, c.estree), args)))
       })
     } catch (e) {
       callback(e)

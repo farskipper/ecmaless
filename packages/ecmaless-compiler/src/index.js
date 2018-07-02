@@ -178,7 +178,7 @@ var compAstNode = {
           }
         })
       default:
-        return Error(node.loc, '`' + id + '` is not a defined Type')
+        return Error(node.loc, '`' + id + '` is not a defined type')
     }
   },
   'TypeFunction': function (node, comp, ctx) {
@@ -252,6 +252,102 @@ var compAstNode = {
       }
     })
   },
+  'Import': function (node, comp, ctx, fromCaller) {
+    if (!fromCaller.isRootLevel) {
+      return Error(node.loc, 'Imports only work at the root level')
+    }
+    var m = ctx.requireModule(node.ast.path, node.loc)
+    if (notOk(m)) {
+      return m
+    }
+    m = m.value
+    var modId = m.id
+    var isJs = m.module.isJs
+    var exported = isJs ? null : m.module.TYPE.typ.byKey
+
+    var estree = []
+
+    var keysToImport = []
+    var parts = {}
+
+    if (node.ast.parts) {
+      _.each(node.ast.parts, function (part) {
+        var key = part.ast.value.ast.value
+        parts[key] = part
+        keysToImport.push(key)
+      })
+    } else {
+      if (isJs) {
+        return Error(node.loc, 'Can\'t use * on js imports')
+      }
+      keysToImport = Object.keys(exported)
+    }
+
+    var i = 0
+    while (i < keysToImport.length) {
+      var key = keysToImport[i]
+      var part = parts[key]
+      i++
+
+      var as = key
+      var TYPE
+
+      var def_loc = node.loc
+      var ann_loc = node.loc
+      if (part) {
+        def_loc = part.ast.value.loc
+        ann_loc = part.ast.value.loc
+
+        if (part.ast.as) {
+          as = part.ast.as.ast.value
+          def_loc = part.ast.as.loc
+          ann_loc = part.ast.as.loc
+        }
+
+        if (part.ast.is && !isJs) {
+          return Error(part.ast.is.loc, '`is` only works for js imports')
+        }
+        if (part.ast.is) {
+          ann_loc = part.ast.is.loc
+        }
+      }
+
+      if (isJs) {
+        if (!part.ast.is) {
+          return Error(part.loc, 'Must annotate js imports using `is`')
+        }
+        var is = comp(part.ast.is)
+        if (notOk(is)) {
+          return is
+        }
+        TYPE = is.value.TYPE
+      } else {
+        TYPE = exported[key]
+        if (!TYPE) {
+          return Error(part.loc, node.ast.path + ' does not export `' + key + '`')
+        }
+      }
+
+      if (ctx.scope.has(as)) {
+        return Error(def_loc, '`' + as + '` is already defined, use `as` to rename')
+      }
+      ctx.scope.set(as, {
+        TYPE: TYPE,
+        def_loc: def_loc,
+        ann_loc: ann_loc
+      })
+
+      var isType = /^[A-Z]/.test(key)
+      if (isType) {
+        // nothing
+      } else {
+        estree.push(e('var', as, e('get', e('id', modId), e('str', key))))
+      }
+    }
+    return Ok({
+      estree: estree
+    })
+  },
   'Export': function (node, comp, ctx, fromCaller) {
     if (!fromCaller.isRootLevel || !fromCaller.isLastNode) {
       return Error(node.loc, 'Export only works as the last statement in a file')
@@ -290,6 +386,7 @@ module.exports = function (ast, conf) {
 
   var ctx = {
     scope: SymbolTableStack(),
+    requireModule: conf.requireModule,
     toLoc: toLoc
   }
 
@@ -303,7 +400,6 @@ module.exports = function (ast, conf) {
 
   var estree = []
   var TYPE// the `export` type (the return value of the estree function)
-  var modules = {}
 
   var i = 0
   while (i < ast.ast.length) {
@@ -317,7 +413,9 @@ module.exports = function (ast, conf) {
     if (notOk(out)) {
       return out
     }
-    if (out.value.estree) {
+    if (Array.isArray(out.value.estree)) {
+      estree = estree.concat(out.value.estree)
+    } else if (out.value.estree) {
       estree.push(out.value.estree)
     }
     if (isExport) {
@@ -328,9 +426,12 @@ module.exports = function (ast, conf) {
   return {
     type: 'Ok',
     value: {
-      estree: e('function', _.keys(modules), estree, ast.loc),
-      TYPE: TYPE,
-      modules: modules
+      estree: {
+        loc: toLoc(ast.loc),
+        type: 'Program',
+        body: estree
+      },
+      TYPE: TYPE
     }
   }
 }
