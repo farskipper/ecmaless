@@ -145,18 +145,18 @@ test('expression', function (t) {
 
   t.is(pe('case'), 'Expected an expression|4-4')
   t.is(pe('case foo'), 'Expected `when` or `else`|8-8')
-  t.is(pe('case foo when'), 'Expected a type expression|13-13')
-  t.is(pe('case foo when Foo()'), 'Expected an expression|19-19')
-  t.deepEqual(pe('case foo when Foo() bar'), ast.CaseExpression(S('foo'), [
-    ast.CaseWhenExpression(ast.TypeVariant(T('Foo'), []), S('bar'))
+  t.is(pe('case foo when'), 'Expected an expression|13-13')
+  t.is(pe('case foo when #foo'), 'Expected an expression|18-18')
+  t.deepEqual(pe('case foo when #foo bar'), ast.CaseExpression(S('foo'), [
+    ast.CaseWhenExpression(ast.Tag('foo'), S('bar'))
   ]))
-  t.is(pe('case foo when Foo() bar else'), 'Expected an expression|28-28')
-  t.deepEqual(pe('case foo when Foo() bar else baz'), ast.CaseExpression(S('foo'), [
-    ast.CaseWhenExpression(ast.TypeVariant(T('Foo'), []), S('bar'))
+  t.is(pe('case foo when #foo bar else'), 'Expected an expression|27-27')
+  t.deepEqual(pe('case foo when #foo bar else baz'), ast.CaseExpression(S('foo'), [
+    ast.CaseWhenExpression(ast.Tag('foo'), S('bar'))
   ], S('baz')))
-  t.deepEqual(pe('case foo when Foo() bar when Baz() qux'), ast.CaseExpression(S('foo'), [
-    ast.CaseWhenExpression(ast.TypeVariant(T('Foo'), []), S('bar')),
-    ast.CaseWhenExpression(ast.TypeVariant(T('Baz'), []), S('qux'))
+  t.deepEqual(pe('case foo when #foo bar when #baz qux'), ast.CaseExpression(S('foo'), [
+    ast.CaseWhenExpression(ast.Tag('foo'), S('bar')),
+    ast.CaseWhenExpression(ast.Tag('baz'), S('qux'))
   ]))
 })
 
@@ -336,43 +336,6 @@ test('statements', function (t) {
   t.is(p('def Foo ='), 'Expected a type expression|9-9')
   t.deepEqual(p('def Foo = Bar'), [ast.Define(T('Foo'), T('Bar'))])
 
-  t.is(p('type'), 'Expected a type|4-4')
-  t.is(p('type A'), 'Expected `=`|6-6')
-  t.is(p('type A='), 'Expected a type expression|7-7')
-  t.is(p('type A=B'), 'Expected a type variant|7-8')
-  t.is(p('type A=B('), 'Expected a type expression|9-9')
-  t.is(p('type A=B(C'), 'Expected `,` or `)`|10-10')
-  t.deepEqual(p('type Foo = Bar()'), [
-    ast.TypeUnion(T('Foo'), [
-      ast.TypeVariant(T('Bar'), [])
-    ])
-  ])
-  t.deepEqual(p('type Foo = Bar(String)'), [
-    ast.TypeUnion(T('Foo'), [
-      ast.TypeVariant(T('Bar'), [T('String')])
-    ])
-  ])
-  t.deepEqual(p('type Foo = Bar(String, Number)'), [
-    ast.TypeUnion(T('Foo'), [
-      ast.TypeVariant(T('Bar'), [T('String'), T('Number')])
-    ])
-  ])
-
-  t.deepEqual(p('type A = B() | C()'), [
-    ast.TypeUnion(T('A'), [
-      ast.TypeVariant(T('B'), []),
-      ast.TypeVariant(T('C'), [])
-    ])
-  ])
-
-  t.deepEqual(p('type A = B() | C() | D()'), [
-    ast.TypeUnion(T('A'), [
-      ast.TypeVariant(T('B'), []),
-      ast.TypeVariant(T('C'), []),
-      ast.TypeVariant(T('D'), [])
-    ])
-  ])
-
   t.is(p('def A = {'), 'Expected a symbol|9-9')
   t.deepEqual(p('def A = {}'), [
     ast.Define(T('A'), ast.TypeStruct([]))
@@ -394,33 +357,33 @@ test('statements', function (t) {
   t.is(p('case'), 'Expected an expression|4-4')
   t.is(p('case foo'), 'Expected `do`|8-8')
   t.is(p('case foo do'), 'Expected `when` or `else`|11-11')
-  t.is(p('case foo do when'), 'Expected a type expression|16-16')
-  t.is(p('case foo do when Bar()'), 'Expected `when`, `else` or `end`|22-22')
-  t.deepEqual(p('case foo do when Bar() end'), [
+  t.is(p('case foo do when'), 'Expected an expression|16-16')
+  t.is(p('case foo do when #bar'), 'Expected `when`, `else` or `end`|21-21')
+  t.deepEqual(p('case foo do when #bar end'), [
     ast.CaseStatement(S('foo'), [
-      ast.CaseWhenStatement(ast.TypeVariant(T('Bar'), []), [])
+      ast.CaseWhenStatement(ast.Tag('bar'), [])
     ])
   ])
-  t.is(p('case foo do when Bar() baz end'), 'Expected a statement|23-26')
-  t.deepEqual(p('case foo do when Bar() baz() end'), [
+  t.is(p('case foo do when #bar baz end'), 'Expected a statement|22-25')
+  t.deepEqual(p('case foo do when #bar baz() end'), [
     ast.CaseStatement(S('foo'), [
-      ast.CaseWhenStatement(ast.TypeVariant(T('Bar'), []), [
+      ast.CaseWhenStatement(ast.Tag('bar'), [
         ast.CallFn(S('baz'), [])
       ])
     ])
   ])
-  t.deepEqual(p('case foo do when Bar() baz() when Qux() end'), [
+  t.deepEqual(p('case foo do when #bar baz() when #qux end'), [
     ast.CaseStatement(S('foo'), [
-      ast.CaseWhenStatement(ast.TypeVariant(T('Bar'), []), [
+      ast.CaseWhenStatement(ast.Tag('bar'), [
         ast.CallFn(S('baz'), [])
       ]),
-      ast.CaseWhenStatement(ast.TypeVariant(T('Qux'), []), [])
+      ast.CaseWhenStatement(ast.Tag('qux'), [])
     ])
   ])
-  t.is(p('case foo do when Bar() baz() else qux() when Foo() end'), 'Expected `end`|40-44')
-  t.deepEqual(p('case foo do when Bar() baz() else qux() end'), [
+  t.is(p('case foo do when #bar baz() else qux() when Foo() end'), 'Expected `end`|39-43')
+  t.deepEqual(p('case foo do when #bar baz() else qux() end'), [
     ast.CaseStatement(S('foo'), [
-      ast.CaseWhenStatement(ast.TypeVariant(T('Bar'), []), [
+      ast.CaseWhenStatement(ast.Tag('bar'), [
         ast.CallFn(S('baz'), [])
       ])
     ], [
@@ -500,4 +463,33 @@ test('export', function (t) {
 
   t.deepEqual(p('export (foo)'), [ast.Export([S('foo')])])
   t.deepEqual(p('export (foo, Bar, baz, Qux)'), [ast.Export([S('foo'), T('Bar'), S('baz'), T('Qux')])])
+})
+
+test('tagged unionts / type variants', function (t) {
+  t.is = t.deepEqual
+
+  t.is(p('type'), 'Expected a type|4-4')
+  t.is(p('type A'), 'Expected `=`|6-6')
+  t.is(p('type A='), 'Expected a type expression|7-7')
+  t.is(p('type A=B'), 'Expected a tag|7-8')
+  t.is(p('type A=#b'), [
+    ast.TypeUnion(T('A'), [
+      ast.TypeTag('b')
+    ])
+  ])
+  t.is(p('type A=#b('), 'Expected a type expression|10-10')
+  t.is(p('type A=#b(C'), 'Expected `,` or `)`|11-11')
+  t.is(p('type A=#b(C)'), [
+    ast.TypeUnion(T('A'), [
+      ast.TypeTag('b', [T('C')])
+    ])
+  ])
+
+  t.is(pte('#b'), ast.TypeTag('b'))
+
+  t.is(pte('B(C)'), 'In type expressions, `(` only works after tags|1-2')
+
+  t.is(pe('#b'), ast.Tag('b'))
+  t.is(pe('#b(c)'), ast.Tag('b', [S('c')]))
+  t.is(pe('#b(1, d)'), ast.Tag('b', [ast.Number(1), S('d')]))
 })

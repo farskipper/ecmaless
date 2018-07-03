@@ -399,6 +399,15 @@ defRule('TYPE', {
   }
 })
 
+defRule('TAG', {
+  nud: function (state, token) {
+    return Ok(token.loc, ast.Tag(token.src.substring(1)))
+  },
+  type_nud: function (state, token) {
+    return Ok(token.loc, ast.TypeTag(token.src.substring(1)))
+  }
+})
+
 infix('and', 30)
 infix('or', 30)
 infix('xor', 30)
@@ -464,6 +473,9 @@ defRule('(', {
       return Error(state.curr.token.loc, 'Expected `)`')
     }
     advance(state)
+    if (left.ast.type === 'Tag') {
+      return Ok(left.loc, ast.Tag(left.ast.tag, args))
+    }
     return Ok(token.loc, ast.ApplyFn(left, args))
   }
 })
@@ -628,7 +640,7 @@ defRule('case', {
     while (true) {
       if (state.curr.rule.id === 'when') {
         advance(state)
-        var test = typeExpression(state, 0)
+        var test = expression(state, 0)
         if (notOk(test)) {
           return test
         }
@@ -674,7 +686,7 @@ defRule('case', {
     while (true) {
       if (state.curr.rule.id === 'when') {
         advance(state)
-        var test = typeExpression(state, 0)
+        var test = expression(state, 0)
         if (notOk(test)) {
           return test
         }
@@ -808,13 +820,13 @@ stmt('type', function (state) {
   var variants = []
 
   while (true) {
-    var variant = typeExpression(state, 10)
+    var variant = typeExpression(state, 0)
     if (notOk(variant)) {
       return variant
     }
     variant = variant.tree
-    if (variant.ast.type !== 'TypeVariant') {
-      return Error(variant.loc, 'Expected a type variant')
+    if (variant.ast.type !== 'TypeTag') {
+      return Error(variant.loc, 'Expected a tag')
     }
     variants.push(variant)
     if (state.curr.rule.id !== '|') {
@@ -829,6 +841,9 @@ stmt('type', function (state) {
 defRule('(', {
   type_lbp: 80,
   type_led: function (state, token, left) {
+    if (left.ast.type !== 'TypeTag') {
+      return Error(token.loc, 'In type expressions, `(` only works after tags')
+    }
     var args = []
     if (state.curr.rule.id !== ')') {
       while (true) {
@@ -847,7 +862,7 @@ defRule('(', {
       return Error(state.curr.token.loc, 'Expected `,` or `)`')
     }
     advance(state)
-    return Ok(token.loc, ast.TypeVariant(left, args))
+    return Ok(left.loc, ast.TypeTag(left.ast.tag, args))
   }
 })
 

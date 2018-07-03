@@ -202,6 +202,28 @@ module.exports = function (src) {
       }
 
       /// /////////////////////////////////////////////////////////////////////
+      // tag
+    } else if (c === '#') {
+      buff = ''
+      while (i < src.length) {
+        c = src[i]
+        buff += c
+        if (!/^[a-zA-Z0-9_]$/.test(src[i + 1])) {
+          break
+        }
+        i += 1
+      }
+      if (buff === '#') {
+        return {
+          type: 'EmptyTag',
+          message: 'Tag is not named "' + buff + '"',
+          src: buff,
+          loc: {start: i, end: i + buff.length}
+        }
+      }
+      pushTok('TAG')
+
+      /// /////////////////////////////////////////////////////////////////////
       // symbol
     } else if (/^[a-zA-Z_]$/.test(c)) {
       buff = ''

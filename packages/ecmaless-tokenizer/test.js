@@ -96,6 +96,17 @@ test('tokenizer', function (t) {
   tstTok('TYPE', 'Foo_bar')
   tstTok('TYPE', 'A1')
 
+  tstErr('#',
+    'EmptyTag',
+    'Tag is not named "#"',
+    '#',
+    {start: 0, end: 1}
+  )
+  tstTok('TAG', '#a')
+  tstTok('TAG', '#4')
+  tstTok('TAG', '#_hi_')
+  tstTok('TAG', '#just')
+
   tstTok('COMMENT', '; some comment')
 
   tstTok('RAW', '{')
@@ -129,6 +140,15 @@ test('tokenizer', function (t) {
     'NUMBER |0.1',
     'SPACES | ',
     'NUMBER |1.0'
+  ])
+
+  tst('one#two(3,#4', [
+    'SYMBOL |one',
+    'TAG    |#two',
+    'RAW    |(',
+    'NUMBER |3',
+    'RAW    |,',
+    'TAG    |#4'
   ])
 
   tst('({[]})', [

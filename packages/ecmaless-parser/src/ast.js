@@ -179,9 +179,16 @@ module.exports = {
       variants: variants
     }
   },
-  TypeVariant: function (tag, args) {
+  TypeTag: function (tag, params) {
     return {
-      type: 'TypeVariant',
+      type: 'TypeTag',
+      tag: tag,
+      params: params
+    }
+  },
+  Tag: function (tag, args) {
+    return {
+      type: 'Tag',
       tag: tag,
       args: args
     }
