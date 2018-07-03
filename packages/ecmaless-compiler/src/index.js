@@ -18,6 +18,26 @@ var typeToString = function (TYPE) {
 
 var assertT = function (actual, expected) {
   var aTag = actual.typ.tag
+  if (aTag === 'Tag' && expected.typ.tag === 'Union') {
+    if (!expected.typ.variants.hasOwnProperty(actual.typ.tag_)) {
+      return Error(actual.loc, '#' + actual.typ.tag_ + ' is not a variant of #' + Object.keys(expected.typ.variants).join(',#'))
+    }
+    var expVariantParams = expected.typ.variants[actual.typ.tag_]
+    if (actual.typ.params.length !== expVariantParams.length) {
+      return Error(actual.loc, 'expected ' + expVariantParams.length + ' arguments but was ' + actual.typ.params.length)
+    }
+    var k = 0
+    while (k < actual.typ.params.length) {
+      var aclVParam = actual.typ.params[k]
+      var expVParam = expVariantParams[k]
+      k++
+      var out = assertT(aclVParam, expVParam)
+      if (notOk(out)) {
+        return out
+      }
+    }
+    return Ok()
+  }
   if (aTag !== expected.typ.tag) {
     return Error(actual.loc, 'expected `' + typeToString(expected) + '` but was `' + typeToString(actual) + '`')
   }
@@ -71,6 +91,36 @@ var compAstNode = {
       TYPE: {
         loc: node.loc,
         typ: {tag: 'String', value: node.ast.value}
+      }
+    })
+  },
+  'Tag': function (node, comp, ctx, fromCaller) {
+    var arr = []
+    arr.push(e('string', node.ast.tag, ctx.toLoc(node.loc)))
+
+    var params = []
+    var i = 0
+    while (i < (node.ast.args || []).length) {
+      var arg = comp(node.ast.args[i])
+      i++
+      if (notOk(arg)) {
+        return arg
+      }
+      arg = arg.value
+
+      arr.push(arg.estree)
+      params.push(arg.TYPE)
+    }
+
+    return Ok({
+      estree: e('array', arr, ctx.toLoc(node.loc)),
+      TYPE: {
+        loc: node.loc,
+        typ: {
+          tag: 'Tag',
+          tag_: node.ast.tag,
+          params: params
+        }
       }
     })
   },
@@ -470,24 +520,24 @@ var compAstNode = {
     while (i < node.ast.variants.length) {
       var variant = node.ast.variants[i]
       i++
-      var tag = variant.ast.tag.ast.value
+      var tag = variant.ast.tag
       if (TYPE.typ.variants.hasOwnProperty(tag)) {
-        return Error(variant.ast.tag.loc, 'Duplicate tag `' + tag + '`')
+        return Error(variant.loc, 'Duplicate tag `' + tag + '`')
       }
 
-      var args = []
+      var params = []
       var j = 0
-      while (j < variant.ast.args.length) {
-        var arg = variant.ast.args[j]
+      while (j < (variant.ast.params || []).length) {
+        var param = variant.ast.params[j]
         j++
-        arg = comp(arg)
-        if (notOk(arg)) {
-          return arg
+        param = comp(param)
+        if (notOk(param)) {
+          return param
         }
-        arg = arg.value
-        args.push(arg.TYPE)
+        param = param.value
+        params.push(param.TYPE)
       }
-      TYPE.typ.variants[tag] = args
+      TYPE.typ.variants[tag] = params
     }
 
     ctx.scope.set(id, {

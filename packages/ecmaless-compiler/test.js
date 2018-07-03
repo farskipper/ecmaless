@@ -112,12 +112,24 @@ test('type alias', function (t) {
 })
 
 test('tagged unions', function (t) {
-  t.is(tc('type Number=A()'), 'Cannot redefine base types|5-11')
-  t.is(tc('def Bar=Number type Bar=A()'), '`Bar` is already defined|20-23')
+  t.is(tc('type Number=#a'), 'Cannot redefine base types|5-11')
+  t.is(tc('def Bar=Number type Bar=#a'), '`Bar` is already defined|20-23')
 
-  t.is(tc('type Bar=A()'), '')
-  t.is(tc('type Bar=A() | A(String)'), 'Duplicate tag `A`|15-16')
-  t.is(tc('type Bar=A() | B(String)'), '')
+  t.is(tc('type Bar=#a'), '')
+  t.is(tc('type Bar=#a | #a'), 'Duplicate tag `a`|14-16')
+  t.is(tc('type Bar=#a | #a(String)'), 'Duplicate tag `a`|14-16')
+  t.is(tc('type Bar=#a | #b'), '')
+  t.is(tc('type Bar=#a | #b(String)'), '')
+
+  t.is(tc('def bar=#a'), "var bar=['a'];")
+  t.is(tc('def bar=#a(1,"hi")'), "var bar=['a',1,'hi'];")
+
+  t.is(tc('ann bar=String def bar=#a'), 'e:String a:Tag|23-25')
+  t.is(tc('type Bar=#b|#c ann bar=Bar def bar=#a'), '#a is not a variant of #b,#c|35-37')
+  t.is(tc('type Bar=#a|#b ann bar=Bar def bar=#a'), "var bar=['a'];")
+  t.is(tc('type Bar=#a(String)|#b ann bar=Bar def bar=#a'), 'expected 1 arguments but was 0|43-45')
+  t.is(tc('type Bar=#a(String)|#b ann bar=Bar def bar=#a(1)'), 'e:String a:Number|46-47')
+  t.is(tc('type Bar=#a(String)|#b ann bar=Bar def bar=#a("hi")'), "var bar=['a','hi'];")
 })
 
 test('export', function (t) {
