@@ -18,26 +18,6 @@ var typeToString = function (TYPE) {
 
 var assertT = function (actual, expected) {
   var aTag = actual.typ.tag
-  if (aTag === 'Tag' && expected.typ.tag === 'Union') {
-    if (!expected.typ.variants.hasOwnProperty(actual.typ.tag_)) {
-      return Error(actual.loc, '#' + actual.typ.tag_ + ' is not a variant of #' + Object.keys(expected.typ.variants).join(',#'))
-    }
-    var expVariantParams = expected.typ.variants[actual.typ.tag_]
-    if (actual.typ.params.length !== expVariantParams.length) {
-      return Error(actual.loc, 'expected ' + expVariantParams.length + ' arguments but was ' + actual.typ.params.length)
-    }
-    var k = 0
-    while (k < actual.typ.params.length) {
-      var aclVParam = actual.typ.params[k]
-      var expVParam = expVariantParams[k]
-      k++
-      var out = assertT(aclVParam, expVParam)
-      if (notOk(out)) {
-        return out
-      }
-    }
-    return Ok()
-  }
   if (aTag !== expected.typ.tag) {
     return Error(actual.loc, 'expected `' + typeToString(expected) + '` but was `' + typeToString(actual) + '`')
   }
@@ -72,6 +52,34 @@ var assertT = function (actual, expected) {
       }
     }
   }
+  if (aTag === 'Union') {
+    var aclVariants = Object.keys(actual.typ.variants).sort()
+    var expVariants = Object.keys(expected.typ.variants).sort()
+    var k = 0
+    while (k < aclVariants.length) {
+      var aclV = aclVariants[k]
+      k++
+      if (!expected.typ.variants.hasOwnProperty(aclV)) {
+        return Error(actual.loc, '#' + aclV + ' is not one of #' + expVariants.join('|#'))
+      }
+      var aclVParams = actual.typ.variants[aclV]
+      var expVParams = expected.typ.variants[aclV]
+      if (aclVParams.length !== expVParams.length) {
+        return Error(actual.loc, 'expected ' + expVParams.length + ' arguments but was ' + aclVParams.length)
+      }
+      var l = 0
+      while (l < aclVParams.length) {
+        var aclVParam = aclVParams[l]
+        var expVParam = expVParams[l]
+        l++
+        var out = assertT(aclVParam, expVParam)
+        if (notOk(out)) {
+          return out
+        }
+      }
+    }
+    return Ok()
+  }
   return Ok()
 }
 
@@ -95,6 +103,8 @@ var compAstNode = {
     })
   },
   'Tag': function (node, comp, ctx, fromCaller) {
+    var expTYPE = fromCaller && fromCaller.expTYPE
+
     var arr = []
     arr.push(e('string', node.ast.tag, ctx.toLoc(node.loc)))
 
@@ -112,14 +122,20 @@ var compAstNode = {
       params.push(arg.TYPE)
     }
 
+    var variants = {}
+    variants[node.ast.tag] = params
+
+    if (expTYPE && expTYPE.typ.tag === 'Union') {
+      variants = Object.assign({}, expTYPE.typ.variants, variants)
+    }
+
     return Ok({
       estree: e('array', arr, ctx.toLoc(node.loc)),
       TYPE: {
         loc: node.loc,
         typ: {
-          tag: 'Tag',
-          tag_: node.ast.tag,
-          params: params
+          tag: 'Union',
+          variants: variants
         }
       }
     })
@@ -547,6 +563,104 @@ var compAstNode = {
 
     return Ok({})
   },
+  'CaseExpression': function (node, comp, ctx, fromCaller) {
+    var disc = comp(node.ast.discriminant)
+    if (notOk(disc)) {
+      return disc
+    }
+    disc = disc.value
+
+    if (disc.TYPE.typ.tag !== 'Union') {
+      return Error(disc.TYPE.loc, 'case only works with tagged unions')
+    }
+    if (node.ast.else) {
+      return Error(node.ast.else.loc, 'case..else is not yet supported')
+    }
+
+    var discId = ctx.nextId()
+    var body = []
+    var TYPE = fromCaller && fromCaller.expTYPE// or based on the first branch
+
+    var tags = []
+    var i = 0
+    while (i < node.ast.whens.length) {
+      var when = node.ast.whens[i]
+      i++
+      if (when.ast.test.ast.type !== 'Tag') {
+        return Error(when.ast.test.loc, 'when only works with tags')
+      }
+      var tag = when.ast.test.ast.tag
+      tags.push(tag)
+      if (!disc.TYPE.typ.variants.hasOwnProperty(tag)) {
+        return Error(when.ast.test.loc, '#' + tag + ' is not in #' + Object.keys(disc.TYPE.typ.variants).join(',#'))
+      }
+      var variantParams = disc.TYPE.typ.variants[tag]
+      var tagArgs = when.ast.test.ast.args || []
+      if (variantParams.length !== tagArgs.length) {
+        return Error(when.ast.test.loc, '#' + tag + ' should have ' + variantParams.length + ' args not ' + tagArgs.length)
+      }
+
+      ctx.scope.push()
+
+      body.push(e('case', e('string', tag, ctx.toLoc(when.ast.test.loc))))
+
+      var params = []
+      var j = 0
+      while (j < tagArgs.length) {
+        var tagArg = tagArgs[j]
+        var paramTYPE = variantParams[j]
+        j++
+        if (tagArg.ast.type !== 'Symbol') {
+          return Error(tagArg.loc, 'expected a symbol to bind to')
+        }
+        ctx.scope.set(tagArg.ast.value, {TYPE: paramTYPE})
+        var arg = comp(tagArg)
+        if (notOk(arg)) {
+          return arg
+        }
+        params.push(arg.value.estree)
+
+        body.push(e('var', arg.value.estree, e('get', e('id', discId, ctx.toLoc(tagArg.loc)), e('number', j, ctx.toLoc(tagArg.loc)), ctx.toLoc(tagArg.loc)), ctx.toLoc(tagArg.loc)))
+      }
+      var then = comp(when.ast.then)
+      if (notOk(then)) {
+        return then
+      }
+      if (!TYPE) {
+        TYPE = then.value.TYPE
+      }
+      var out = assertT(then.value.TYPE, TYPE)
+      if (notOk(out)) {
+        return out
+      }
+      body.push(e('return', then.value.estree, ctx.toLoc(when.ast.then.loc)))
+      ctx.scope.pop()
+    }
+
+    var missingWhens = Object.keys(disc.TYPE.typ.variants).filter(function (key) {
+      return tags.indexOf(key) < 0
+    })
+    if (missingWhens.length > 0) {
+      return Error(node.loc, 'missing `when #' + missingWhens.join('..`,`when #') + '..`')
+    }
+
+    var cpLoc = function () {
+      return ctx.toLoc(node.ast.discriminant.loc)
+    }
+
+    return Ok({
+      estree: e('call', e('function', [
+        e('id', discId, cpLoc())
+      ], [
+        e('switch',
+          e('get', e('id', discId, cpLoc()), e('number', 0, cpLoc()), cpLoc()),
+          body,
+          cpLoc()
+        )
+      ], null, cpLoc()), [disc.estree], cpLoc()),
+      TYPE: TYPE
+    })
+  },
   'Import': function (node, comp, ctx, fromCaller) {
     if (!fromCaller.isRootLevel) {
       return Error(node.loc, 'Imports only work at the root level')
@@ -682,6 +796,12 @@ module.exports = function (ast, conf) {
   var ctx = {
     scope: SymbolTableStack(),
     requireModule: conf.requireModule,
+    nextId: (function () {
+      var i = 0
+      return function () {
+        return '$v' + i++
+      }
+    }()),
     toLoc: toLoc
   }
 
