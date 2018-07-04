@@ -29,6 +29,10 @@ var keywords = {
   'ann': true,
   'def': true,
 
+  'true': true,
+  'false': true,
+  'nil': true,
+
   'fn': true,
   'Fn': true,
   'do': true,

@@ -59,6 +59,10 @@ test('expression', function (t) {
   t.deepEqual(pe('"a\\"b"'), ast.String('a"b'))
   t.deepEqual(pe('"a\\\\b"'), ast.String('a\\b'))
 
+  t.deepEqual(pe('nil'), ast.Nil())
+  t.deepEqual(pe('true'), ast.Boolean(true))
+  t.deepEqual(pe('false'), ast.Boolean(false))
+
   t.deepEqual(pe('foo'), ast.Symbol('foo'))
 
   t.deepEqual(pe('a+b'), ast.Infix('+', S('a'), S('b')))

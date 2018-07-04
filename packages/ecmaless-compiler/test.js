@@ -150,6 +150,14 @@ test('case', function (t) {
   t.is(tc('type Bar=#a(String)|#b ann bar=Bar def bar=#a("s") ann out=Number def out = case bar when #a(name) name when #b 2'), 'e:Number a:String|99-103')
 })
 
+test('if', function (t) {
+  t.is(tc('def out=if a then 1 else 2'), 'Not defined `a`|11-12')
+  t.is(tc('def out=if 1 then 1 else 2'), 'must be a Boolean|11-12')
+  t.is(tc('def out=if true then 1 else 2'), 'var out=true?1:2;')
+  t.is(tc('def out=if true then 1 else "s"'), 'e:Number a:String|28-31')
+  t.is(tc('ann out=String def out=if true then 1 else "s"'), 'e:String a:Number|36-37')
+})
+
 test('export', function (t) {
   t.is(tc('export(a)'), 'Not defined `a`|7-8')
   t.is(tc('def a=1 export(a)'), "var a=1;return{'a':a};")

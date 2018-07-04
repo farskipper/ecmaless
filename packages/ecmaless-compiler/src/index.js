@@ -9,7 +9,9 @@ var notOk = okOrError.notOk
 
 var baseTypes = {
   'Number': true,
-  'String': true
+  'String': true,
+  'Boolean': true,
+  'Nil': true
 }
 
 var typeToString = function (TYPE) {
@@ -99,6 +101,24 @@ var compAstNode = {
       TYPE: {
         loc: node.loc,
         typ: {tag: 'String', value: node.ast.value}
+      }
+    })
+  },
+  'Boolean': function (node, comp, ctx) {
+    return Ok({
+      estree: e(node.ast.value ? 'true' : 'false', ctx.toLoc(node.loc)),
+      TYPE: {
+        loc: node.loc,
+        typ: {tag: 'Boolean', value: node.ast.value}
+      }
+    })
+  },
+  'Nil': function (node, comp, ctx) {
+    return Ok({
+      estree: e('nil', ctx.toLoc(node.loc)),
+      TYPE: {
+        loc: node.loc,
+        typ: {tag: 'Nil'}
       }
     })
   },
@@ -658,6 +678,47 @@ var compAstNode = {
           cpLoc()
         )
       ], null, cpLoc()), [disc.estree], cpLoc()),
+      TYPE: TYPE
+    })
+  },
+  'IfExpression': function (node, comp, ctx, fromCaller) {
+    var test = comp(node.ast.test)
+    if (notOk(test)) {
+      return test
+    }
+    test = test.value
+    if (test.TYPE.typ.tag !== 'Boolean') {
+      return Error(node.ast.test.loc, 'must be a Boolean')
+    }
+    var then = comp(node.ast.then)
+    if (notOk(then)) {
+      return then
+    }
+    then = then.value
+    var TYPE = fromCaller && fromCaller.expTYPE// or based on the first branch
+    if (!TYPE) {
+      TYPE = then.TYPE
+    }
+    var out = assertT(then.TYPE, TYPE)
+    if (notOk(out)) {
+      return out
+    }
+    var else_ = comp(node.ast.else)
+    if (notOk(else_)) {
+      return else_
+    }
+    else_ = else_.value
+    out = assertT(else_.TYPE, TYPE)
+    if (notOk(out)) {
+      return out
+    }
+    return Ok({
+      estree: e('?',
+        test.estree,
+        then.estree,
+        else_.estree,
+        ctx.toLoc(node.loc)
+      ),
       TYPE: TYPE
     })
   },

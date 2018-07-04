@@ -5,6 +5,12 @@ module.exports = {
   String: function (value) {
     return {type: 'String', value: value}
   },
+  Nil: function () {
+    return {type: 'Nil'}
+  },
+  Boolean: function (value) {
+    return {type: 'Boolean', value: !!value}
+  },
   Symbol: function (value) {
     return {type: 'Symbol', value: value}
   },

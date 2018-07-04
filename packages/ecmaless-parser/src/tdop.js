@@ -408,6 +408,22 @@ defRule('TAG', {
   }
 })
 
+defRule('nil', {
+  nud: function (state, token) {
+    return Ok(token.loc, ast.Nil())
+  }
+})
+defRule('true', {
+  nud: function (state, token) {
+    return Ok(token.loc, ast.Boolean(true))
+  }
+})
+defRule('false', {
+  nud: function (state, token) {
+    return Ok(token.loc, ast.Boolean(false))
+  }
+})
+
 infix('and', 30)
 infix('or', 30)
 infix('xor', 30)
