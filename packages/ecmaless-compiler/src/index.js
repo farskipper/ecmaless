@@ -641,8 +641,7 @@ var compAstNode = {
 
       ctx.scope.push()
 
-      body.push(e('case', e('string', tag, ctx.toLoc(when.ast.test.loc))))
-
+      var caseBody = []
       var params = []
       var j = 0
       while (j < tagArgs.length) {
@@ -659,7 +658,7 @@ var compAstNode = {
         }
         params.push(arg.value.estree)
 
-        body.push(e('var', arg.value.estree, e('get', e('id', discId, ctx.toLoc(tagArg.loc)), e('number', j, ctx.toLoc(tagArg.loc)), ctx.toLoc(tagArg.loc)), ctx.toLoc(tagArg.loc)))
+        caseBody.push(e('var', arg.value.estree, e('get', e('id', discId, ctx.toLoc(tagArg.loc)), e('number', j, ctx.toLoc(tagArg.loc)), ctx.toLoc(tagArg.loc)), ctx.toLoc(tagArg.loc)))
       }
       var then = comp(when.ast.then)
       if (notOk(then)) {
@@ -672,7 +671,10 @@ var compAstNode = {
       if (notOk(out)) {
         return out
       }
-      body.push(e('return', then.value.estree, ctx.toLoc(when.ast.then.loc)))
+      caseBody.push(e('return', then.value.estree, ctx.toLoc(when.ast.then.loc)))
+
+      body.push(e('case', e('string', tag, ctx.toLoc(when.ast.test.loc)), caseBody))
+
       ctx.scope.pop()
     }
 

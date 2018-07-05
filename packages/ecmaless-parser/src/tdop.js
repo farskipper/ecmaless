@@ -54,7 +54,7 @@ var advance = function (state) {
   }
 
   var rule
-  if (token.type === 'RAW' || token.type === 'KEYWORD') {
+  if (rules[token.src]) {
     rule = rules[token.src]
   } else {
     rule = rules[token.type]
@@ -92,23 +92,21 @@ var expression = function (state, rbp) {
 }
 
 var symbol = function (state) {
-  if (state.curr.rule.id !== 'SYMBOL') {
+  if (state.curr.token.type !== 'SYMBOL') {
     return Error(state.curr.token.loc, 'Expected a symbol')
   }
-  var nud = state.curr.rule.nud
   var token = state.curr.token
   advance(state)
-  return nud(state, token)
+  return rules['SYMBOL'].nud(state, token)
 }
 
 var type = function (state) {
-  if (state.curr.rule.id !== 'TYPE') {
+  if (state.curr.token.type !== 'TYPE') {
     return Error(state.curr.token.loc, 'Expected a type')
   }
-  var typeNud = state.curr.rule.type_nud
   var token = state.curr.token
   advance(state)
-  return typeNud(state, token)
+  return rules['TYPE'].type_nud(state, token)
 }
 
 var typeExpression = function (state, rbp) {

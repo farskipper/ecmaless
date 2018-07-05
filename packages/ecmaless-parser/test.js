@@ -54,6 +54,8 @@ var S = ast.Symbol
 var T = ast.Type
 
 test('expression', function (t) {
+  t.is = t.deepEqual
+
   t.deepEqual(pe('123'), ast.Number(123))
   t.deepEqual(pe('"a"'), ast.String('a'))
   t.deepEqual(pe('"a\\"b"'), ast.String('a"b'))
@@ -140,12 +142,15 @@ test('expression', function (t) {
     ast.StructPair(S('b'), ast.Number(2)),
     ast.StructPair(S('c'), ast.Number(3))
   ]))
-  t.is(pe('{def: 1}'), 'Expected a symbol|1-4')
+  t.is(pe('{def: 1}'), ast.Struct([
+    ast.StructPair(S('def'), ast.Number(1))
+  ]))
 
   t.deepEqual(pe('a.b'), ast.Member(S('a'), S('b')))
   t.deepEqual(pe('a.b.c'), ast.Member(ast.Member(S('a'), S('b')), S('c')))
   t.is(pe('a.'), 'Expected a symbol|2-2')
   t.is(pe('a. 1'), 'Expected a symbol|3-4')// NOTE need the space so it doesn't tokenize the number `.1`
+  t.is(pe('a.def'), ast.Member(S('a'), S('def')))
 
   t.is(pe('case'), 'Expected an expression|4-4')
   t.is(pe('case foo'), 'Expected `when` or `else`|8-8')

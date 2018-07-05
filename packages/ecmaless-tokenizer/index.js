@@ -24,44 +24,6 @@ var rawToks = {
   '|': true
 }
 
-var keywords = {
-  'type': true,
-  'ann': true,
-  'def': true,
-
-  'true': true,
-  'false': true,
-  'nil': true,
-
-  'fn': true,
-  'Fn': true,
-  'do': true,
-  'end': true,
-  'return': true,
-
-  'not': true,
-  'and': true,
-  'or': true,
-  'xor': true,
-
-  'if': true,
-  'then': true,
-  'elseif': true,
-  'else': true,
-
-  'while': true,
-  'break': true,
-  'continue': true,
-
-  'case': true,
-  'when': true,
-
-  'import': true,
-  'is': true,
-  'as': true,
-  'export': true
-}
-
 module.exports = function (src) {
   var tokens = []
 
@@ -240,9 +202,7 @@ module.exports = function (src) {
         i += 1
       }
 
-      if (keywords.hasOwnProperty(buff)) {
-        pushTok('KEYWORD')
-      } else if (/^[A-Z]$/.test(buff[0])) {
+      if (/^[A-Z]$/.test(buff[0])) {
         pushTok('TYPE')
       } else {
         pushTok('SYMBOL')
