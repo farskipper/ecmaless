@@ -5,6 +5,7 @@
   "scripts": {
     "setup": "npm i && lerna bootstrap --hoist",
     "clean": "lerna clean --yes && rm -rf node_modules/ package-lock.json && npm run setup",
+    "out": "lerna clean --yes && lerna exec -- npm i && lerna exec --bail=false -- npm out",
     "publish": "lerna publish",
     "test": "lerna run test"
   },

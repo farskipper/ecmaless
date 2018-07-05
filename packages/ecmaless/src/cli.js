@@ -4,35 +4,83 @@ var main = require('./')
 var path = require('path')
 var btoa = require('btoa')
 var chalk = require('chalk')
-var escodegen = require('escodegen')
-var excerptAtLineCol = require('excerpt-at-line-col')
+var astring = require('astring')
+var EStreeLoc = require('estree-loc')
+var SourceMapGenerator = require('source-map').SourceMapGenerator
 
 var basePath = process.cwd()
 
-var printErr = function (err) {
-  if (err.ecmaless && err.ecmaless.loc && err.ecmaless.loc.source) {
-    fs.readFile(err.ecmaless.loc.source, 'utf-8', function (ferr, src) {
-      if (ferr) {
-        printErr(ferr)
-        return
+var exrpt = function (src, loc) {
+  var around = 3
+
+  var pad = (function () {
+    var padL = ((loc.end.line + around) + '').length
+    return function (n) {
+      return _.padStart(n + '', padL, ' ')
+    }
+  }())
+  var inHl = false
+
+  var out = ''
+  var lines = src.split('\n')
+  var i = Math.max(0, loc.start.line - around - 1)
+  while (i < Math.min(lines.length, loc.end.line + around)) {
+    var lineN = i + 1
+    var line = lines[i]
+    i++
+    out += chalk.gray(pad(lineN) + '|')
+    if (lineN === loc.start.line) {
+      inHl = true
+      out += line.substring(0, loc.start.column)
+      if (loc.end.line === loc.start.line) {
+        out += chalk.bgRed(line.substring(loc.start.column, loc.end.column))
+        out += line.substring(loc.end.column)
+        inHl = false
+      } else {
+        out += chalk.bgRed(line.substring(loc.start.column))
       }
+    } else if (inHl) {
+      if (lineN === loc.end.line) {
+        out += chalk.bgRed(line.substring(0, loc.end.column))
+        out += line.substring(loc.end.column)
+        inHl = false
+      } else {
+        out += chalk.bgRed(line)
+      }
+    } else {
+      out += line
+    }
+    out += '\n'
+  }
 
-      var startloc = err.ecmaless.loc.start
-      var excerpt = excerptAtLineCol(src, startloc.line - 1, startloc.column, 0)
-      var fileinfo = path.relative(basePath, err.ecmaless.loc.source) +
-                ' ' + err.ecmaless.loc.start.line +
-                ':' + err.ecmaless.loc.start.column +
-                ',' + err.ecmaless.loc.end.line +
-                ':' + err.ecmaless.loc.end.column
+  return out
+}
 
-      console.error(chalk.red(err + ''))
-      console.error()
-      console.error(excerpt)
-      console.error(chalk.dim(fileinfo))
-    })
+var printErr = function (err) {
+  if (err &&
+    err.type === 'Error' &&
+    typeof err.message === 'string' &&
+    err.loc &&
+    typeof err.loc.src === 'string' &&
+    typeof err.loc.file === 'string'
+  ) {
+    var toLoc = EStreeLoc(err.loc.src, err.loc.file)
+    // {type:'Error', loc, message: String}
+    var loc = toLoc(err.loc.start, err.loc.end)
+
+    var fileinfo = path.relative(basePath, loc.source) +
+                ' ' + loc.start.line +
+                ':' + loc.start.column +
+                ',' + loc.end.line +
+                ':' + loc.end.column
+    console.error(chalk.grey(fileinfo))
+    console.error()
+    console.error(exrpt(err.loc.src, loc))
+    console.error()
+    console.error(chalk.red(err.message))
     return
   }
-  console.error(chalk.red(err + ''))
+  console.error(chalk.red(JSON.stringify(err)))
 }
 
 function runCli () {
@@ -62,8 +110,11 @@ function runCli () {
     return
   }
 
+  var startPath = path.resolve(basePath, args._[0])
+
   main({
-    start_path: path.resolve(basePath, args._[0]),
+    base: basePath,
+    startPath: startPath,
     loadPath: function (path, callback) {
       fs.readFile(path, 'utf-8', callback)
     }
@@ -73,19 +124,19 @@ function runCli () {
       return
     }
 
-    var out = escodegen.generate(est, {
-      sourceMap: true,
-      sourceMapRoot: basePath,
-      sourceMapWithCode: true
+    var map = new SourceMapGenerator({
+      file: path.basename(startPath),
+      sourceRoot: basePath
     })
 
-    var code = out.code
-    var map = JSON.parse(out.map.toString())
+    var code = astring.generate(est, {sourceMap: map})
+
+    map = JSON.parse(map.toString())
     map.sources = map.sources.map(function (source) {
       return path.relative(map.sourceRoot, source)
     })
     delete map.sourceRoot
-    code += '\n//# sourceMappingURL=data:application/json;base64,' +
+    code += '//# sourceMappingURL=data:application/json;base64,' +
         btoa(JSON.stringify(map)) +
         '\n'
 

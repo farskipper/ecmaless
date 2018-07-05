@@ -1,6 +1,6 @@
 var test = require('ava')
 var main = require('./src')
-var escodegen = require('escodegen')
+var astring = require('astring')
 
 var StructLoader = function (files) {
   return function (path, callback) {
@@ -16,12 +16,12 @@ var run = function (files) {
   return new Promise(function (resolve, reject) {
     main({
       base: '/test/',
-      start_path: './a',
+      startPath: './a',
       loadPath: StructLoader(files)
     }, function (err, est) {
       if (err) return reject(err)
 
-      var js = escodegen.generate(est)
+      var js = astring.generate(est)
 
       var out = eval(js)// eslint-disable-line
 

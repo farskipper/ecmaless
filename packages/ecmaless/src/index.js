@@ -14,9 +14,9 @@ var normalizePath = function (base, path) {
 }
 
 module.exports = function (conf, callback) {
-  var base = conf.base || process.cwd()
+  var base = conf.base
   var loadPath = conf.loadPath
-  var startPath = normalizePath(base, conf.start_path)
+  var startPath = normalizePath(base, conf.startPath)
 
   var moduleSrc = {}
   var moduleAst = {}
@@ -38,7 +38,9 @@ module.exports = function (conf, callback) {
 
       var ast = parser(src)
       if (ast.type !== 'Ok') {
-        return callback(new Error(JSON.stringify(ast)))
+        ast.loc.file = pathFns.relative(base, path)
+        ast.loc.src = src
+        return callback(ast)
       }
       ast = ast.tree
 
@@ -70,72 +72,72 @@ module.exports = function (conf, callback) {
     var body = []
     var modules = {}
 
-    try {
-      _.each(pathsToComp, function (path, modIndex) {
-        if (/\.js$/i.test(path)) {
-          modules[path] = {isJs: true}
+    for (var modIndex = 0; modIndex < pathsToComp.length; modIndex++) {
+      var path = pathsToComp[modIndex]
 
-          body.push(e('var',
-            '$mod$' + modIndex,
-            e('call',
-              e('id', 'require'),
-              [e('str', path)]
-            )
-          ))
-          return
+      if (/\.js$/i.test(path)) {
+        modules[path] = {isJs: true}
+
+        body.push(e('var',
+          '$mod$' + modIndex,
+          e('call',
+            e('id', 'require'),
+            [e('str', path)]
+          )
+        ))
+        continue
+      }
+      var src = moduleSrc[path]
+      var ast = moduleAst[path]
+
+      var myModules = {}
+      var nextModuleId = (function () {
+        var i = 0
+        return function () {
+          return '$' + i++
         }
-        var src = moduleSrc[path]
-        var ast = moduleAst[path]
+      }())
 
-        var myModules = {}
-        var nextModuleId = (function () {
-          var i = 0
-          return function () {
-            return '$' + i++
+      var c = compiler(ast, {
+        toLoc: function () { _.noop(src, path) }, // TODO use src + path
+        requireModule: function (path, loc) {
+          // TODO resolve relative to curr path
+          path = normalizePath(base, path)
+
+          if (!modules[path]) {
+            return {type: 'Error', loc: loc, message: 'Module not found: ' + path}
           }
-        }())
 
-        var c = compiler(ast, {
-          toLoc: function () { _.noop(src, path) }, // TODO use src + path
-          requireModule: function (path, loc) {
-            // TODO resolve relative to curr path
-            path = normalizePath(base, path)
+          var moduleId = nextModuleId()
+          myModules[moduleId] = path
 
-            if (!modules[path]) {
-              return {type: 'Error', loc: loc, message: 'Module not found: ' + path}
-            }
-
-            var moduleId = nextModuleId()
-            myModules[moduleId] = path
-
-            return {
-              type: 'Ok',
-              value: {
-                id: moduleId,
-                module: modules[path]
-              }
+          return {
+            type: 'Ok',
+            value: {
+              id: moduleId,
+              module: modules[path]
             }
           }
-        })
-        if (c.type !== 'Ok') {
-          throw new Error(JSON.stringify(c))
         }
-        c = c.value
-
-        modules[path] = c
-
-        var args = []
-        var params = []
-        _.each(myModules, function (path, moduleId) {
-          var i = _.indexOf(pathsToComp, path)
-          args.push(e('id', '$mod$' + i))
-          params.push(moduleId)
-        })
-        body.push(e('var', '$mod$' + modIndex, e('call', e('function', params, c.estree.body), args)))
       })
-    } catch (e) {
-      callback(e)
-      return
+      if (c.type !== 'Ok') {
+        c.loc.file = pathFns.relative(base, path)
+        c.loc.src = src
+        callback(c)
+        return
+      }
+      c = c.value
+
+      modules[path] = c
+
+      var args = []
+      var params = []
+      _.each(myModules, function (path, moduleId) {
+        var i = _.indexOf(pathsToComp, path)
+        args.push(e('id', '$mod$' + i))
+        params.push(moduleId)
+      })
+      body.push(e('var', '$mod$' + modIndex, e('call', e('function', params, c.estree.body), args)))
     }
 
     var mainMod = '$mod$' + _.indexOf(pathsToComp, startPath)
