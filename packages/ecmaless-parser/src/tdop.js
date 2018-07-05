@@ -439,6 +439,7 @@ infix('++', 50)
 
 infix('*', 60)
 infix('/', 60)
+infix('%', 60)
 
 prefix('not', 70)
 prefix('-', 70)

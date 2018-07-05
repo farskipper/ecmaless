@@ -49,7 +49,19 @@ test('compile', function (t) {
 
   t.is(tc('def a = "b"'), "var a='b';")
 
+  t.is(tc('ann a=Number def a=1'), 'var a=1;')
+  t.is(tc('ann a=Number def a="b"'), 'e:Number a:String|19-22')
+  t.is(tc('ann a=String def a=1'), 'e:String a:Number|19-20')
+  t.is(tc('def a=1 ann a=Number'), '`a` should be annotated before it\'s defined|12-13')
+  t.is(tc('ann a=Number ann a=Number'), '`a` is already annotated|17-18')
+})
+
+test('infix', function (t) {
   t.is(tc('def a = 1 + 2'), 'var a=1+2;')
+  t.is(tc('def a = 1 - 2'), 'var a=1-2;')
+  t.is(tc('def a = 1 * 2'), 'var a=1*2;')
+  t.is(tc('def a = 1 / 2'), 'var a=1/2;')
+  t.is(tc('def a = 1 % 2'), 'var a=1%2;')
 
   t.is(tc('def a = 1 + "b"'), 'e:Number a:String|12-15')
   t.is(tc('def a = "b" + 2'), 'e:Number a:String|8-11')
@@ -58,11 +70,28 @@ test('compile', function (t) {
   t.is(tc('def a = "a" ++ "b"'), "var a='a'+'b';")
   t.is(tc('def a = "a" ++ 1'), 'e:String a:Number|15-16')
 
-  t.is(tc('ann a=Number def a=1'), 'var a=1;')
-  t.is(tc('ann a=Number def a="b"'), 'e:Number a:String|19-22')
-  t.is(tc('ann a=String def a=1'), 'e:String a:Number|19-20')
-  t.is(tc('def a=1 ann a=Number'), '`a` should be annotated before it\'s defined|12-13')
-  t.is(tc('ann a=Number ann a=Number'), '`a` is already annotated|17-18')
+  t.is(tc('def a = 1 and false'), 'e:Boolean a:Number|8-9')
+  t.is(tc('def a = true and 1'), 'e:Boolean a:Number|17-18')
+  t.is(tc('def a = true and false'), 'var a=true&&false;')
+  t.is(tc('def a = true or false'), 'var a=true||false;')
+  t.is(tc('def a = true xor false'), 'var a=true?!false:false;')
+
+  t.is(tc('def a = 1 == "b"'), 'e:Number a:String|13-16')
+  t.is(tc('def a = {} == {}'), 'Struct is not comparable, only Number,String,Boolean,Nil|8-10')
+
+  t.is(tc('def a = 1 == 2'), 'var a=1===2;')
+  t.is(tc('def a = 1 != 2'), 'var a=1!==2;')
+  t.is(tc('def a = 1 < 2'), 'var a=1<2;')
+  t.is(tc('def a = 1 <= 2'), 'var a=1<=2;')
+  t.is(tc('def a = 1 > 2'), 'var a=1>2;')
+  t.is(tc('def a = 1 >= 2'), 'var a=1>=2;')
+})
+
+test('prefix', function (t) {
+  t.is(tc('def a = not 1'), 'e:Boolean a:Number|12-13')
+  t.is(tc('def a = not true'), 'var a=!true;')
+  t.is(tc('def a = -"s"'), 'e:Number a:String|9-12')
+  t.is(tc('def a = -1'), 'var a=-1;')
 })
 
 test('functions', function (t) {

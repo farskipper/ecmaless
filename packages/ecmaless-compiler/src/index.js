@@ -14,6 +14,13 @@ var baseTypes = {
   'Nil': true
 }
 
+var comparableTypes = {
+  'Number': true,
+  'String': true,
+  'Boolean': true,
+  'Nil': true
+}
+
 var typeToString = function (TYPE) {
   return TYPE.typ.tag
 }
@@ -294,7 +301,18 @@ var compAstNode = {
       return Ok()
     }
 
+    var toOk = function (op, tag) {
+      return Ok({
+        estree: e(op, left.estree, right.estree, ctx.toLoc(node.loc)),
+        TYPE: {
+          loc: node.loc,
+          typ: {tag: tag}
+        }
+      })
+    }
+
     var op = node.ast.op
+    var tmp
 
     switch (op) {
       case '+':
@@ -306,23 +324,99 @@ var compAstNode = {
         if (notOk(out)) {
           return out
         }
-        return Ok({
-          estree: e(op, left.estree, right.estree, ctx.toLoc(node.loc)),
-          TYPE: {
-            loc: node.loc,
-            typ: left.TYPE.typ
-          }
-        })
+        return toOk(op, 'Number')
       case '++':
-        var tmp = assertLR('String')
+        tmp = assertLR('String')
+        if (notOk(tmp)) {
+          return tmp
+        }
+        return toOk('+', 'String')
+      case 'and':
+      case 'or':
+        tmp = assertLR('Boolean')
+        if (notOk(tmp)) {
+          return tmp
+        }
+        if (op === 'and') {
+          op = '&&'
+        } else if (op === 'or') {
+          op = '||'
+        }
+        return toOk(op, 'Boolean')
+      case 'xor':
+        tmp = assertLR('Boolean')
         if (notOk(tmp)) {
           return tmp
         }
         return Ok({
-          estree: e('+', left.estree, right.estree, ctx.toLoc(node.loc)),
+          estree: e('?', left.estree, e('!', right.estree, ctx.toLoc(node.loc)), right.estree, ctx.toLoc(node.loc)),
           TYPE: {
             loc: node.loc,
-            typ: left.TYPE.typ
+            typ: {tag: 'Boolean'}
+          }
+        })
+      case '==':
+      case '!=':
+      case '<':
+      case '<=':
+      case '>':
+      case '>=':
+        if (!comparableTypes[left.TYPE.typ.tag]) {
+          return Error(node.ast.left.loc, left.TYPE.typ.tag + ' is not comparable, only ' + Object.keys(comparableTypes))
+        }
+        tmp = assertLR(left.TYPE.typ.tag)
+        if (notOk(tmp)) {
+          return tmp
+        }
+        if (op === '==' || op === '!=') {
+          op += '='
+        }
+        return toOk(op, 'Boolean')
+      default:
+        return Error(node.loc, '`' + op + '` not supported')
+    }
+  },
+  'Prefix': function (node, comp, ctx) {
+    var value = comp(node.ast.value)
+    if (notOk(value)) {
+      return value
+    }
+    value = value.value
+    var tmp
+    switch (node.ast.op) {
+      case 'not':
+        tmp = assertT(value.TYPE, {
+          loc: node.loc,
+          typ: {tag: 'Boolean'}
+        })
+        if (notOk(tmp)) {
+          return tmp
+        }
+        return Ok({
+          estree: e('!', value.estree, ctx.toLoc(node.loc)),
+          TYPE: {
+            loc: node.loc,
+            typ: {tag: 'Boolean'}
+          }
+        })
+      case '-':
+        tmp = assertT(value.TYPE, {
+          loc: node.loc,
+          typ: {tag: 'Number'}
+        })
+        if (notOk(tmp)) {
+          return tmp
+        }
+        return Ok({
+          estree: {
+            type: 'UnaryExpression',
+            prefix: true,
+            operator: '-',
+            argument: value.estree
+          },
+          TYPE: {
+            loc: node.loc,
+            typ: {tag: 'Number'}
           }
         })
       default:
