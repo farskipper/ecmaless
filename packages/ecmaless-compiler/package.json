@@ -1,6 +1,6 @@
 {
   "name": "ecmaless-compiler",
-  "version": "0.7.0",
+  "version": "0.8.1",
   "description": "ecmaless AST -> ESTree",
   "main": "src/index.js",
   "files": [
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "ava": "^0.25.0",
-    "ecmaless-parser": "^0.7.0",
+    "ecmaless-parser": "^0.8.1",
     "escodegen": "^1.8.0",
     "standard": "^11.0.1"
   }

@@ -1,6 +1,6 @@
 {
   "name": "ecmaless",
-  "version": "0.3.0",
+  "version": "0.8.1",
   "description": "A small compile to JS language.",
   "main": "index.js",
   "bin": {
@@ -32,8 +32,8 @@
     "chalk": "^2.3.0",
     "contra": "^1.9.4",
     "dependency-resolver": "^2.0.1",
-    "ecmaless-compiler": "^0.7.0",
-    "ecmaless-parser": "^0.7.0",
+    "ecmaless-compiler": "^0.8.1",
+    "ecmaless-parser": "^0.8.1",
     "estree-builder": "^1.10.0",
     "estree-loc": "^2.0.0",
     "lodash": "^4.17.4",

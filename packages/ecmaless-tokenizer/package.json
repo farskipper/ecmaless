@@ -1,6 +1,6 @@
 {
   "name": "ecmaless-tokenizer",
-  "version": "0.7.0",
+  "version": "0.8.1",
   "description": "Tokenizer for the ecmaless language",
   "main": "index.js",
   "scripts": {
