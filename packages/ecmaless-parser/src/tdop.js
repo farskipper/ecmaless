@@ -615,16 +615,20 @@ defRule('if', {
     if (notOk(then)) {
       return then
     }
-    var elseStmt
+    then = then.tree
+    then = {loc: then.loc, ast: ast.Block(then)}
+    var else_
     while (true) {
       if (state.curr.rule.id === 'elseif') {
         return Error(state.curr.token.loc, '`elseif` is not yet supported')
       } else if (state.curr.rule.id === 'else') {
         advance(state)
-        elseStmt = statements(state)
-        if (notOk(elseStmt)) {
-          return elseStmt
+        else_ = statements(state)
+        if (notOk(else_)) {
+          return else_
         }
+        else_ = else_.tree
+        else_ = {loc: else_.loc, ast: ast.Block(else_)}
         if (state.curr.rule.id !== 'end') {
           return Error(state.curr.token.loc, 'Expected `end`')
         }
@@ -637,7 +641,7 @@ defRule('if', {
         return Error(state.curr.token.loc, 'Expected `elseif` or `else` or `end`')
       }
     }
-    return Ok(loc, ast.IfStatement(test.tree, then.tree, elseStmt ? elseStmt.tree : null))
+    return Ok(loc, ast.IfStatement(test.tree, then, else_))
   }
 })
 

@@ -377,20 +377,37 @@ var compAstNode = {
       i++
     }
 
-    var body = comp(node.ast.body)
-    if (notOk(body)) {
-      return body
+    var body
+    if (node.ast.body.ast.type === 'Block') {
+      body = comp(node.ast.body)
+      if (notOk(body)) {
+        return body
+      }
+      body = body.value
+      if (body.mayReturn) {
+        return Error(node.ast.body.loc, 'a branch does not return')
+      }
+      var out = assertT(body.returns, expTYPE.typ.body)
+      if (notOk(out)) {
+        return out
+      }
+      body = body.estree
+    } else {
+      body = comp(node.ast.body)
+      if (notOk(body)) {
+        return body
+      }
+      var out = assertT(body.value.TYPE, expTYPE.typ.body)
+      if (notOk(out)) {
+        return out
+      }
+      body = [e('return', body.value.estree, ctx.toLoc(node.ast.body.loc))]
     }
-    var out = assertT(body.value.TYPE, expTYPE.typ.body)
-    if (notOk(out)) {
-      return out
-    }
-    body = [e('return', body.value.estree, node.ast.body.loc)]
 
     ctx.scope.pop()
     var id
     return Ok({
-      estree: e('function', params, body, id, node.loc),
+      estree: e('function', params, body, id, ctx.toLoc(node.loc)),
       TYPE: {
         loc: node.loc,
         typ: expTYPE.typ
@@ -720,6 +737,122 @@ var compAstNode = {
         ctx.toLoc(node.loc)
       ),
       TYPE: TYPE
+    })
+  },
+  'Block': function (node, comp, ctx, fromCaller) {
+    var shouldPushScope = !(fromCaller && fromCaller.noScopePush)
+    var shouldWrapInEBlock = !(fromCaller && fromCaller.dontWrapInEBlock)
+    if (shouldPushScope) {
+      ctx.scope.push()
+    }
+    var body = []
+    var returns
+    var mayReturn
+
+    var i = 0
+    while (i < node.ast.body.ast.length) {
+      var stmt = node.ast.body.ast[i]
+      i++
+      if (returns) {
+        return Error(stmt.loc, 'dead code')
+      }
+      var c = comp(stmt)
+      if (notOk(c)) {
+        return c
+      }
+      c = c.value
+      body.push(c.estree)
+      if (c.returns) {
+        returns = c.returns
+        if (mayReturn) {
+          var tst = assertT(mayReturn, returns)
+          if (notOk(tst)) {
+            return tst
+          }
+          mayReturn = void 0
+        }
+      }
+      if (c.mayReturn) {
+        if (mayReturn) {
+          var tst2 = assertT(mayReturn, c.mayReturn)
+          if (notOk(tst2)) {
+            return tst2
+          }
+        }
+        mayReturn = c.mayReturn
+      }
+    }
+
+    if (!returns && !mayReturn) {
+      returns = {loc: node.loc, typ: {tag: 'Nil'}}
+    }
+
+    if (shouldPushScope) {
+      ctx.scope.pop()
+    }
+    return Ok({
+      estree: shouldWrapInEBlock
+        ? e('block', body, ctx.toLoc(node.loc))
+        : body,
+      returns: returns,
+      mayReturn: mayReturn
+    })
+  },
+  'IfStatement': function (node, comp, ctx, fromCaller) {
+    var test = comp(node.ast.test)
+    if (notOk(test)) {
+      return test
+    }
+    test = test.value
+    if (test.TYPE.typ.tag !== 'Boolean') {
+      return Error(node.ast.test.loc, 'must be a Boolean')
+    }
+    var then = comp(node.ast.then)
+    if (notOk(then)) {
+      return then
+    }
+    then = then.value
+    var else_
+    if (node.ast.else) {
+      else_ = comp(node.ast.else)
+      if (notOk(else_)) {
+        return else_
+      }
+      else_ = else_.value
+    }
+    var returns
+    var mayReturn
+    if (then.returns && else_ && else_.returns) {
+      var tst = assertT(else_.returns, then.returns)
+      if (notOk(tst)) {
+        return tst
+      }
+      returns = then.returns
+    } else {
+      mayReturn = then.returns || then.mayReturn
+      if (else_) {
+        var elseMayReturn = else_.returns || else_.mayReturn
+        var tst2 = assertT(elseMayReturn, mayReturn)
+        if (notOk(tst2)) {
+          return tst2
+        }
+      }
+    }
+    return Ok({
+      estree: e('if', test.estree, then.estree, else_ && else_.estree, ctx.toLoc(node.loc)),
+      returns: returns,
+      mayReturn: mayReturn
+    })
+  },
+  'Return': function (node, comp, ctx, fromCaller) {
+    var val = comp(node.ast.value)
+    if (notOk(val)) {
+      return val
+    }
+    val = val.value
+    return Ok({
+      estree: e('return', val.estree, ctx.toLoc(node.loc)),
+      returns: val.TYPE
     })
   },
   'Import': function (node, comp, ctx, fromCaller) {

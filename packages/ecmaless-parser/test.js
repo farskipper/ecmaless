@@ -321,19 +321,19 @@ test('statements', function (t) {
   t.is(p('if a then'), 'Expected `do`|5-9')
   t.is(p('if a do foo()'), 'Expected `elseif` or `else` or `end`|13-13')
   t.deepEqual(p('if a do foo() end'), [
-    ast.IfStatement(S('a'), [
+    ast.IfStatement(S('a'), ast.Block([
       ast.CallFn(S('foo'), [])
-    ], null)
+    ]), void 0)
   ])
   t.deepEqual(p('if a do foo() else bar() end'), [
-    ast.IfStatement(S('a'), [
+    ast.IfStatement(S('a'), ast.Block([
       ast.CallFn(S('foo'), [])
-    ], [
+    ]), ast.Block([
       ast.CallFn(S('bar'), [])
-    ])
+    ]))
   ])
-  t.deepEqual(p('if a do else end'), [ast.IfStatement(S('a'), [], [])])
-  t.deepEqual(p('if a do end'), [ast.IfStatement(S('a'), [], null)])
+  t.deepEqual(p('if a do else end'), [ast.IfStatement(S('a'), ast.Block([]), ast.Block([]))])
+  t.deepEqual(p('if a do end'), [ast.IfStatement(S('a'), ast.Block([]), void 0)])
 
   t.is(p('def'), 'Expected a symbol or type|3-3')
   t.is(p('def Foo'), 'Expected `=`|7-7')

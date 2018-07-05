@@ -82,6 +82,8 @@ test('functions', function (t) {
   t.is(tc(addEl + ' add(1,"a")'), 'e:Number a:String|57-60')
   t.is(tc(addEl + ' add(1,2)'), addJs + 'add(1,2);')
   t.is(tc(addEl + ' ann a=String def a=add(1,2)'), 'e:String a:Number|70-73')
+
+  t.is(tc('ann foo=Fn()Nil def foo=fn() do def a=1 def b=2 end'), 'var foo=function foo(){var a=1;var b=2;};')
 })
 
 test('struct', function (t) {
@@ -156,6 +158,18 @@ test('if', function (t) {
   t.is(tc('def out=if true then 1 else 2'), 'var out=true?1:2;')
   t.is(tc('def out=if true then 1 else "s"'), 'e:Number a:String|28-31')
   t.is(tc('ann out=String def out=if true then 1 else "s"'), 'e:String a:Number|36-37')
+
+  t.is(tc('if true do def a=1 end'), 'if(true){var a=1;}')
+  t.is(tc('if true do def a=1 else def a=2 end'), 'if(true){var a=1;}else{var a=2;}')
+  t.is(tc('if true do else end'), 'if(true){}else{}')
+
+  t.is(tc('ann foo=Fn()Number def foo=fn()do return 1 end'), 'var foo=function foo(){return 1;};')
+  t.is(tc('ann foo=Fn()Number def foo=fn()do return "s" end'), 'e:Number a:String|41-44')
+  t.is(tc('ann foo=Fn(Boolean)Number def foo=fn(b)do if b do return 1 end end'), 'a branch does not return|42-66')
+  t.is(tc('ann foo=Fn(Boolean)Number def foo=fn(b)do if b do return 1 else return 2 end end'), 'var foo=function foo(b){if(b){return 1;}else{return 2;}};')
+  t.is(tc('ann foo=Fn(Boolean)Number def foo=fn(b)do if b do return 1 end return 2 end'), 'var foo=function foo(b){if(b){return 1;}return 2;};')
+  t.is(tc('ann foo=Fn(Boolean)Number def foo=fn(b)do if b do return 1 else if b do return 2 end end end'), 'a branch does not return|42-92')
+  t.is(tc('ann foo=Fn(Boolean)Number def foo=fn(b)do if b do return 1 else if b do return 2 end return 3 end end'), 'var foo=function foo(b){if(b){return 1;}else{if(b){return 2;}return 3;}};')
 })
 
 test('export', function (t) {
