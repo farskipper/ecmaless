@@ -172,6 +172,20 @@ test('if', function (t) {
   t.is(tc('ann foo=Fn(Boolean)Number def foo=fn(b)do if b do return 1 else if b do return 2 end return 3 end end'), 'var foo=function foo(b){if(b){return 1;}else{if(b){return 2;}return 3;}};')
 })
 
+test('while', function (t) {
+  t.is(tc('while a do end'), 'Not defined `a`|6-7')
+  t.is(tc('while 1 do end'), 'must be a Boolean|6-7')
+  t.is(tc('while true do end'), 'while(true){}')
+  t.is(tc('while true do def a=1 end'), 'while(true){var a=1;}')
+  t.is(tc('while true do foo() end'), 'Not defined `foo`|14-17')
+  t.is(tc('ann foo=Fn()Number def foo=fn()do while true do return "s" end end'), 'a branch does not return|34-66')
+  t.is(tc('ann foo=Fn()Number def foo=fn()do while true do return "s" end return 1 end'), 'e:Number a:String|55-58')
+  t.is(tc('ann foo=Fn()Number def foo=fn()do while true do if true do return 2 end end return 1 end'), 'var foo=function foo(){while(true){if(true){return 2;}}return 1;};')
+
+  t.is(tc('while true do continue end'), 'while(true){continue;}')
+  t.is(tc('while true do break end'), 'while(true){break;}')
+})
+
 test('export', function (t) {
   t.is(tc('export(a)'), 'Not defined `a`|7-8')
   t.is(tc('def a=1 export(a)'), "var a=1;return{'a':a};")

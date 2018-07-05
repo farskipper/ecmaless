@@ -74,13 +74,12 @@ var assertT = function (actual, expected) {
         var aclVParam = aclVParams[l]
         var expVParam = expVParams[l]
         l++
-        var out = assertT(aclVParam, expVParam)
-        if (notOk(out)) {
-          return out
+        var out2 = assertT(aclVParam, expVParam)
+        if (notOk(out2)) {
+          return out2
         }
       }
     }
-    return Ok()
   }
   return Ok()
 }
@@ -387,6 +386,9 @@ var compAstNode = {
       if (body.mayReturn) {
         return Error(node.ast.body.loc, 'a branch does not return')
       }
+      if (!body.returns) {
+        body.returns = {loc: node.ast.body.loc, typ: {tag: 'Nil'}}
+      }
       var out = assertT(body.returns, expTYPE.typ.body)
       if (notOk(out)) {
         return out
@@ -397,9 +399,9 @@ var compAstNode = {
       if (notOk(body)) {
         return body
       }
-      var out = assertT(body.value.TYPE, expTYPE.typ.body)
-      if (notOk(out)) {
-        return out
+      var out2 = assertT(body.value.TYPE, expTYPE.typ.body)
+      if (notOk(out2)) {
+        return out2
       }
       body = [e('return', body.value.estree, ctx.toLoc(node.ast.body.loc))]
     }
@@ -783,10 +785,6 @@ var compAstNode = {
       }
     }
 
-    if (!returns && !mayReturn) {
-      returns = {loc: node.loc, typ: {tag: 'Nil'}}
-    }
-
     if (shouldPushScope) {
       ctx.scope.pop()
     }
@@ -832,9 +830,11 @@ var compAstNode = {
       mayReturn = then.returns || then.mayReturn
       if (else_) {
         var elseMayReturn = else_.returns || else_.mayReturn
-        var tst2 = assertT(elseMayReturn, mayReturn)
-        if (notOk(tst2)) {
-          return tst2
+        if (elseMayReturn) {
+          var tst2 = assertT(elseMayReturn, mayReturn)
+          if (notOk(tst2)) {
+            return tst2
+          }
         }
       }
     }
@@ -854,6 +854,36 @@ var compAstNode = {
       estree: e('return', val.estree, ctx.toLoc(node.loc)),
       returns: val.TYPE
     })
+  },
+  'While': function (node, comp, ctx, fromCaller) {
+    var cond = comp(node.ast.cond)
+    if (notOk(cond)) {
+      return cond
+    }
+    cond = cond.value
+    if (cond.TYPE.typ.tag !== 'Boolean') {
+      return Error(node.ast.cond.loc, 'must be a Boolean')
+    }
+    var body = comp(node.ast.body)
+    if (notOk(body)) {
+      return body
+    }
+    body = body.value
+
+    var mayReturn = body.returns || body.mayReturn
+
+    return Ok({
+      estree: e('while', cond.estree, body.estree, ctx.toLoc(node.loc)),
+      mayReturn: mayReturn
+    })
+  },
+  'Continue': function (node, comp, ctx, fromCaller) {
+    // TODO only inside while
+    return Ok({estree: e('continue', ctx.toLoc(node.loc))})
+  },
+  'Break': function (node, comp, ctx, fromCaller) {
+    // TODO only inside while
+    return Ok({estree: e('break', ctx.toLoc(node.loc))})
   },
   'Import': function (node, comp, ctx, fromCaller) {
     if (!fromCaller.isRootLevel) {
