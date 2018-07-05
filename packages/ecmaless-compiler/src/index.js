@@ -242,6 +242,28 @@ var compAstNode = {
       estree: e('var', id.value.estree, init.value.estree, ctx.toLoc(node.loc))
     })
   },
+  'Assign': function (node, comp, ctx, fromCaller) {
+    var id = comp(node.ast.id)
+    if (notOk(id)) {
+      return id
+    }
+    id = id.value
+
+    var value = comp(node.ast.value)
+    if (notOk(value)) {
+      return value
+    }
+    value = value.value
+
+    var out = assertT(value.TYPE, id.TYPE)
+    if (notOk(out)) {
+      return out
+    }
+
+    return Ok({
+      estree: e(';', e('=', id.estree, value.estree, ctx.toLoc(node.loc)), ctx.toLoc(node.loc))
+    })
+  },
   'Infix': function (node, comp, ctx) {
     var left = comp(node.ast.left)
     if (notOk(left)) {

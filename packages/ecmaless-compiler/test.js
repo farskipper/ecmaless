@@ -186,6 +186,12 @@ test('while', function (t) {
   t.is(tc('while true do break end'), 'while(true){break;}')
 })
 
+test('set', function (t) {
+  t.is(tc('set a=2'), 'Not defined `a`|4-5')
+  t.is(tc('def a=1 set a="s"'), 'e:Number a:String|14-17')
+  t.is(tc('def a=1 set a=2'), 'var a=1;a=2;')
+})
+
 test('export', function (t) {
   t.is(tc('export(a)'), 'Not defined `a`|7-8')
   t.is(tc('def a=1 export(a)'), "var a=1;return{'a':a};")

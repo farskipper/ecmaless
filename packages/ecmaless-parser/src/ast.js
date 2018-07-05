@@ -97,6 +97,13 @@ module.exports = {
       init: init
     }
   },
+  Assign: function (id, value) {
+    return {
+      type: 'Assign',
+      id: id,
+      value: value
+    }
+  },
   Block: function (body) {
     return {
       type: 'Block',

@@ -772,6 +772,23 @@ stmt('def', function (state) {
   return Ok(loc, ast.Define(id.tree, init.tree))
 })
 
+stmt('set', function (state) {
+  var loc = state.curr.token.loc
+  var id = symbol(state)
+  if (notOk(id)) {
+    return id
+  }
+  if (state.curr.rule.id !== '=') {
+    return Error(state.curr.token.loc, 'Expected `=`')
+  }
+  advance(state)
+  var value = expression(state, 0)
+  if (notOk(value)) {
+    return value
+  }
+  return Ok(loc, ast.Assign(id.tree, value.tree))
+})
+
 stmt('do', doBlock)
 
 stmt('return', function (state) {

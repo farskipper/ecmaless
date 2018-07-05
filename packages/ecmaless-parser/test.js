@@ -268,6 +268,8 @@ test('ast shape', function (t) {
 })
 
 test('statements', function (t) {
+  t.is = t.deepEqual
+
   t.deepEqual(p('a()'), [ast.CallFn(S('a'), [])])
   t.is(p('a + 1'), 'Expected a statement|2-3')
 
@@ -281,6 +283,12 @@ test('statements', function (t) {
   t.is(p('def 1 = a'), 'Expected a symbol or type|4-5')
   t.is(p('def a + a'), 'Expected `=`|6-7')
   t.is(p('def a = def b = 2'), 'Expected an expression|8-11')
+
+  t.is(p('set'), 'Expected a symbol|3-3')
+  t.is(p('set A'), 'Expected a symbol|4-5')
+  t.is(p('set a'), 'Expected `=`|5-5')
+  t.is(p('set a ='), 'Expected an expression|7-7')
+  t.is(p('set a = 1'), [ast.Assign(S('a'), ast.Number(1))])
 
   t.deepEqual(p('ann a = Number'), [ast.Annotate(S('a'), T('Number'))])
   t.is(p('ann 1 = Number'), 'Expected a symbol|4-5')
