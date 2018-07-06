@@ -14,6 +14,9 @@ module.exports = {
   Symbol: function (value) {
     return {type: 'Symbol', value: value}
   },
+  TypeVar: function (value) {
+    return {type: 'TypeVar', value: value}
+  },
   Infix: function (op, left, right) {
     return {
       type: 'Infix',
@@ -232,6 +235,13 @@ module.exports = {
     return {
       type: 'Export',
       parts: parts
+    }
+  },
+  Generic: function (id, params) {
+    return {
+      type: 'Generic',
+      id: id,
+      params: params
     }
   }
 }

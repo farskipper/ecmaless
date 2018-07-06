@@ -100,6 +100,15 @@ var symbol = function (state) {
   return rules['SYMBOL'].nud(state, token)
 }
 
+var typeVar = function (state) {
+  if (state.curr.token.type !== 'SYMBOL') {
+    return Error(state.curr.token.loc, 'Expected a type var')
+  }
+  var token = state.curr.token
+  advance(state)
+  return rules['SYMBOL'].type_nud(state, token)
+}
+
 var type = function (state) {
   if (state.curr.token.type !== 'TYPE') {
     return Error(state.curr.token.loc, 'Expected a type')
@@ -389,6 +398,9 @@ defRule('STRING', {
 defRule('SYMBOL', {
   nud: function (state, token) {
     return Ok(token.loc, ast.Symbol(token.src))
+  },
+  type_nud: function (state, token) {
+    return Ok(token.loc, ast.TypeVar(token.src))
   }
 })
 defRule('TYPE', {
@@ -760,8 +772,38 @@ stmt('def', function (state) {
   if (notOk(id)) {
     return id
   }
+  id = id.tree
   if (state.curr.rule.id !== '=') {
-    return Error(state.curr.token.loc, 'Expected `=`')
+    if (!isType) {
+      return Error(state.curr.token.loc, 'Expected `=`')
+    }
+    if (state.curr.rule.id !== '<') {
+      return Error(state.curr.token.loc, 'Expected `=` or `<`')
+    }
+    advance(state)
+    var tparams = []
+    while (true) {
+      var tparam = typeVar(state)
+      if (notOk(tparam)) {
+        return tparam
+      }
+      tparams.push(tparam.tree)
+      if (state.curr.rule.id !== ',') {
+        break
+      }
+      advance(state)
+    }
+    if (state.curr.rule.id !== '>') {
+      return Error(state.curr.token.loc, 'Expected `,` or `>`')
+    }
+    id = {
+      loc: {start: id.loc.start, end: state.curr.token.loc.end},
+      ast: ast.Generic(id, tparams)
+    }
+    advance(state)
+    if (state.curr.rule.id !== '=') {
+      return Error(state.curr.token.loc, 'Expected `=`')
+    }
   }
   advance(state)
   var init = isType
@@ -770,7 +812,7 @@ stmt('def', function (state) {
   if (notOk(init)) {
     return init
   }
-  return Ok(loc, ast.Define(id.tree, init.tree))
+  return Ok(loc, ast.Define(id, init.tree))
 })
 
 stmt('set', function (state) {
@@ -899,6 +941,32 @@ defRule('(', {
     }
     advance(state)
     return Ok(left.loc, ast.TypeTag(left.ast.tag, args))
+  }
+})
+
+defRule('<', {
+  type_lbp: 80,
+  type_led: function (state, token, left) {
+    if (left.ast.type !== 'Type') {
+      return Error(left.loc, 'expected a type left of `<`')
+    }
+    var args = []
+    while (true) {
+      var e = typeExpression(state, 0)
+      if (notOk(e)) {
+        return e
+      }
+      args.push(e.tree)
+      if (state.curr.rule.id !== ',') {
+        break
+      }
+      advance(state)
+    }
+    if (state.curr.rule.id !== '>') {
+      return Error(state.curr.token.loc, 'Expected `,` or `>`')
+    }
+    advance(state)
+    return Ok(left.loc, ast.Generic(left, args))
   }
 })
 

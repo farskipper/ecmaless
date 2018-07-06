@@ -349,7 +349,7 @@ test('statements', function (t) {
   t.deepEqual(p('if a do end'), [ast.IfStatement(S('a'), ast.Block([]), void 0)])
 
   t.is(p('def'), 'Expected a symbol or type|3-3')
-  t.is(p('def Foo'), 'Expected `=`|7-7')
+  t.is(p('def Foo'), 'Expected `=` or `<`|7-7')
   t.is(p('def Foo ='), 'Expected a type expression|9-9')
   t.deepEqual(p('def Foo = Bar'), [ast.Define(T('Foo'), T('Bar'))])
 
@@ -482,7 +482,7 @@ test('export', function (t) {
   t.deepEqual(p('export (foo, Bar, baz, Qux)'), [ast.Export([S('foo'), T('Bar'), S('baz'), T('Qux')])])
 })
 
-test('tagged unionts / type variants', function (t) {
+test('tagged unions / type variants', function (t) {
   t.is = t.deepEqual
 
   t.is(p('type'), 'Expected a type|4-4')
@@ -509,4 +509,31 @@ test('tagged unionts / type variants', function (t) {
   t.is(pe('#b'), ast.Tag('b'))
   t.is(pe('#b(c)'), ast.Tag('b', [S('c')]))
   t.is(pe('#b(1, d)'), ast.Tag('b', [ast.Number(1), S('d')]))
+})
+
+test('generics', function (t) {
+  t.is = t.deepEqual
+
+  t.is(p('def A'), 'Expected `=` or `<`|5-5')
+  t.is(p('def A<'), 'Expected a type var|6-6')
+  t.is(p('def A<b'), 'Expected `,` or `>`|7-7')
+  t.is(p('def A<b>'), 'Expected `=`|8-8')
+  t.is(p('def A<b> = C'), [
+    ast.Define(ast.Generic(T('A'), [ast.TypeVar('b')]), T('C'))
+  ])
+  t.is(p('def A<b,c> = D<e>'), [
+    ast.Define(
+      ast.Generic(T('A'), [ast.TypeVar('b'), ast.TypeVar('c')]),
+      ast.Generic(T('D'), [ast.TypeVar('e')])
+    )
+  ])
+  t.is(p('def A<b,c> = D<Array<b>, c>'), [
+    ast.Define(
+      ast.Generic(T('A'), [ast.TypeVar('b'), ast.TypeVar('c')]),
+      ast.Generic(T('D'), [
+        ast.Generic(T('Array'), [ast.TypeVar('b')]),
+        ast.TypeVar('c')
+      ])
+    )
+  ])
 })
