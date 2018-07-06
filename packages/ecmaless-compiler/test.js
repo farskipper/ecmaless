@@ -143,24 +143,22 @@ test('type alias', function (t) {
 })
 
 test('tagged unions', function (t) {
-  t.is(tc('type Number=#a'), 'Cannot redefine base types|5-11')
-  t.is(tc('def Bar=Number type Bar=#a'), '`Bar` is already defined|20-23')
-
-  t.is(tc('type Bar=#a'), '')
-  t.is(tc('type Bar=#a | #a'), 'Duplicate tag `a`|14-16')
-  t.is(tc('type Bar=#a | #a(String)'), 'Duplicate tag `a`|14-16')
-  t.is(tc('type Bar=#a | #b'), '')
-  t.is(tc('type Bar=#a | #b(String)'), '')
+  t.is(tc('def Bar=#a|#b'), '')
+  t.is(tc('def Bar=#a'), '')
+  t.is(tc('def Bar=#a | #a'), 'Duplicate tag `a`|13-15')
+  t.is(tc('def Bar=#a | #a(String)'), 'Duplicate tag `a`|13-15')
+  t.is(tc('def Bar=#a | #b'), '')
+  t.is(tc('def Bar=#a | #b(String)'), '')
 
   t.is(tc('def bar=#a'), "var bar=['a'];")
   t.is(tc('def bar=#a(1,"hi")'), "var bar=['a',1,'hi'];")
 
   t.is(tc('ann bar=String def bar=#a'), 'e:String a:Union|23-25')
-  t.is(tc('type Bar=#b|#c ann bar=Bar def bar=#a'), '#a is not one of #b|#c|35-37')
-  t.is(tc('type Bar=#a|#b ann bar=Bar def bar=#a'), "var bar=['a'];")
-  t.is(tc('type Bar=#a(String)|#b ann bar=Bar def bar=#a'), 'expected 1 arguments but was 0|43-45')
-  t.is(tc('type Bar=#a(String)|#b ann bar=Bar def bar=#a(1)'), 'e:String a:Number|46-47')
-  t.is(tc('type Bar=#a(String)|#b ann bar=Bar def bar=#a("hi")'), "var bar=['a','hi'];")
+  t.is(tc('def Bar=#b|#c ann bar=Bar def bar=#a'), '#a is not one of #b|#c|34-36')
+  t.is(tc('def Bar=#a|#b ann bar=Bar def bar=#a'), "var bar=['a'];")
+  t.is(tc('def Bar=#a(String)|#b ann bar=Bar def bar=#a'), 'expected 1 arguments but was 0|42-44')
+  t.is(tc('def Bar=#a(String)|#b ann bar=Bar def bar=#a(1)'), 'e:String a:Number|45-46')
+  t.is(tc('def Bar=#a(String)|#b ann bar=Bar def bar=#a("hi")'), "var bar=['a','hi'];")
 })
 
 test('case', function (t) {
@@ -170,15 +168,15 @@ test('case', function (t) {
   t.is(tc('def bar = #a ' + caseE), '#a should have 0 args not 1|37-39')
   t.is(tc('def bar = #a("s") ' + caseE), '#b is not in #a|70-72')
   t.is(tc('def bar = #a("s") ' + caseE), '#b is not in #a|70-72')
-  t.is(tc('type Bar=#a(String)|#b|#c ann bar=Bar def bar=#a("s") ' + caseE), 'missing `when #c..`|64-68')
+  t.is(tc('def Bar=#a(String)|#b|#c ann bar=Bar def bar=#a("s") ' + caseE), 'missing `when #c..`|63-67')
   t.is(tc('def foo=#a("s") def bar=case foo when #a(1) "hi " ++ name'), 'expected a symbol to bind to|41-42')
   t.is(tc('def foo=#a("s") def bar=case foo when #a(name) "hi " ++ name'), "var foo=['a','s'];var bar=function($v0){switch($v0[0]){case'a':var $name$=$v0[1];return'hi '+$name$;}}(foo);")
   t.is(tc('def foo=#a(1) def bar=case foo when #a(name) "hi " ++ name'), 'e:String a:Number|54-58')
   t.is(tc('def foo=#a("s") def bar=case foo when #a(name) "hi " ++ name def baz=name'), 'Not defined `name`|69-73')
-  t.is(tc('type Bar=#a(String)|#b ann bar=Bar def bar=#a("s") ' + caseE), "var bar=['a','s'];var out=function($v0){switch($v0[0]){case'a':var $name$=$v0[1];return'hi '+$name$;case'b':return'bye';}}(bar);")
+  t.is(tc('def Bar=#a(String)|#b ann bar=Bar def bar=#a("s") ' + caseE), "var bar=['a','s'];var out=function($v0){switch($v0[0]){case'a':var $name$=$v0[1];return'hi '+$name$;case'b':return'bye';}}(bar);")
 
-  t.is(tc('type Bar=#a(String)|#b ann bar=Bar def bar=#a("s") def out = case bar when #a(name) name when #b 2'), 'e:String a:Number|97-98')
-  t.is(tc('type Bar=#a(String)|#b ann bar=Bar def bar=#a("s") ann out=Number def out = case bar when #a(name) name when #b 2'), 'e:Number a:String|99-103')
+  t.is(tc('def Bar=#a(String)|#b ann bar=Bar def bar=#a("s") def out = case bar when #a(name) name when #b 2'), 'e:String a:Number|96-97')
+  t.is(tc('def Bar=#a(String)|#b ann bar=Bar def bar=#a("s") ann out=Number def out = case bar when #a(name) name when #b 2'), 'e:Number a:String|98-102')
 })
 
 test('if', function (t) {

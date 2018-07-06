@@ -485,30 +485,47 @@ test('export', function (t) {
 test('tagged unions / type variants', function (t) {
   t.is = t.deepEqual
 
-  t.is(p('type'), 'Expected a type|4-4')
-  t.is(p('type A'), 'Expected `=`|6-6')
-  t.is(p('type A='), 'Expected a type expression|7-7')
-  t.is(p('type A=B'), 'Expected a tag|7-8')
-  t.is(p('type A=#b'), [
-    ast.TypeUnion(T('A'), [
-      ast.TypeTag('b')
-    ])
-  ])
-  t.is(p('type A=#b('), 'Expected a type expression|10-10')
-  t.is(p('type A=#b(C'), 'Expected `,` or `)`|11-11')
-  t.is(p('type A=#b(C)'), [
-    ast.TypeUnion(T('A'), [
-      ast.TypeTag('b', [T('C')])
-    ])
-  ])
+  t.is(pte('#a'), ast.TypeTag('a'))
+  t.is(pte('#a|#b'), ast.TypeUnion([
+    ast.TypeTag('a'),
+    ast.TypeTag('b')
+  ]))
+  t.is(pte('#a|#b|#c'), ast.TypeUnion([
+    ast.TypeTag('a'),
+    ast.TypeTag('b'),
+    ast.TypeTag('c')
+  ]))
+
+  t.is(pte('A|#b'), 'only tags can be unioned|0-1')
+  t.is(pte('#a|B'), 'only tags can be unioned|3-4')
+
+  t.is(pte('#b('), 'Expected a type expression|3-3')
+  t.is(pte('#b(C'), 'Expected `,` or `)`|4-4')
+  t.is(pte('#b(C)'), ast.TypeTag('b', [T('C')]))
+  t.is(pte('#b(C,D)'), ast.TypeTag('b', [T('C'), T('D')]))
 
   t.is(pte('#b'), ast.TypeTag('b'))
 
   t.is(pte('B(C)'), 'In type expressions, `(` only works after tags|1-2')
 
+  t.is(pe('#a|#b'), 'Expected `(end)`|2-3')
   t.is(pe('#b'), ast.Tag('b'))
   t.is(pe('#b(c)'), ast.Tag('b', [S('c')]))
   t.is(pe('#b(1, d)'), ast.Tag('b', [ast.Number(1), S('d')]))
+
+  t.is(p('def A = #a | #b(C)'), [
+    ast.Define(T('A'), ast.TypeUnion([
+      ast.TypeTag('a'),
+      ast.TypeTag('b', [T('C')])
+    ]))
+  ])
+
+  t.is(pte('Fn(#a|#b)String'), ast.TypeFunction([
+    ast.TypeUnion([
+      ast.TypeTag('a'),
+      ast.TypeTag('b')
+    ])
+  ], T('String')))
 })
 
 test('generics', function (t) {
@@ -533,6 +550,16 @@ test('generics', function (t) {
       ast.Generic(T('D'), [
         ast.Generic(T('Array'), [ast.TypeVar('b')]),
         ast.TypeVar('c')
+      ])
+    )
+  ])
+
+  t.is(p('def Maybe<a> = #nil|#just(a)'), [
+    ast.Define(
+      ast.Generic(T('Maybe'), [ast.TypeVar('a')]),
+      ast.TypeUnion([
+        ast.TypeTag('nil'),
+        ast.TypeTag('just', [ast.TypeVar('a')])
       ])
     )
   ])

@@ -365,7 +365,6 @@ defRule(')', {})
 defRule('}', {})
 defRule(':', {})
 defRule(',', {})
-defRule('|', {})
 defRule('=', {})
 defRule('as', {})
 defRule('is', {})
@@ -884,36 +883,33 @@ stmt('ann', function (state) {
   return Ok(loc, ast.Annotate(id.tree, init.tree))
 })
 
-stmt('type', function (state) {
-  var loc = state.curr.token.loc
-  var id = type(state)
-  if (notOk(id)) {
-    return id
-  }
-  if (state.curr.rule.id !== '=') {
-    return Error(state.curr.token.loc, 'Expected `=`')
-  }
-  advance(state)
-
-  var variants = []
-
-  while (true) {
-    var variant = typeExpression(state, 0)
-    if (notOk(variant)) {
-      return variant
+defRule('|', {
+  type_lbp: 80,
+  type_led: function (state, token, left) {
+    if (left.ast.type !== 'TypeTag') {
+      return Error(left.loc, 'only tags can be unioned')
     }
-    variant = variant.tree
-    if (variant.ast.type !== 'TypeTag') {
-      return Error(variant.loc, 'Expected a tag')
-    }
-    variants.push(variant)
-    if (state.curr.rule.id !== '|') {
-      break
-    }
-    advance(state)
-  }
 
-  return Ok(loc, ast.TypeUnion(id.tree, variants))
+    var variants = []
+    variants.push(left)
+
+    var e = typeExpression(state, 0)
+    if (notOk(e)) {
+      return e
+    }
+    if (e.tree.ast.type === 'TypeUnion') {
+      variants = variants.concat(e.tree.ast.variants)
+    } else if (e.tree.ast.type === 'TypeTag') {
+      variants.push(e.tree)
+    } else {
+      return Error(e.tree.loc, 'only tags can be unioned')
+    }
+
+    return Ok({
+      start: variants[0].loc.start,
+      end: variants[variants.length - 1].loc.end
+    }, ast.TypeUnion(variants))
+  }
 })
 
 defRule('(', {

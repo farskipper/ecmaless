@@ -420,7 +420,7 @@ var compAstNode = {
           }
         })
       default:
-        return Error(node.loc, '`' + op + '` not supported')
+        return Error(node.loc, '`' + node.ast.op + '` not supported')
     }
   },
   'Type': function (node, comp, ctx) {
@@ -669,30 +669,24 @@ var compAstNode = {
       }
     })
   },
-  'TypeUnion': function (node, comp, ctx, fromCaller) {
-    var id = node.ast.id.ast.value
-
-    if (ctx.scope.has(id)) {
-      return Error(node.ast.id.loc, '`' + id + '` is already defined')
-    }
-    if (baseTypes[id]) {
-      return Error(node.ast.id.loc, 'Cannot redefine base types')
-    }
-
-    var TYPE = {
-      loc: node.ast.id.loc,
-      typ: {
-        tag: 'Union',
-        variants: {}
+  'TypeTag': function (node, comp, ctx, fromCaller) {
+    return comp({
+      loc: node.loc,
+      ast: {
+        type: 'TypeUnion',
+        variants: [node]
       }
-    }
+    })
+  },
+  'TypeUnion': function (node, comp, ctx, fromCaller) {
+    var variants = {}
 
     var i = 0
     while (i < node.ast.variants.length) {
       var variant = node.ast.variants[i]
       i++
       var tag = variant.ast.tag
-      if (TYPE.typ.variants.hasOwnProperty(tag)) {
+      if (variants.hasOwnProperty(tag)) {
         return Error(variant.loc, 'Duplicate tag `' + tag + '`')
       }
 
@@ -708,15 +702,18 @@ var compAstNode = {
         param = param.value
         params.push(param.TYPE)
       }
-      TYPE.typ.variants[tag] = params
+      variants[tag] = params
     }
 
-    ctx.scope.set(id, {
-      TYPE: TYPE,
-      defLoc: node.loc
+    return Ok({
+      TYPE: {
+        loc: node.loc,
+        typ: {
+          tag: 'Union',
+          variants: variants
+        }
+      }
     })
-
-    return Ok({})
   },
   'CaseExpression': function (node, comp, ctx, fromCaller) {
     var disc = comp(node.ast.discriminant)
