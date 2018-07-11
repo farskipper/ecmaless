@@ -113,6 +113,8 @@ test('functions', function (t) {
   t.is(tc(addEl + ' ann a=String def a=add(1,2)'), 'e:String a:Number|70-73')
 
   t.is(tc('ann foo=Fn()Nil def foo=fn() do def a=1 def b=2 end'), 'var foo=function foo(){var a=1;var b=2;};')
+
+  t.is(tc('ann foo=Fn()Nil def foo=fn() do ann a=Number def a=1 end'), 'var foo=function foo(){var a=1;};', 'test that `ann` doesnt break estree')
 })
 
 test('struct', function (t) {
@@ -223,6 +225,8 @@ test('export', function (t) {
   t.is(tc('export(a)'), 'Not defined `a`|7-8')
   t.is(tc('def a=1 export(a)'), "var a=1;return{'a':a};")
 
+  t.is(tc('def a=1 def B=String export(a, B)'), "var a=1;return{'a':a};")
+
   t.is(tc('export *'), '`export *` is not yet supported|7-8')
 })
 
@@ -290,6 +294,7 @@ test('generics', function (t) {
   t.is(tc('def M<> = #n|#j(a)'), 'Expected a type var|6-7')
   t.is(tc('def M<A> = #n|#j(a)'), 'Expected a type var|6-7')
   t.is(tc('def M<a> = #n|#j(a) ann b=M<Number,String>'), 'Trying to give 2 params for M<a>|26-27')
+  t.is(tc('def M<a> = #n|#j def M<a> = #n|#j'), '`M` is already defined|21-22')
 
   t.is(tc('def M<a> = #n|#j(a) ann b=M<Number> def b=#j("s")'), 'e:Number a:String|45-48')
   t.is(tc('def M<a> = #n|#j(a) ann b=M<Number> def b=#j(1)'), "var b=['j',1];")

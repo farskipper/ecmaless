@@ -54,9 +54,9 @@ var advance = function (state) {
   }
 
   var rule
-  if (rules[token.src]) {
+  if (rules.hasOwnProperty(token.src)) {
     rule = rules[token.src]
-  } else {
+  } else if (rules.hasOwnProperty(token.type)) {
     rule = rules[token.type]
   }
 

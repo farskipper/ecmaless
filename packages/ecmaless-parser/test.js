@@ -466,6 +466,9 @@ test('import', function (t) {
     ])
   ])
   t.is(p('import "./foo" (Baz as Wat is String)'), 'Expected `,` or `)`|27-29')
+  t.deepEqual(p('import "./foo" (toString)'), [ast.Import('./foo', [
+    ast.ImportSymbol(S('toString'))
+  ])])
 })
 
 test('export', function (t) {

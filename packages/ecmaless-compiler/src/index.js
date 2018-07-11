@@ -237,6 +237,9 @@ var compAstNode = {
         tparams.push(tparam.ast.value)
       }
       var sym2 = node.ast.id.ast.id.ast.value
+      if (ctx.scope.has(sym2)) {
+        return Error(node.ast.id.ast.id.loc, '`' + sym2 + '` is already defined')
+      }
       var TYPE = {
         loc: node.loc,
         typ: {
@@ -956,7 +959,11 @@ var compAstNode = {
         return c
       }
       c = c.value
-      body.push(c.estree)
+      if (Array.isArray(c.estree)) {
+        body = body.concat(c.estree)
+      } else if (c.estree) {
+        body.push(c.estree)
+      }
       if (c.returns) {
         returns = c.returns
         if (mayReturn) {
@@ -1112,7 +1119,7 @@ var compAstNode = {
     var i = 0
     while (i < keysToImport.length) {
       var key = keysToImport[i]
-      var part = parts[key]
+      var part = parts.hasOwnProperty(key) ? parts[key] : null
       i++
 
       var as = key
@@ -1192,7 +1199,9 @@ var compAstNode = {
       if (notOk(part)) {
         return part
       }
-      obj[key] = part.value.estree
+      if (part.value.estree) {
+        obj[key] = part.value.estree
+      }
       typ.byKey[key] = part.value.TYPE
     }
     return Ok({
