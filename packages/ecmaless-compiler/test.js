@@ -284,3 +284,15 @@ test('import', function (t) {
   t.is(tcM('import "./a" (a is String)'), '`is` only works for js imports|19-25')
   t.is(tcM('import "./log.js" (log as foo is String)'), "var foo=$_log_js['log'];")
 })
+
+test('generics', function (t) {
+  t.is(tc('def m<> = #n|#j(a)'), 'Expected `=`|5-6')
+  t.is(tc('def M<> = #n|#j(a)'), 'Expected a type var|6-7')
+  t.is(tc('def M<A> = #n|#j(a)'), 'Expected a type var|6-7')
+  t.is(tc('def M<a> = #n|#j(a) ann b=M<Number,String>'), 'Trying to give 2 params for M<a>|26-27')
+
+  t.is(tc('def M<a> = #n|#j(a) ann b=M<Number> def b=#j("s")'), 'e:Number a:String|45-48')
+  t.is(tc('def M<a> = #n|#j(a) ann b=M<Number> def b=#j(1)'), "var b=['j',1];")
+  t.is(tc('def M<a> = #n|#j(a) ann b=M<String> def b=#j(1)'), 'e:String a:Number|45-46')
+  t.is(tc('def M<a> = #n|#j(a) ann b=M<String> def b=#j("s")'), "var b=['j','s'];")
+})

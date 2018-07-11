@@ -199,7 +199,85 @@ var compAstNode = {
 
     return Ok({})
   },
+  'TypeVar': function (node, comp, ctx) {
+    var v = ctx.scope.get(node.ast.value)
+    if (!v || !v.isTypeVar) {
+      return Error(node.ast.loc, '`' + node.ast.value + '` is not a type var')
+    }
+    return Ok({
+      TYPE: v.TYPE
+    })
+  },
+  'Generic': function (node, comp, ctx) {
+    var id = comp(node.ast.id)
+    if (notOk(id)) {
+      return id
+    }
+    id = id.value
+    var ctor = id.TYPE.typ.ctor
+    var TYPE = ctor(node.ast.params, node.loc, comp, ctx)
+    if (notOk(TYPE)) {
+      return TYPE
+    }
+    return Ok({TYPE: TYPE.value.TYPE})
+  },
   'Define': function (node, comp, ctx) {
+    if (node.ast.id.ast.type === 'Generic') {
+      if (node.ast.id.ast.id.ast.type !== 'Type') {
+        return Error(node.ast.id.ast.id.loc, '`def ..<..> = ..`  only works on types')
+      }
+      if (node.ast.id.ast.params.length === 0) {
+        return Error(node.ast.id.ast.id.loc, 'no `<..>` params')
+      }
+      var tparams = []
+      var i = 0
+      while (i < node.ast.id.ast.params.length) {
+        var tparam = node.ast.id.ast.params[i]
+        i++
+        tparams.push(tparam.ast.value)
+      }
+      var sym2 = node.ast.id.ast.id.ast.value
+      var TYPE = {
+        loc: node.loc,
+        typ: {
+          tag: 'Generic',
+          params: tparams,
+          ctor: function (types, calledLoc, comp, ctx) {
+            if (types.length !== tparams.length) {
+              return Error(calledLoc, 'Trying to give ' + types.length + ' params for ' + sym2 + '<' + tparams.join(',') + '>')
+            }
+            ctx.scope.push()
+            var i = 0
+            while (i < types.length) {
+              var arg = comp(types[i])
+              var tparam = tparams[i]
+              i++
+              if (notOk(arg)) {
+                return arg
+              }
+              ctx.scope.set(tparam, {
+                TYPE: arg.value.TYPE,
+                isTypeVar: true
+              })
+            }
+            var init = comp(node.ast.init)
+            if (notOk(init)) {
+              return init
+            }
+            ctx.scope.pop()
+            return Ok({
+              TYPE: init.value.TYPE
+            })
+          }
+        }
+      }
+      ctx.scope.set(sym2, {
+        TYPE: TYPE,
+        defLoc: node.loc
+      })
+      return Ok({})
+    }
+
     var isType = node.ast.id.ast.type === 'Type'
 
     var sym = node.ast.id.ast.value
