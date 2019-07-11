@@ -14,6 +14,8 @@ A compile to JS language where less is more, worse is better, and reliability is
 - ships with a code formatter (so we don't waste time arguing about style)
 - designed for humans who understand skill comes from experience not from tooling and fancy language features
 
+**PROJECT STATUS:** Abandoned… at least for now. [read more](https://github.com/farskipper/ecmaless#work-in-progress-maybe-not)
+
 ## Code samples
 
 ```
